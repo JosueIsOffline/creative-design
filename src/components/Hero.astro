@@ -20,18 +20,19 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
           Cre<svg viewBox="-8 0 32 32" class="inline-block h-[0.8em] w-auto align-baseline -mx-3" fill="none">
             <g transform="rotate(-1 12.5 20.5)">
               <g transform="translate(4,4) rotate(15)">
-                <rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="white" />
+                <rect data-gsap="hero-confetti" x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="white" />
               </g>
               <g transform="translate(-1,6) rotate(-40)">
-                <rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" />
+                <rect data-gsap="hero-confetti" x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" />
               </g>
               <g transform="translate(-4,10) rotate(-80)">
-                <rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" />
+                <rect data-gsap="hero-confetti" x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" />
               </g>
               <g transform="translate(-3,15) rotate(-115)">
-                <rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" />
+                <rect data-gsap="hero-confetti" x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" />
               </g>
               <path
+                data-gsap="hero-shape"
                 d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z"
                 fill="white"
                 stroke="white"
@@ -51,7 +52,7 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
     <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-foreground"></span>
   </div>
   <p data-gsap="hero-subtitle" class="mt-6 text-lg text-muted max-w-xl">{frase}</p>
-  <a href="/catalogo" class="mt-8 inline-flex items-center rounded-full bg-brand-lilac p-1.5 pl-6 hover:opacity-90 transition-opacity">
+  <a data-gsap="hero-cta" href="/catalogo" class="mt-8 inline-flex items-center rounded-full bg-brand-lilac p-1.5 pl-6 hover:opacity-90 transition-opacity">
     <span class="text-brand-black font-medium pr-4">Ver catálogo</span>
     <span class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
       <Icon name="line-md:arrow-right" class="w-4 h-4" />
@@ -62,6 +63,22 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
 <script>
   import gsap from 'gsap';
 
-  gsap.from('[data-gsap="hero-title"]', { opacity: 0, y: 40, duration: 1, ease: 'power3.out' });
-  gsap.from('[data-gsap="hero-subtitle"]', { opacity: 0, y: 20, duration: 1, delay: 0.3, ease: 'power3.out' });
+  const mm = gsap.matchMedia();
+
+  mm.add('(prefers-reduced-motion: no-preference)', () => {
+    const tl = gsap.timeline();
+    const shape = document.querySelector<SVGPathElement>('[data-gsap="hero-shape"]');
+
+    if (shape) {
+      const length = shape.getTotalLength();
+      gsap.set(shape, { strokeDasharray: length, strokeDashoffset: length });
+      tl.to(shape, { strokeDashoffset: 0, duration: 0.6, ease: 'power2.inOut' });
+    }
+
+    tl.from('[data-gsap="hero-confetti"]', { opacity: 0, stagger: 0.06, duration: 0.3 }, '<0.1')
+      .from('[data-gsap="hero-title"]', { opacity: 0, y: 40, duration: 0.8, ease: 'power3.out' }, '-=0.2')
+      .from('[data-gsap="hero-chip"]', { opacity: 0, y: 10, stagger: 0.08, duration: 0.4, ease: 'power2.out' }, '-=0.4')
+      .from('[data-gsap="hero-subtitle"]', { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' }, '-=0.2')
+      .from('[data-gsap="hero-cta"]', { opacity: 0, y: 10, duration: 0.5, ease: 'power3.out' }, '-=0.3');
+  });
 </script>
