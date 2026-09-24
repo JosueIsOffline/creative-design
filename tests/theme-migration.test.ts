@@ -53,3 +53,11 @@ describe('theme migration: no legacy color classes remain', () => {
     });
   }
 });
+
+describe('theme migration: Hero wordmark shape is theme-aware', () => {
+  it('does not hardcode white fill/stroke on the decorative shape or confetti (invisible in light mode)', async () => {
+    const src = await fs.readFile(path.join(process.cwd(), 'src/components/Hero.astro'), 'utf-8');
+    expect(src, 'Hero.astro still contains fill="white"').not.toContain('fill="white"');
+    expect(src, 'Hero.astro still contains stroke="white"').not.toContain('stroke="white"');
+  });
+});
