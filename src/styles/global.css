@@ -1,15 +1,47 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Dancing+Script:wght@500;600&display=swap");
 @import "tailwindcss";
 
-@theme {
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
   --color-brand-black: #0d0d0c;
-  --color-brand-surface: #1a1a1a;
   --color-brand-lilac: #d9a8d9;
-  --color-brand-orange: #f2a154;
-  --color-brand-pink: #e85fa0;
-  --color-brand-purple: #8a5cd6;
   --font-display: "Space Grotesk", sans-serif;
   --font-script: "Dancing Script", cursive;
+}
+
+:root {
+  --background: #0d0d0c;
+  --foreground: #ffffff;
+  --surface: #1a1a1a;
+  --border: var(--color-gray-800);
+  --border-strong: var(--color-gray-700);
+  --muted: var(--color-gray-400);
+  --subtle: var(--color-gray-500);
+  --accent: #d9a8d9;
+}
+
+:root[data-theme="light"] {
+  --background: oklch(0.96 0.0057 308.39);
+  --foreground: oklch(0.145 0 0);
+  --surface: oklch(1 0 0);
+  --border: oklch(0.88 0.012 308);
+  --border-strong: oklch(0.78 0.02 308);
+  --muted: oklch(0.42 0.01 308);
+  --subtle: oklch(0.55 0.01 308);
+  --accent: oklch(0.5 0.17 322);
+}
+
+/* Toggle button: only the icon matching the CURRENT theme is shown. */
+[data-theme="dark"] .theme-icon-sun,
+[data-theme="light"] .theme-icon-moon {
+  display: none;
 }
 
 /* Plain ease-out for the card's own box (no bounce — an overshoot curve
