@@ -1,0 +1,12 @@
+---
+const instagram = import.meta.env.INSTAGRAM_URL;
+const phone = import.meta.env.WHATSAPP_NUMBER;
+const currentYear = new Date().getFullYear();
+---
+<footer class="border-t border-gray-800 mt-16 py-10 px-6 text-center text-sm text-gray-400">
+  <div class="flex justify-center gap-6 mb-4">
+    <a href={instagram} target="_blank" rel="noopener noreferrer" class="hover:text-brand-lilac">Instagram</a>
+    <a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer" class="hover:text-brand-lilac">WhatsApp</a>
+  </div>
+  <p>&copy; {currentYear}. Todos los derechos reservados.</p>
+</footer>

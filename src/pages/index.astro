@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import Services from '../components/Services.astro';
+import About from '../components/About.astro';
+import Icon from '../components/Icon.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { fetchCatalog } from '../lib/sheets';
+
+const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
+const destacados = products.slice(0, 4);
+---
+<BaseLayout title="Inicio">
+  <Hero
+    nombreMarca="Creative Design"
+    frase="Diseño gráfico y sublimación | artículos personalizados y piezas de diseño hechas con amor."
+  />
+
+  <Services />
+
+  {destacados.length > 0 && (
+    <section class="max-w-5xl mx-auto px-6 py-16">
+      <div class="flex items-end justify-between mb-8">
+        <h2 class="font-display text-2xl font-semibold text-brand-lilac">Destacados</h2>
+        <a href="/catalogo" class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-brand-lilac transition-colors">
+          Ver catálogo completo
+          <Icon name="arrow-right" class="w-3.5 h-3.5" />
+        </a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {destacados.map((product) => <ProductCard product={product} />)}
+      </div>
+    </section>
+  )}
+
+  <About historia="Creative Design, de Ailyn Jaspa, crea artículos personalizados por sublimación (tazas, camisetas, fundas, llaveros y más) y servicios de diseño gráfico a medida: invitaciones, catálogos, banners y contenido para redes. Creatividad que conecta y vende." />
+</BaseLayout>
+
+<script>
+  import '../scripts/scroll-reveal';
+</script>

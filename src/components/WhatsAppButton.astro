@@ -1,0 +1,15 @@
+---
+const phone = import.meta.env.WHATSAPP_NUMBER;
+const message = encodeURIComponent('Hola! Vi tu catálogo y quiero más información.');
+---
+<a
+  href={`https://wa.me/${phone}?text=${message}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow-lg hover:scale-110 transition-transform"
+  aria-label="Contactar por WhatsApp"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-7 h-7 fill-white">
+    <path d="M16 3C9.4 3 4 8.4 4 15c0 2.2.6 4.3 1.7 6.1L4 29l8.1-1.7C13.8 28 14.9 28 16 28c6.6 0 12-5.4 12-13S22.6 3 16 3zm0 23.2c-1.1 0-2.2-.2-3.2-.6l-.5-.2-4.8 1 1-4.7-.3-.5C7.1 19.6 6.4 17.9 6.4 16c0-5.3 4.3-9.6 9.6-9.6s9.6 4.3 9.6 9.6-4.3 9.6-9.6 9.6z"/>
+  </svg>
+</a>

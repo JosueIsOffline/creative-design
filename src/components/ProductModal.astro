@@ -1,0 +1,167 @@
+---
+---
+<div id="card-expand-backdrop" class="fixed inset-0 z-40 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"></div>
+
+<script>
+  const backdrop = document.getElementById('card-expand-backdrop');
+
+  let expandedArticle: HTMLElement | null = null;
+  let expandedLink: HTMLElement | null = null;
+
+  // Measure the WhatsApp button's real content height (instead of guessing a
+  // fixed max-height) so its own reveal animates to its actual size.
+  const waHeightObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const el = entry.target as HTMLElement;
+      el.style.setProperty('--wa-height', `${el.scrollHeight}px`);
+    }
+  });
+  document.querySelectorAll<HTMLElement>('.card-whatsapp').forEach((el) => {
+    el.style.setProperty('--wa-height', `${el.scrollHeight}px`);
+    waHeightObserver.observe(el);
+  });
+
+  function setBoxName(article: HTMLElement, active: boolean) {
+    article.style.viewTransitionName = active ? 'expanding-card' : '';
+  }
+
+  // View Transitions freeze the live DOM behind static before/after snapshots
+  // for the duration of the box morph — a CSS transition on a child element
+  // never gets to visually play while that's happening, it just jumps between
+  // whatever state it was in at each snapshot instant. So the reveal-only
+  // button gets its own real transition run OUTSIDE that window: faded/shrunk
+  // out before the box starts shrinking, faded/grown in after it's done
+  // growing.
+  const REVEAL_FADE_MS = 200;
+
+  function getRevealEls(article: HTMLElement) {
+    return [article.querySelector<HTMLElement>('.card-whatsapp'), article.querySelector<HTMLElement>('.card-close')].filter(
+      (el): el is HTMLElement => !!el
+    );
+  }
+
+  function closeExpanded() {
+    if (!expandedArticle || !expandedLink) return;
+    const article = expandedArticle;
+    const link = expandedLink;
+    expandedArticle = null;
+    expandedLink = null;
+
+    // Height animation is only for phase 2 of opening (see openExpanded) —
+    // must be off before the box's position:fixed toggles off again here.
+    article.classList.remove('height-anim');
+
+    const revealEls = getRevealEls(article);
+    revealEls.forEach((el) => el.classList.add('is-hiding'));
+
+    const collapse = () => {
+      const applyClosed = () => {
+        article.classList.remove('is-expanded');
+        revealEls.forEach((el) => el.classList.remove('is-hiding'));
+        link.style.minHeight = '';
+        backdrop?.classList.add('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = '';
+      };
+
+      if (document.startViewTransition) {
+        setBoxName(article, true);
+        const transition = document.startViewTransition(applyClosed);
+        transition.finished.finally(() => {
+          setBoxName(article, false);
+        });
+      } else {
+        applyClosed();
+      }
+    };
+
+    setTimeout(collapse, revealEls.length ? REVEAL_FADE_MS : 0);
+  }
+
+  function openExpanded(link: HTMLElement, article: HTMLElement) {
+    if (expandedArticle) closeExpanded();
+
+    // Lock the link's height so the grid doesn't collapse once the card
+    // inside it switches to position:fixed.
+    link.style.minHeight = `${link.getBoundingClientRect().height}px`;
+
+    const revealEls = getRevealEls(article);
+    // is-precollapsed forces the button's space to 0 only for this initial
+    // growth, so the box's view-transition snapshot doesn't include an
+    // empty gap reserved for a button nobody sees yet.
+    revealEls.forEach((el) => el.classList.add('is-hiding', 'is-precollapsed'));
+
+    const applyOpen = () => {
+      article.classList.add('is-expanded');
+      backdrop?.classList.remove('opacity-0', 'pointer-events-none');
+      document.body.style.overflow = 'hidden';
+    };
+
+    const revealButtons = () => {
+      // Only turn on the height transition once the box has finished
+      // moving/resizing into position:fixed — this is purely for the
+      // button's own reveal growth, never the position-changing motion.
+      article.classList.add('height-anim');
+      requestAnimationFrame(() => {
+        revealEls.forEach((el) => el.classList.remove('is-hiding', 'is-precollapsed'));
+      });
+    };
+
+    if (document.startViewTransition) {
+      setBoxName(article, true);
+      const transition = document.startViewTransition(applyOpen);
+      transition.finished.finally(() => {
+        setBoxName(article, false);
+        revealButtons();
+      });
+    } else {
+      applyOpen();
+      revealButtons();
+    }
+
+    expandedArticle = article;
+    expandedLink = link;
+  }
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    const closeBtn = target.closest('.card-close');
+    if (closeBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeExpanded();
+      return;
+    }
+
+    const waBtn = target.closest<HTMLElement>('.card-whatsapp');
+    if (waBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const href = waBtn.dataset.waHref;
+      if (href) window.open(href, '_blank', 'noopener');
+      return;
+    }
+
+    const trigger = target.closest<HTMLElement>('[data-product-trigger]');
+    if (trigger) {
+      const article = trigger.querySelector<HTMLElement>('.product-card');
+      if (article) {
+        e.preventDefault();
+        if (article.classList.contains('is-expanded')) {
+          closeExpanded();
+        } else {
+          openExpanded(trigger, article);
+        }
+        return;
+      }
+    }
+
+    if (target === backdrop) {
+      closeExpanded();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && expandedArticle) closeExpanded();
+  });
+</script>

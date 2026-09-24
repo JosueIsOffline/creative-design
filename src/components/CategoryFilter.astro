@@ -1,0 +1,21 @@
+---
+interface Category { slug: string; name: string }
+interface Props { categories: Category[]; active: string | null }
+const { categories, active } = Astro.props;
+---
+<nav class="flex flex-wrap gap-3 p-6" aria-label="Categorías">
+  <a
+    href="/catalogo"
+    class={`px-4 py-2 rounded-full border border-gray-700 ${active === null ? 'bg-brand-lilac text-brand-black border-brand-lilac' : 'text-gray-300'}`}
+  >
+    Todos
+  </a>
+  {categories.map((cat) => (
+    <a
+      href={`/catalogo/${encodeURIComponent(cat.slug)}`}
+      class={`px-4 py-2 rounded-full border border-gray-700 ${active === cat.slug ? 'bg-brand-lilac text-brand-black border-brand-lilac' : 'text-gray-300'}`}
+    >
+      {cat.name}
+    </a>
+  ))}
+</nav>

@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import CategoryFilter from '../../components/CategoryFilter.astro';
+import { fetchCatalog, getCategories, type Product, type Category } from '../../lib/sheets';
+
+export async function getStaticPaths() {
+  const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
+  const categories = getCategories(products);
+
+  return categories.map(({ slug, name }) => ({
+    params: { categoria: slug },
+    props: {
+      products: products.filter((p: Product) => p.slug === slug),
+      categories,
+      categoryName: name,
+    },
+  }));
+}
+
+interface Props {
+  products: Product[];
+  categories: Category[];
+  categoryName: string;
+}
+
+const { categoria } = Astro.params;
+const { products, categories, categoryName } = Astro.props;
+---
+<BaseLayout title={`Catálogo - ${categoryName}`}>
+  <h1 class="text-3xl font-bold px-6 pt-6 text-brand-lilac">Catálogo - {categoryName}</h1>
+  <CategoryFilter categories={categories} active={categoria ?? null} />
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-6 pb-16">
+    {products.map((product) => <ProductCard product={product} />)}
+  </div>
+</BaseLayout>
+
+<script>
+  import '../../scripts/scroll-reveal';
+</script>

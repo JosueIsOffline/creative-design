@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { fetchCatalog, type Product } from '../../../lib/sheets';
+import Icon from '../../../components/Icon.astro';
+
+export async function getStaticPaths() {
+  const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
+
+  return products.map((product) => ({
+    params: { categoria: product.slug, producto: product.productoSlug },
+    props: { product },
+  }));
+}
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+const phone = import.meta.env.WHATSAPP_NUMBER;
+const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
+const mensaje = encodeURIComponent(
+  `Hola! Me interesa este producto: ${product.nombre} (${precioFormateado}). ¿Me das más información?`
+);
+---
+<BaseLayout title={`${product.nombre} - Catálogo`} description={product.descripcion}>
+  <div class="max-w-4xl mx-auto px-6 py-10">
+    <a href={`/catalogo/${product.slug}`} class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-brand-lilac transition-colors">
+      <Icon name="arrow-left" class="w-3.5 h-3.5" />
+      Volver a {product.categoria}
+    </a>
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+      <img
+        src={product.fotos[0]}
+        alt={product.nombre}
+        class="w-full aspect-square object-cover rounded-2xl border border-gray-800"
+        onerror="this.onerror=null;this.src='/placeholder.jpg';"
+      />
+      <div>
+        <span class="text-xs px-3 py-1 rounded-full border border-gray-700 text-gray-400">{product.categoria}</span>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold mt-4 text-brand-lilac">{product.nombre}</h1>
+        <p class="mt-4 text-gray-300 leading-relaxed">{product.descripcion}</p>
+        <p class="mt-6 text-2xl font-bold">{precioFormateado}</p>
+        <a
+          href={`https://wa.me/${phone}?text=${mensaje}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-8 inline-flex items-center rounded-full bg-brand-lilac p-1.5 pl-6 hover:opacity-90 transition-opacity"
+        >
+          <span class="text-brand-black font-medium pr-4">Solicitar por WhatsApp</span>
+          <span class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
+            <Icon name="arrow-right" class="w-4 h-4" />
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

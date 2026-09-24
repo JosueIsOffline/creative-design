@@ -1,0 +1,126 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Dancing+Script:wght@500;600&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-brand-black: #0d0d0c;
+  --color-brand-surface: #1a1a1a;
+  --color-brand-lilac: #d9a8d9;
+  --color-brand-orange: #f2a154;
+  --color-brand-pink: #e85fa0;
+  --color-brand-purple: #8a5cd6;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-script: "Dancing Script", cursive;
+}
+
+/* Plain ease-out for the card's own box (no bounce — an overshoot curve
+   stretches the flat snapshot's baked-in photo past its real size before
+   settling, which reads as a flicker/shimmer). */
+::view-transition-group(expanding-card) {
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(expanding-card),
+::view-transition-new(expanding-card) {
+  animation-duration: 1ms;
+}
+
+.product-card.is-expanded {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(32rem, 90vw);
+  height: fit-content;
+  max-height: 85vh;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+/* Only added once the box has already settled into position:fixed (after
+   the open view-transition finishes) — animating height at the same
+   instant position switches from in-flow to fixed makes the browser
+   miscompute an intermediate height (briefly way too tall) before it
+   settles. Scoping it to after-settle keeps it only for the button's
+   own reveal growth. */
+.product-card.is-expanded.height-anim {
+  interpolate-size: allow-keywords;
+  transition: height 0.15s ease;
+}
+
+.product-card.is-expanded .card-title {
+  white-space: normal;
+  overflow: visible;
+}
+
+.product-card.is-expanded .card-desc-compact,
+.product-card.is-expanded .card-arrow {
+  display: none;
+}
+
+.product-card.is-expanded .card-desc-full {
+  display: block;
+}
+
+/* Space for the button is reserved the instant .is-expanded is applied
+   (max-height/margin jump immediately, no transition on those two) so the
+   box's grow captures its true final size in one motion. Only opacity +
+   a small upward slide animate — with a real CSS transition, independent
+   of the view-transition box morph above (which freezes the live DOM for
+   its duration — a transition on a child never gets to visually play
+   during that window). ProductModal.astro sequences this: the button
+   fades/slides out before the box starts shrinking, and fades/slides in
+   only after the box is done growing. */
+.card-whatsapp {
+  --wa-height: 4rem; /* fallback until the ResizeObserver measures it */
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.product-card.is-expanded .card-whatsapp {
+  max-height: var(--wa-height);
+  margin-top: 1rem;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.card-close {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.product-card.is-expanded .card-close {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* Forces the collapsed look even while .is-expanded is present — this is
+   what lets the button fade out BEFORE the box shrinks and fade/grow in
+   only AFTER the box finishes growing (see REVEAL_FADE_MS in
+   ProductModal.astro). */
+.product-card.is-expanded .card-whatsapp.is-hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Only added during the box's initial view-transition growth (open), so
+   that first snapshot doesn't include the button's space (avoids an empty
+   gap). Never added on close, so closing fades opacity out while the
+   button keeps its full height — no instant clipping mid-fade. */
+.product-card.is-expanded .card-whatsapp.is-precollapsed {
+  max-height: 0;
+  margin-top: 0;
+}
+
+.product-card.is-expanded .card-close.is-hiding {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
