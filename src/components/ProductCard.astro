@@ -31,13 +31,13 @@ const waHref = `https://wa.me/${phone}?text=${mensaje}`;
       <p class="card-desc-full hidden text-sm text-muted leading-relaxed">{product.descripcion}</p>
       <div class="mt-auto pt-3 flex items-center justify-between">
         <p class="card-precio font-bold text-accent">{precioFormateado}</p>
-        <span class="card-arrow js-hover-fx flex items-center justify-center w-8 h-8 rounded-full border border-border-strong text-muted group-hover:bg-brand-lilac group-hover:text-brand-black group-hover:border-brand-lilac transition-colors">
+        <span class="card-arrow js-hover-fx flex items-center justify-center w-8 h-8 rounded-full border border-border-strong text-muted group-hover:bg-brand-lilac group-hover:text-brand-black group-hover:border-accent transition-colors">
           <Icon name="line-md:arrow-right" class="w-4 h-4" />
         </span>
       </div>
       <button
         type="button"
-        class="card-whatsapp flex items-center rounded-2xl bg-brand-lilac p-1.5 pl-6 hover:opacity-90 self-start cursor-pointer"
+        class="card-whatsapp flex items-center rounded-2xl bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 self-start cursor-pointer"
         data-wa-href={waHref}
       >
         <span class="text-brand-black font-medium pr-4">Solicitar por WhatsApp</span>

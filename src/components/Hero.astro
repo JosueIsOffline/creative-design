@@ -7,7 +7,7 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
 <section class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6">
   <div class="flex flex-wrap justify-center gap-3 mb-8">
     {chips.map((chip, i) => (
-      <span data-gsap="hero-chip" class={`px-4 py-1.5 rounded-full text-sm border ${i === chips.length - 1 ? 'bg-brand-lilac text-brand-black border-brand-lilac' : 'border-border-strong text-muted'}`}>
+      <span data-gsap="hero-chip" class={`px-4 py-1.5 rounded-full text-sm border ${i === chips.length - 1 ? 'bg-brand-lilac text-brand-black border-accent' : 'border-border-strong text-muted'}`}>
         {chip}
       </span>
     ))}
@@ -52,7 +52,7 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
     <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-foreground"></span>
   </div>
   <p data-gsap="hero-subtitle" class="mt-6 text-lg text-muted max-w-xl">{frase}</p>
-  <a data-gsap="hero-cta" href="/catalogo" class="mt-8 inline-flex items-center rounded-full bg-brand-lilac p-1.5 pl-6 hover:opacity-90 transition-opacity">
+  <a data-gsap="hero-cta" href="/catalogo" class="mt-8 inline-flex items-center rounded-full bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 transition-opacity">
     <span class="text-brand-black font-medium pr-4">Ver catálogo</span>
     <span class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
       <Icon name="line-md:arrow-right" class="w-4 h-4" />
