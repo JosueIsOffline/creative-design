@@ -1,5 +1,5 @@
 ---
-import Icon from './Icon.astro';
+import { Icon } from 'astro-icon/components';
 interface Valor { numero: string; titulo: string; descripcion: string }
 interface Props { historia: string; valores?: Valor[] }
 const {
@@ -12,18 +12,18 @@ const {
 } = Astro.props;
 ---
 <section id="sobre-la-marca" class="max-w-2xl mx-auto px-6 py-16 text-center scroll-mt-24">
-  <h2 class="font-display text-2xl font-semibold mb-4 text-brand-lilac">Sobre la marca</h2>
-  <p class="text-gray-300 leading-relaxed">{historia}</p>
+  <h2 class="font-display text-2xl font-semibold mb-4 text-accent">Sobre la marca</h2>
+  <p class="text-muted leading-relaxed">{historia}</p>
 </section>
 
 <section class="max-w-5xl mx-auto px-6 pb-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
   {valores.map((v) => (
-    <div class="valor-card relative rounded-2xl bg-brand-surface border border-gray-800 p-6 text-left">
-      <span class="font-display text-brand-lilac text-sm">/{v.numero}</span>
+    <div class="valor-card relative rounded-2xl bg-surface border border-border p-6 text-left">
+      <span class="font-display text-accent text-sm">/{v.numero}</span>
       <h3 class="font-display text-xl font-bold mt-2">{v.titulo}</h3>
-      <p class="text-gray-400 text-sm mt-2">{v.descripcion}</p>
-      <span class="mt-4 flex items-center justify-center w-8 h-8 rounded-full border border-gray-700 text-brand-lilac">
-        <Icon name="arrow-diagonal" class="w-4 h-4" />
+      <p class="text-muted text-sm mt-2">{v.descripcion}</p>
+      <span class="js-hover-fx mt-4 flex items-center justify-center w-8 h-8 rounded-full border border-border-strong text-accent">
+        <Icon name="line-md:external-link" class="w-4 h-4" />
       </span>
     </div>
   ))}

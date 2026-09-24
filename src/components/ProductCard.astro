@@ -1,6 +1,6 @@
 ---
 import type { Product } from '../lib/sheets';
-import Icon from './Icon.astro';
+import { Icon } from 'astro-icon/components';
 interface Props { product: Product }
 const { product } = Astro.props;
 const phone = import.meta.env.WHATSAPP_NUMBER;
@@ -11,9 +11,9 @@ const mensaje = encodeURIComponent(
 const waHref = `https://wa.me/${phone}?text=${mensaje}`;
 ---
 <a href={`/catalogo/${product.slug}/${product.productoSlug}`} class="block group h-full" data-product-trigger>
-  <article class="product-card relative h-full flex flex-col rounded-2xl overflow-hidden bg-brand-surface border border-gray-800 group-hover:border-brand-lilac transition-colors duration-300">
+  <article class="product-card relative h-full flex flex-col rounded-2xl overflow-hidden bg-surface border border-border group-hover:border-accent transition-colors duration-300">
     <button type="button" class="card-close absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-brand-black/80 text-white flex items-center justify-center cursor-pointer" aria-label="Cerrar">
-      <Icon name="close" class="w-4 h-4" />
+      <Icon name="line-md:close" class="w-4 h-4" />
     </button>
     <div class="overflow-hidden">
       <img
@@ -25,14 +25,14 @@ const waHref = `https://wa.me/${phone}?text=${mensaje}`;
       />
     </div>
     <div class="p-4 flex flex-col flex-1">
-      <span class="card-categoria text-xs text-gray-500">{product.categoria}</span>
-      <h3 class="card-title font-display font-semibold text-lg text-white mt-1 truncate">{product.nombre}</h3>
-      <p class="card-desc-compact text-sm text-gray-400 line-clamp-2">{product.descripcion}</p>
-      <p class="card-desc-full hidden text-sm text-gray-300 leading-relaxed">{product.descripcion}</p>
+      <span class="card-categoria text-xs text-subtle">{product.categoria}</span>
+      <h3 class="card-title font-display font-semibold text-lg text-foreground mt-1 truncate">{product.nombre}</h3>
+      <p class="card-desc-compact text-sm text-muted line-clamp-2">{product.descripcion}</p>
+      <p class="card-desc-full hidden text-sm text-muted leading-relaxed">{product.descripcion}</p>
       <div class="mt-auto pt-3 flex items-center justify-between">
-        <p class="card-precio font-bold text-brand-lilac">{precioFormateado}</p>
-        <span class="card-arrow flex items-center justify-center w-8 h-8 rounded-full border border-gray-700 text-gray-300 group-hover:bg-brand-lilac group-hover:text-brand-black group-hover:border-brand-lilac transition-colors">
-          <Icon name="arrow-right" class="w-4 h-4" />
+        <p class="card-precio font-bold text-accent">{precioFormateado}</p>
+        <span class="card-arrow js-hover-fx flex items-center justify-center w-8 h-8 rounded-full border border-border-strong text-muted group-hover:bg-brand-lilac group-hover:text-brand-black group-hover:border-brand-lilac transition-colors">
+          <Icon name="line-md:arrow-right" class="w-4 h-4" />
         </span>
       </div>
       <button
@@ -41,8 +41,8 @@ const waHref = `https://wa.me/${phone}?text=${mensaje}`;
         data-wa-href={waHref}
       >
         <span class="text-brand-black font-medium pr-4">Solicitar por WhatsApp</span>
-        <span class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
-          <Icon name="arrow-right" class="w-4 h-4" />
+        <span class="js-hover-fx flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
+          <Icon name="line-md:arrow-right" class="w-4 h-4" />
         </span>
       </button>
     </div>

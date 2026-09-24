@@ -1,5 +1,5 @@
 ---
-import Icon from './Icon.astro';
+import { Icon } from 'astro-icon/components';
 interface Props { nombreMarca: string; frase: string }
 const { nombreMarca, frase } = Astro.props;
 const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', 'Sublimación'];
@@ -7,12 +7,12 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
 <section class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6">
   <div class="flex flex-wrap justify-center gap-3 mb-8">
     {chips.map((chip, i) => (
-      <span class={`px-4 py-1.5 rounded-full text-sm border ${i === chips.length - 1 ? 'bg-brand-lilac text-brand-black border-brand-lilac' : 'border-gray-700 text-gray-300'}`}>
+      <span data-gsap="hero-chip" class={`px-4 py-1.5 rounded-full text-sm border ${i === chips.length - 1 ? 'bg-brand-lilac text-brand-black border-brand-lilac' : 'border-border-strong text-muted'}`}>
         {chip}
       </span>
     ))}
   </div>
-  <h1 data-gsap="hero-title" class="font-display text-6xl sm:text-8xl md:text-9xl font-bold tracking-tight text-brand-lilac leading-none">
+  <h1 data-gsap="hero-title" class="font-display text-6xl sm:text-8xl md:text-9xl font-bold tracking-tight text-accent leading-none">
     {nombreMarca === 'Creative Design' ? (
       <>
         <span class="sr-only">Creative Design</span>
@@ -46,15 +46,15 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
     ) : nombreMarca}
   </h1>
   <div class="mt-4 flex items-center justify-center gap-4">
-    <span class="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-white"></span>
-    <span class="font-script text-2xl sm:text-3xl text-white">By Ailyn Jaspa</span>
-    <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-white"></span>
+    <span class="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-foreground"></span>
+    <span class="font-script text-2xl sm:text-3xl text-foreground">By Ailyn Jaspa</span>
+    <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-foreground"></span>
   </div>
-  <p data-gsap="hero-subtitle" class="mt-6 text-lg text-gray-300 max-w-xl">{frase}</p>
+  <p data-gsap="hero-subtitle" class="mt-6 text-lg text-muted max-w-xl">{frase}</p>
   <a href="/catalogo" class="mt-8 inline-flex items-center rounded-full bg-brand-lilac p-1.5 pl-6 hover:opacity-90 transition-opacity">
     <span class="text-brand-black font-medium pr-4">Ver catálogo</span>
     <span class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
-      <Icon name="arrow-right" class="w-4 h-4" />
+      <Icon name="line-md:arrow-right" class="w-4 h-4" />
     </span>
   </a>
 </section>
