@@ -3,6 +3,7 @@ import '../styles/global.css';
 import WhatsAppButton from '../components/WhatsAppButton.astro';
 import Footer from '../components/Footer.astro';
 import ProductModal from '../components/ProductModal.astro';
+import CartDrawer from '../components/CartDrawer.astro';
 import { Icon } from 'astro-icon/components';
 interface Props {
   title: string;
@@ -81,6 +82,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     <Footer />
     <WhatsAppButton />
     <ProductModal />
+    <CartDrawer />
     <script>
       import '../scripts/theme';
       import '../scripts/hover-fx';

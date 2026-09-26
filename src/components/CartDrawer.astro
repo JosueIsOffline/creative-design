@@ -1,0 +1,195 @@
+---
+import { Icon } from 'astro-icon/components';
+const whatsapp = import.meta.env.WHATSAPP_NUMBER;
+---
+<div id="cart-backdrop" class="fixed inset-0 z-40 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"></div>
+<aside
+  id="cart-drawer"
+  data-phone={whatsapp}
+  class="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-surface border-l border-border flex flex-col pointer-events-none"
+  aria-label="Carrito"
+>
+  <div class="flex items-center justify-between p-4 border-b border-border">
+    <h2 class="font-display text-lg font-semibold text-foreground">Tu carrito</h2>
+    <button type="button" id="cart-close" aria-label="Cerrar carrito" class="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-accent">
+      <Icon name="line-md:close" class="w-4 h-4" />
+    </button>
+  </div>
+  <div id="cart-list-view" class="flex-1 overflow-y-auto p-4"></div>
+  <div id="cart-checkout-view" class="hidden flex-1 overflow-y-auto p-4 flex flex-col">
+    <button type="button" id="cart-back" class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent mb-4">
+      <Icon name="line-md:arrow-left" class="w-3.5 h-3.5" />
+      Volver
+    </button>
+    <div id="cart-checkout-summary" class="text-sm text-muted mb-4"></div>
+    <label for="cart-note" class="text-sm text-foreground font-medium mb-2 block">
+      Cuéntanos qué colores, estilo o detalles te gustaría (opcional)
+    </label>
+    <textarea id="cart-note" rows="4" class="w-full rounded-xl border border-border bg-background text-foreground p-3 text-sm mb-4"></textarea>
+    <button type="button" id="cart-send" class="bg-brand-lilac border border-accent text-brand-black font-medium rounded-full py-3 hover:opacity-90">
+      Enviar por WhatsApp
+    </button>
+  </div>
+</aside>
+
+<script>
+  import gsap from 'gsap';
+  import { getCart, removeItem, setQuantity, getTotal, clearCart, buildWhatsAppMessage } from '../scripts/cart';
+
+  const backdrop = document.getElementById('cart-backdrop');
+  const drawer = document.getElementById('cart-drawer');
+  const listView = document.getElementById('cart-list-view');
+  const checkoutView = document.getElementById('cart-checkout-view');
+  const checkoutSummary = document.getElementById('cart-checkout-summary');
+  const noteInput = document.getElementById('cart-note') as HTMLTextAreaElement | null;
+  const phone = drawer?.dataset.phone ?? '';
+
+  let isOpen = false;
+
+  const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function renderList() {
+    if (!listView) return;
+    const cart = getCart();
+
+    if (cart.length === 0) {
+      listView.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-center gap-4 py-12">
+          <p class="text-muted">Tu carrito está vacío</p>
+          <a href="/catalogo" class="text-accent hover:opacity-80 text-sm font-medium">Ver catálogo</a>
+        </div>
+      `;
+      return;
+    }
+
+    const rows = cart
+      .map(
+        (item) => `
+          <div class="cart-item flex gap-3 py-3 border-b border-border" data-slug="${item.slug}" data-producto-slug="${item.productoSlug}">
+            <img src="${item.foto}" alt="${item.nombre}" class="w-14 h-14 rounded-lg object-cover shrink-0" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-foreground font-medium truncate">${item.nombre}</p>
+              <p class="text-xs text-muted">RD$ ${item.precio.toLocaleString('es-DO')} c/u</p>
+              <div class="flex items-center gap-2 mt-1">
+                <button type="button" class="cart-qty-decrease w-6 h-6 rounded-full border border-border-strong text-muted hover:text-accent" aria-label="Quitar una unidad">−</button>
+                <span class="text-sm text-foreground w-4 text-center">${item.cantidad}</span>
+                <button type="button" class="cart-qty-increase w-6 h-6 rounded-full border border-border-strong text-muted hover:text-accent" aria-label="Agregar una unidad">+</button>
+                <button type="button" class="cart-item-remove ml-auto text-xs text-muted hover:text-accent">Quitar</button>
+              </div>
+            </div>
+            <p class="text-sm font-bold text-accent shrink-0">RD$ ${(item.precio * item.cantidad).toLocaleString('es-DO')}</p>
+          </div>
+        `
+      )
+      .join('');
+
+    listView.innerHTML = `
+      ${rows}
+      <div class="flex items-center justify-between pt-4 font-bold text-foreground">
+        <span>Total</span>
+        <span>RD$ ${getTotal(cart).toLocaleString('es-DO')}</span>
+      </div>
+      <button type="button" id="cart-checkout-start" class="w-full mt-4 bg-brand-lilac border border-accent text-brand-black font-medium rounded-full py-3 hover:opacity-90">
+        Finalizar pedido
+      </button>
+    `;
+  }
+
+  function showListView() {
+    listView?.classList.remove('hidden');
+    checkoutView?.classList.add('hidden');
+  }
+
+  function showCheckoutView() {
+    const cart = getCart();
+    if (checkoutSummary) {
+      const rows = cart
+        .map(
+          (item) =>
+            `<div class="flex justify-between py-1"><span>${item.nombre} x${item.cantidad}</span><span>RD$ ${(item.precio * item.cantidad).toLocaleString('es-DO')}</span></div>`
+        )
+        .join('');
+      checkoutSummary.innerHTML = `
+        ${rows}
+        <div class="flex justify-between pt-2 mt-2 font-bold text-foreground border-t border-border">
+          <span>Total</span>
+          <span>RD$ ${getTotal(cart).toLocaleString('es-DO')}</span>
+        </div>
+      `;
+    }
+    listView?.classList.add('hidden');
+    checkoutView?.classList.remove('hidden');
+  }
+
+  function openDrawer() {
+    if (!drawer || !backdrop || isOpen) return;
+    isOpen = true;
+    renderList();
+    showListView();
+    drawer.classList.remove('pointer-events-none');
+    backdrop.classList.remove('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = 'hidden';
+    gsap.to(drawer, { opacity: 1, x: 0, duration: prefersReducedMotion() ? 0.2 : 0.35, ease: 'power3.out', overwrite: 'auto' });
+  }
+
+  function closeDrawer() {
+    if (!drawer || !backdrop || !isOpen) return;
+    isOpen = false;
+    backdrop.classList.add('opacity-0', 'pointer-events-none');
+    document.body.style.overflow = '';
+    gsap.to(drawer, {
+      opacity: 0,
+      x: prefersReducedMotion() ? 0 : '100%',
+      duration: prefersReducedMotion() ? 0.2 : 0.3,
+      ease: 'power2.in',
+      overwrite: 'auto',
+      onComplete: () => drawer.classList.add('pointer-events-none'),
+    });
+  }
+
+  listView?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    if (target.closest('#cart-checkout-start')) {
+      showCheckoutView();
+      return;
+    }
+
+    const row = target.closest<HTMLElement>('.cart-item');
+    if (!row) return;
+    const slug = row.dataset.slug!;
+    const productoSlug = row.dataset.productoSlug!;
+
+    if (target.closest('.cart-qty-increase')) {
+      const item = getCart().find((i) => i.slug === slug && i.productoSlug === productoSlug);
+      if (item) setQuantity(slug, productoSlug, item.cantidad + 1);
+    } else if (target.closest('.cart-qty-decrease')) {
+      const item = getCart().find((i) => i.slug === slug && i.productoSlug === productoSlug);
+      if (item) setQuantity(slug, productoSlug, item.cantidad - 1);
+    } else if (target.closest('.cart-item-remove')) {
+      removeItem(slug, productoSlug);
+    }
+  });
+
+  document.getElementById('cart-back')?.addEventListener('click', showListView);
+
+  document.getElementById('cart-send')?.addEventListener('click', () => {
+    // Defensive guard (Review Focus): the button that reaches this view only
+    // renders when the cart has items, but this stays safe if that ever changes.
+    const cart = getCart();
+    if (cart.length === 0) return;
+    const mensaje = buildWhatsAppMessage(cart, noteInput?.value ?? '');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`, '_blank', 'noopener');
+    clearCart();
+    if (noteInput) noteInput.value = '';
+    closeDrawer();
+  });
+
+  document.getElementById('cart-close')?.addEventListener('click', closeDrawer);
+  backdrop?.addEventListener('click', closeDrawer);
+  window.addEventListener('cart:open', openDrawer);
+  window.addEventListener('cart:change', renderList);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen) closeDrawer();
+  });
+</script>
