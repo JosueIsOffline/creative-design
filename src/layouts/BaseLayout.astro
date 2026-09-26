@@ -56,6 +56,18 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
         </a>
         <button
           type="button"
+          id="cart-toggle"
+          aria-label="Ver carrito"
+          class="relative w-8 h-8 rounded-full border border-border-strong flex items-center justify-center text-muted hover:text-accent hover:border-accent transition-colors"
+        >
+          <Icon name="lucide:shopping-cart" class="w-4 h-4" />
+          <span
+            id="cart-badge"
+            class="hidden absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-accent text-background text-[10px] font-bold flex items-center justify-center"
+          >0</span>
+        </button>
+        <button
+          type="button"
           id="theme-toggle"
           aria-label="Cambiar entre modo claro y oscuro"
           class="w-8 h-8 rounded-full border border-border-strong flex items-center justify-center text-muted hover:text-accent hover:border-accent transition-colors"
@@ -72,6 +84,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     <script>
       import '../scripts/theme';
       import '../scripts/hover-fx';
+      import '../scripts/cart';
     </script>
   </body>
 </html>

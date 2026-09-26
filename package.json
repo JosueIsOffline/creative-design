@@ -15,6 +15,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@iconify-json/line-md": "^1.2.16",
+    "@iconify-json/lucide": "^1.2.136",
     "@iconify-json/simple-icons": "^1.2.97",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.2",
