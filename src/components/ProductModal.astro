@@ -3,6 +3,8 @@
 <div id="card-expand-backdrop" class="fixed inset-0 z-40 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"></div>
 
 <script>
+  import { addItem } from '../scripts/cart';
+
   const backdrop = document.getElementById('card-expand-backdrop');
 
   let expandedArticle: HTMLElement | null = null;
@@ -16,7 +18,7 @@
       el.style.setProperty('--wa-height', `${el.scrollHeight}px`);
     }
   });
-  document.querySelectorAll<HTMLElement>('.card-whatsapp').forEach((el) => {
+  document.querySelectorAll<HTMLElement>('.card-add-to-cart').forEach((el) => {
     el.style.setProperty('--wa-height', `${el.scrollHeight}px`);
     waHeightObserver.observe(el);
   });
@@ -35,7 +37,7 @@
   const REVEAL_FADE_MS = 200;
 
   function getRevealEls(article: HTMLElement) {
-    return [article.querySelector<HTMLElement>('.card-whatsapp'), article.querySelector<HTMLElement>('.card-close')].filter(
+    return [article.querySelector<HTMLElement>('.card-add-to-cart'), article.querySelector<HTMLElement>('.card-close')].filter(
       (el): el is HTMLElement => !!el
     );
   }
@@ -133,12 +135,22 @@
       return;
     }
 
-    const waBtn = target.closest<HTMLElement>('.card-whatsapp');
-    if (waBtn) {
+    const addBtn = target.closest<HTMLElement>('.card-add-to-cart');
+    if (addBtn) {
       e.preventDefault();
       e.stopPropagation();
-      const href = waBtn.dataset.waHref;
-      if (href) window.open(href, '_blank', 'noopener');
+      const raw = addBtn.dataset.product;
+      if (raw) {
+        addItem(JSON.parse(raw));
+        const label = addBtn.querySelector<HTMLElement>('.card-add-label');
+        const labelAdded = addBtn.querySelector<HTMLElement>('.card-add-label-added');
+        label?.classList.add('hidden');
+        labelAdded?.classList.remove('hidden');
+        window.setTimeout(() => {
+          label?.classList.remove('hidden');
+          labelAdded?.classList.add('hidden');
+        }, 1200);
+      }
       return;
     }
 

@@ -3,12 +3,7 @@ import type { Product } from '../lib/sheets';
 import { Icon } from 'astro-icon/components';
 interface Props { product: Product }
 const { product } = Astro.props;
-const phone = import.meta.env.WHATSAPP_NUMBER;
 const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
-const mensaje = encodeURIComponent(
-  `Hola! Me interesa este producto: ${product.nombre} (${precioFormateado}). ¿Me das más información?`
-);
-const waHref = `https://wa.me/${phone}?text=${mensaje}`;
 ---
 <a href={`/catalogo/${product.slug}/${product.productoSlug}`} class="block group h-full" data-product-trigger>
   <article class="product-card relative h-full flex flex-col rounded-2xl overflow-hidden bg-surface border border-border group-hover:border-accent transition-colors duration-300">
@@ -37,10 +32,11 @@ const waHref = `https://wa.me/${phone}?text=${mensaje}`;
       </div>
       <button
         type="button"
-        class="card-whatsapp flex items-center rounded-2xl bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 self-start cursor-pointer"
-        data-wa-href={waHref}
+        class="card-add-to-cart flex items-center rounded-2xl bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 self-start cursor-pointer"
+        data-product={JSON.stringify({ slug: product.slug, productoSlug: product.productoSlug, nombre: product.nombre, precio: product.precio, foto: product.fotos[0] })}
       >
-        <span class="text-brand-black font-medium pr-4">Solicitar por WhatsApp</span>
+        <span class="card-add-label text-brand-black font-medium pr-4">Agregar al carrito</span>
+        <span class="card-add-label-added hidden text-brand-black font-medium pr-4">¡Agregado!</span>
         <span class="js-hover-fx flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
           <Icon name="line-md:arrow-right" class="w-4 h-4" />
         </span>
