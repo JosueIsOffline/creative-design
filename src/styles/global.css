@@ -122,6 +122,17 @@
   pointer-events: auto;
 }
 
+/* Press feedback on the primary conversion action (both the card's button
+   and the product detail page's standalone one) — subtle since it's
+   pressed often, reuses the box-morph's existing ease-out curve. */
+.card-add-to-cart {
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-add-to-cart:active {
+  transform: scale(0.97);
+}
+
 .card-close {
   opacity: 0;
   transform: scale(0.8);
@@ -165,6 +176,20 @@
   transform: translateX(100%);
   opacity: 0;
   will-change: transform, opacity;
+}
+
+/* Press feedback on the quantity steppers and remove button — adjusted
+   often during checkout, so kept subtle and fast. */
+.cart-qty-increase,
+.cart-qty-decrease,
+.cart-item-remove {
+  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cart-qty-increase:active,
+.cart-qty-decrease:active,
+.cart-item-remove:active {
+  transform: scale(0.95);
 }
 
 @media (prefers-reduced-motion: reduce) {

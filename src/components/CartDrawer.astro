@@ -98,9 +98,40 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     `;
   }
 
-  function showListView() {
+  // Instant, no crossfade — used only to put the drawer in a known state
+  // while it's not visible yet (opening) or on its way out (closing), so
+  // there's nothing to animate.
+  function resetToListView() {
+    gsap.set([listView, checkoutView], { clearProps: 'opacity' });
     listView?.classList.remove('hidden');
     checkoutView?.classList.add('hidden');
+  }
+
+  // Crossfades between the two views instead of the instant hidden-class
+  // swap — this is a visible, user-triggered switch (Finalizar pedido /
+  // Volver), so a hard cut would read as a jarring teleport.
+  function switchView(hide: HTMLElement | null, show: HTMLElement | null) {
+    if (!hide || !show) return;
+    if (prefersReducedMotion()) {
+      hide.classList.add('hidden');
+      show.classList.remove('hidden');
+      return;
+    }
+    gsap.to(hide, {
+      opacity: 0,
+      duration: 0.15,
+      ease: 'power2.in',
+      overwrite: 'auto',
+      onComplete: () => {
+        hide.classList.add('hidden');
+        show.classList.remove('hidden');
+        gsap.fromTo(show, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
+      },
+    });
+  }
+
+  function showListView() {
+    switchView(checkoutView, listView);
   }
 
   function showCheckoutView() {
@@ -120,15 +151,14 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
         </div>
       `;
     }
-    listView?.classList.add('hidden');
-    checkoutView?.classList.remove('hidden');
+    switchView(listView, checkoutView);
   }
 
   function openDrawer() {
     if (!drawer || !backdrop || isOpen) return;
     isOpen = true;
     renderList();
-    showListView();
+    resetToListView();
     drawer.inert = false;
     drawer.classList.remove('pointer-events-none');
     backdrop.classList.remove('opacity-0', 'pointer-events-none');
@@ -141,7 +171,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     if (!drawer || !backdrop || !isOpen) return;
     isOpen = false;
     drawer.inert = true;
-    showListView();
+    resetToListView();
     backdrop.classList.add('opacity-0', 'pointer-events-none');
     document.body.style.overflow = '';
     gsap.to(drawer, {

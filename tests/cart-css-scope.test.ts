@@ -12,7 +12,15 @@ describe('the card-add-to-cart reveal-on-expand styling stays scoped to product 
     // inside a .product-card — an unscoped base rule would make that
     // button permanently invisible and unclickable.
     const css = await fs.readFile(path.join(process.cwd(), 'src/styles/global.css'), 'utf-8');
-    expect(css, 'global.css still has an unscoped .card-add-to-cart base rule').not.toContain('\n.card-add-to-cart {');
     expect(css).toContain('.product-card .card-add-to-cart {');
+    // An unscoped `.card-add-to-cart { ... }` rule is fine (e.g. the
+    // press-feedback transition, which applies correctly to both the
+    // card's button and the detail page's) as long as it never sets the
+    // hiding properties — that combination on an unscoped selector is
+    // what made the detail page's button permanently invisible before.
+    const unscopedBlock = css.match(/\n\.card-add-to-cart \{([^}]*)\}/);
+    expect(unscopedBlock, 'expected the unscoped .card-add-to-cart rule (press-feedback transition)').not.toBeNull();
+    expect(unscopedBlock![1]).not.toContain('pointer-events');
+    expect(unscopedBlock![1]).not.toContain('opacity');
   });
 });

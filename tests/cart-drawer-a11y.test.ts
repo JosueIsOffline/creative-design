@@ -19,6 +19,9 @@ describe('the closed cart drawer is not reachable by keyboard/screen reader', ()
   it('resets to the list view when it closes', async () => {
     const src = await fs.readFile(path.join(process.cwd(), 'src/components/CartDrawer.astro'), 'utf-8');
     const closeDrawerBody = src.slice(src.indexOf('function closeDrawer'), src.indexOf('function closeDrawer') + 400);
-    expect(closeDrawerBody, 'closeDrawer does not reset to the list view').toContain('showListView()');
+    // Was showListView() (which now crossfades — see opportunity 2 in
+    // animation-opportunities.test.ts); closing should reset instantly
+    // instead of animating a view nobody can see.
+    expect(closeDrawerBody, 'closeDrawer does not reset to the list view').toContain('resetToListView()');
   });
 });
