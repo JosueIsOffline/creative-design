@@ -11,14 +11,34 @@ export function cartId(item: Pick<CartItem, 'slug' | 'productoSlug'>): string {
   return `${item.slug}/${item.productoSlug}`;
 }
 
+function isCartItem(value: unknown): value is CartItem {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.slug === 'string' &&
+    typeof item.productoSlug === 'string' &&
+    typeof item.nombre === 'string' &&
+    typeof item.precio === 'number' &&
+    typeof item.foto === 'string' &&
+    Number.isInteger(item.cantidad) &&
+    (item.cantidad as number) > 0
+  );
+}
+
 export function parseCartJson(raw: string | null): CartItem[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.filter(isCartItem) : [];
   } catch {
     return [];
   }
+}
+
+const ESCAPE_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+export function esc(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
 }
 
 const STORAGE_KEY = 'cart';

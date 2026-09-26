@@ -8,6 +8,9 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
   data-phone={whatsapp}
   class="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-surface border-l border-border flex flex-col pointer-events-none"
   aria-label="Carrito"
+  role="dialog"
+  aria-modal="true"
+  inert
 >
   <div class="flex items-center justify-between p-4 border-b border-border">
     <h2 class="font-display text-lg font-semibold text-foreground">Tu carrito</h2>
@@ -34,7 +37,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 
 <script>
   import gsap from 'gsap';
-  import { getCart, removeItem, setQuantity, getTotal, clearCart, buildWhatsAppMessage } from '../scripts/cart';
+  import { getCart, removeItem, setQuantity, getTotal, clearCart, buildWhatsAppMessage, esc } from '../scripts/cart';
 
   const backdrop = document.getElementById('cart-backdrop');
   const drawer = document.getElementById('cart-drawer');
@@ -65,10 +68,10 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     const rows = cart
       .map(
         (item) => `
-          <div class="cart-item flex gap-3 py-3 border-b border-border" data-slug="${item.slug}" data-producto-slug="${item.productoSlug}">
-            <img src="${item.foto}" alt="${item.nombre}" class="w-14 h-14 rounded-lg object-cover shrink-0" />
+          <div class="cart-item flex gap-3 py-3 border-b border-border" data-slug="${esc(item.slug)}" data-producto-slug="${esc(item.productoSlug)}">
+            <img src="${esc(item.foto)}" alt="${esc(item.nombre)}" class="w-14 h-14 rounded-lg object-cover shrink-0" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
             <div class="flex-1 min-w-0">
-              <p class="text-sm text-foreground font-medium truncate">${item.nombre}</p>
+              <p class="text-sm text-foreground font-medium truncate">${esc(item.nombre)}</p>
               <p class="text-xs text-muted">RD$ ${item.precio.toLocaleString('es-DO')} c/u</p>
               <div class="flex items-center gap-2 mt-1">
                 <button type="button" class="cart-qty-decrease w-6 h-6 rounded-full border border-border-strong text-muted hover:text-accent" aria-label="Quitar una unidad">−</button>
@@ -106,7 +109,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
       const rows = cart
         .map(
           (item) =>
-            `<div class="flex justify-between py-1"><span>${item.nombre} x${item.cantidad}</span><span>RD$ ${(item.precio * item.cantidad).toLocaleString('es-DO')}</span></div>`
+            `<div class="flex justify-between py-1"><span>${esc(item.nombre)} x${item.cantidad}</span><span>RD$ ${(item.precio * item.cantidad).toLocaleString('es-DO')}</span></div>`
         )
         .join('');
       checkoutSummary.innerHTML = `
@@ -126,15 +129,19 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     isOpen = true;
     renderList();
     showListView();
+    drawer.inert = false;
     drawer.classList.remove('pointer-events-none');
     backdrop.classList.remove('opacity-0', 'pointer-events-none');
     document.body.style.overflow = 'hidden';
     gsap.to(drawer, { opacity: 1, x: 0, duration: prefersReducedMotion() ? 0.2 : 0.35, ease: 'power3.out', overwrite: 'auto' });
+    document.getElementById('cart-close')?.focus();
   }
 
   function closeDrawer() {
     if (!drawer || !backdrop || !isOpen) return;
     isOpen = false;
+    drawer.inert = true;
+    showListView();
     backdrop.classList.add('opacity-0', 'pointer-events-none');
     document.body.style.overflow = '';
     gsap.to(drawer, {

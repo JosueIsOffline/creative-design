@@ -8,6 +8,7 @@ import {
   clearCart,
   buildWhatsAppMessage,
   parseCartJson,
+  esc,
 } from '../src/scripts/cart';
 
 const TAZA = { slug: 'tazas', productoSlug: 'taza-blanca', nombre: 'Taza Blanca', precio: 350, foto: 'https://example.com/taza.jpg' };
@@ -82,6 +83,28 @@ describe('parseCartJson', () => {
   it('returns the parsed array when it is valid', () => {
     const stored = [{ ...TAZA, cantidad: 3 }];
     expect(parseCartJson(JSON.stringify(stored))).toEqual(stored);
+  });
+
+  it('drops elements that are not well-formed cart items instead of crashing', () => {
+    // Review finding: Array.isArray alone isn't enough — a corrupted or
+    // hand-edited localStorage.cart value can be a valid array containing
+    // garbage. cart.ts is a shared chunk imported on every page, so a
+    // single bad element (e.g. null, or an old-format object) would throw
+    // inside updateBadge()/renderList() and break the whole site.
+    expect(parseCartJson(JSON.stringify([null]))).toEqual([]);
+    expect(parseCartJson(JSON.stringify([{}]))).toEqual([]);
+    expect(parseCartJson(JSON.stringify([{ ...TAZA, cantidad: 0 }]))).toEqual([]);
+    expect(parseCartJson(JSON.stringify([{ ...TAZA, cantidad: 2 }, null]))).toEqual([{ ...TAZA, cantidad: 2 }]);
+  });
+});
+
+describe('esc', () => {
+  it('escapes HTML-significant characters', () => {
+    expect(esc('Taza "Mamá" <3 & tú')).toBe('Taza &quot;Mamá&quot; &lt;3 &amp; tú');
+  });
+
+  it('leaves plain text untouched', () => {
+    expect(esc('Taza Blanca')).toBe('Taza Blanca');
   });
 });
 
