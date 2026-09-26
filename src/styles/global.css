@@ -102,7 +102,11 @@
    during that window). ProductModal.astro sequences this: the button
    fades/slides out before the box starts shrinking, and fades/slides in
    only after the box is done growing. */
-.card-add-to-cart {
+/* Scoped to .product-card: the product detail page reuses the
+   .card-add-to-cart class (for the shared click delegation in
+   ProductModal.astro) on a button that's always visible, never nested
+   inside a card — an unscoped rule here would hide it permanently. */
+.product-card .card-add-to-cart {
   --wa-height: 4rem; /* fallback until the ResizeObserver measures it */
   max-height: 0;
   margin-top: 0;

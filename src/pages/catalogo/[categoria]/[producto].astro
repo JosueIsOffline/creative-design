@@ -17,11 +17,7 @@ interface Props {
 }
 
 const { product } = Astro.props;
-const phone = import.meta.env.WHATSAPP_NUMBER;
 const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
-const mensaje = encodeURIComponent(
-  `Hola! Me interesa este producto: ${product.nombre} (${precioFormateado}). ¿Me das más información?`
-);
 ---
 <BaseLayout title={`${product.nombre} - Catálogo`} description={product.descripcion}>
   <div class="max-w-4xl mx-auto px-6 py-10">
@@ -41,17 +37,17 @@ const mensaje = encodeURIComponent(
         <h1 class="font-display text-3xl sm:text-4xl font-bold mt-4 text-accent">{product.nombre}</h1>
         <p class="mt-4 text-muted leading-relaxed">{product.descripcion}</p>
         <p class="mt-6 text-2xl font-bold">{precioFormateado}</p>
-        <a
-          href={`https://wa.me/${phone}?text=${mensaje}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="mt-8 inline-flex items-center rounded-full bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 transition-opacity"
+        <button
+          type="button"
+          class="card-add-to-cart mt-8 inline-flex items-center rounded-full bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 cursor-pointer"
+          data-product={JSON.stringify({ slug: product.slug, productoSlug: product.productoSlug, nombre: product.nombre, precio: product.precio, foto: product.fotos[0] })}
         >
-          <span class="text-brand-black font-medium pr-4">Solicitar por WhatsApp</span>
+          <span class="card-add-label text-brand-black font-medium pr-4">Agregar al carrito</span>
+          <span class="card-add-label-added hidden text-brand-black font-medium pr-4">¡Agregado!</span>
           <span class="js-hover-fx flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">
             <Icon name="line-md:arrow-right" class="w-4 h-4" />
           </span>
-        </a>
+        </button>
       </div>
     </div>
   </div>
