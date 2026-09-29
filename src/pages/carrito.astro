@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { Icon } from 'astro-icon/components';
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 ---
-<BaseLayout title="Tu carrito">
+<BaseLayout title="Tu carrito" hideFooter>
   <div class="max-w-2xl mx-auto px-6 py-10" data-phone={whatsapp}>
     <h1 class="font-display text-2xl font-semibold text-foreground mb-6">Tu carrito</h1>
     <div id="cart-list-view"></div>
