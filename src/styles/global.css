@@ -66,6 +66,13 @@
   max-height: 85vh;
   overflow-y: auto;
   z-index: 50;
+  /* The resting grid card has no background/border (Apple Store style —
+     cards float on the page, separated by whitespace). Expanded, it's a
+     floating overlay instead, so it needs its own surface to stay legible
+     over whatever's behind it. */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
 }
 
 /* Only added once the box has already settled into position:fixed (after
@@ -84,42 +91,8 @@
   overflow: visible;
 }
 
-.product-card.is-expanded .card-desc-compact,
-.product-card.is-expanded .card-arrow {
-  display: none;
-}
-
 .product-card.is-expanded .card-desc-full {
   display: block;
-}
-
-/* Space for the button is reserved the instant .is-expanded is applied
-   (max-height/margin jump immediately, no transition on those two) so the
-   box's grow captures its true final size in one motion. Only opacity +
-   a small upward slide animate — with a real CSS transition, independent
-   of the view-transition box morph above (which freezes the live DOM for
-   its duration — a transition on a child never gets to visually play
-   during that window). ProductModal.astro sequences this: the button
-   fades/slides out before the box starts shrinking, and fades/slides in
-   only after the box is done growing. */
-/* Scoped to .product-card: the product detail page reuses the
-   .card-add-to-cart class (for the shared click delegation in
-   ProductModal.astro) on a button that's always visible, never nested
-   inside a card — an unscoped rule here would hide it permanently. */
-.product-card .card-add-to-cart {
-  --wa-height: 4rem; /* fallback until the ResizeObserver measures it */
-  max-height: 0;
-  margin-top: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.product-card.is-expanded .card-add-to-cart {
-  max-height: var(--wa-height);
-  margin-top: 1rem;
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* Press feedback on the primary conversion action (both the card's button
@@ -146,24 +119,6 @@
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
-}
-
-/* Forces the collapsed look even while .is-expanded is present — this is
-   what lets the button fade out BEFORE the box shrinks and fade/grow in
-   only AFTER the box finishes growing (see REVEAL_FADE_MS in
-   ProductModal.astro). */
-.product-card.is-expanded .card-add-to-cart.is-hiding {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Only added during the box's initial view-transition growth (open), so
-   that first snapshot doesn't include the button's space (avoids an empty
-   gap). Never added on close, so closing fades opacity out while the
-   button keeps its full height — no instant clipping mid-fade. */
-.product-card.is-expanded .card-add-to-cart.is-precollapsed {
-  max-height: 0;
-  margin-top: 0;
 }
 
 .product-card.is-expanded .card-close.is-hiding {

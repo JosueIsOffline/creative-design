@@ -34,10 +34,14 @@ describe('opportunity 3: cart stepper/remove button press feedback', () => {
   });
 });
 
-describe('opportunity 4: CategoryFilter pills get hover feedback', () => {
-  it('the inactive pill branch has a transition and hover state', async () => {
+describe('opportunity 4: CategoryFilter tabs get hover feedback', () => {
+  it('the inactive tab branch has a transition and hover state', async () => {
+    // Was pill buttons with hover:border-accent; redesigned as underline
+    // tabs (Apple Store pass) — hover is intentionally a neutral
+    // border-border-strong now, keeping border-accent reserved for the
+    // active tab so the two states stay visually distinct.
     const src = await read('src/components/CategoryFilter.astro');
     expect(src).toContain('transition-colors');
-    expect(src).toContain('hover:border-accent');
+    expect(src).toContain('hover:border-border-strong');
   });
 });

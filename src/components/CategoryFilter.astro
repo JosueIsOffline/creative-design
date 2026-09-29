@@ -3,17 +3,17 @@ interface Category { slug: string; name: string }
 interface Props { categories: Category[]; active: string | null }
 const { categories, active } = Astro.props;
 ---
-<nav class="flex flex-wrap gap-3 p-6" aria-label="Categorías">
+<nav class="flex flex-wrap gap-6 px-6 py-6 border-b border-border" aria-label="Categorías">
   <a
     href="/catalogo"
-    class={`px-4 py-2 rounded-full border transition-colors duration-200 ${active === null ? 'bg-brand-lilac text-brand-black border-accent' : 'border-border-strong text-muted hover:text-foreground hover:border-accent'}`}
+    class={`text-sm pb-2 border-b-2 transition-colors duration-200 ${active === null ? 'text-foreground border-accent font-semibold' : 'text-muted border-transparent hover:text-foreground hover:border-border-strong'}`}
   >
     Todos
   </a>
   {categories.map((cat) => (
     <a
       href={`/catalogo/${encodeURIComponent(cat.slug)}`}
-      class={`px-4 py-2 rounded-full border transition-colors duration-200 ${active === cat.slug ? 'bg-brand-lilac text-brand-black border-accent' : 'border-border-strong text-muted hover:text-foreground hover:border-accent'}`}
+      class={`text-sm pb-2 border-b-2 transition-colors duration-200 ${active === cat.slug ? 'text-foreground border-accent font-semibold' : 'text-muted border-transparent hover:text-foreground hover:border-border-strong'}`}
     >
       {cat.name}
     </a>

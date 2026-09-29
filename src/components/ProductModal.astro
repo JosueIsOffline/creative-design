@@ -10,19 +10,6 @@
   let expandedArticle: HTMLElement | null = null;
   let expandedLink: HTMLElement | null = null;
 
-  // Measure the WhatsApp button's real content height (instead of guessing a
-  // fixed max-height) so its own reveal animates to its actual size.
-  const waHeightObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const el = entry.target as HTMLElement;
-      el.style.setProperty('--wa-height', `${el.scrollHeight}px`);
-    }
-  });
-  document.querySelectorAll<HTMLElement>('.card-add-to-cart').forEach((el) => {
-    el.style.setProperty('--wa-height', `${el.scrollHeight}px`);
-    waHeightObserver.observe(el);
-  });
-
   function setBoxName(article: HTMLElement, active: boolean) {
     article.style.viewTransitionName = active ? 'expanding-card' : '';
   }
@@ -31,15 +18,14 @@
   // for the duration of the box morph — a CSS transition on a child element
   // never gets to visually play while that's happening, it just jumps between
   // whatever state it was in at each snapshot instant. So the reveal-only
-  // button gets its own real transition run OUTSIDE that window: faded/shrunk
-  // out before the box starts shrinking, faded/grown in after it's done
-  // growing.
+  // close button gets its own real transition run OUTSIDE that window:
+  // faded/shrunk out before the box starts shrinking, faded/grown in after
+  // it's done growing. (card-add-to-cart used to be reveal-only too, but
+  // it's always visible now — see the Apple Store style pass.)
   const REVEAL_FADE_MS = 200;
 
   function getRevealEls(article: HTMLElement) {
-    return [article.querySelector<HTMLElement>('.card-add-to-cart'), article.querySelector<HTMLElement>('.card-close')].filter(
-      (el): el is HTMLElement => !!el
-    );
+    return [article.querySelector<HTMLElement>('.card-close')].filter((el): el is HTMLElement => !!el);
   }
 
   function closeExpanded() {
