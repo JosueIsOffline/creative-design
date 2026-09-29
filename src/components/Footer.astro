@@ -4,28 +4,16 @@ const instagram = import.meta.env.INSTAGRAM_URL;
 const phone = import.meta.env.WHATSAPP_NUMBER;
 const currentYear = new Date().getFullYear();
 ---
-<footer class="border-t border-border mt-16">
-  <div class="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
-    <div>
-      <p class="font-display font-semibold text-foreground">Creative Design</p>
-      <p class="text-muted mt-1">Sublimación y diseño gráfico personalizado.</p>
-    </div>
-    <div>
-      <p class="text-foreground font-medium mb-2">Síguenos</p>
-      <div class="flex flex-col gap-2 items-start">
-        <a href={instagram} target="_blank" rel="noopener noreferrer" class="js-hover-fx inline-flex items-center gap-1.5 text-muted hover:text-accent">
-          <Icon name="simple-icons:instagram" class="w-4 h-4" />
-          Instagram
-        </a>
-        <a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer" class="js-hover-fx inline-flex items-center gap-1.5 text-muted hover:text-accent">
-          <Icon name="simple-icons:whatsapp" class="w-4 h-4" />
-          WhatsApp
-        </a>
-      </div>
-    </div>
-    <div class="sm:text-right">
-      <p class="text-foreground font-medium mb-2">Legal</p>
-      <p class="text-muted">&copy; {currentYear}. Todos los derechos reservados.</p>
-    </div>
+<footer class="border-t border-border mt-16 py-10 px-6 text-center text-sm text-muted">
+  <div class="flex justify-center gap-6 mb-4">
+    <a href={instagram} target="_blank" rel="noopener noreferrer" class="js-hover-fx inline-flex items-center gap-1.5 hover:text-accent">
+      <Icon name="simple-icons:instagram" class="w-4 h-4" />
+      Instagram
+    </a>
+    <a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer" class="js-hover-fx inline-flex items-center gap-1.5 hover:text-accent">
+      <Icon name="simple-icons:whatsapp" class="w-4 h-4" />
+      WhatsApp
+    </a>
   </div>
+  <p>&copy; {currentYear}. Todos los derechos reservados.</p>
 </footer>
