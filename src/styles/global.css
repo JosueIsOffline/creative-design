@@ -127,12 +127,6 @@
   pointer-events: none;
 }
 
-#cart-drawer {
-  transform: translateX(100%);
-  opacity: 0;
-  will-change: transform, opacity;
-}
-
 /* Press feedback on the quantity steppers and remove button — adjusted
    often during checkout, so kept subtle and fast. */
 .cart-qty-increase,
@@ -145,10 +139,4 @@
 .cart-qty-decrease:active,
 .cart-item-remove:active {
   transform: scale(0.95);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #cart-drawer {
-    transform: translateX(0);
-  }
 }

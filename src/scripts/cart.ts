@@ -131,10 +131,8 @@ if (typeof document !== 'undefined') {
     badge.classList.toggle('hidden', count === 0);
   };
 
-  document.getElementById('cart-toggle')?.addEventListener('click', () => {
-    window.dispatchEvent(new CustomEvent('cart:open'));
-  });
-
+  // #cart-toggle is a plain <a href="/carrito"> link now — no click
+  // wiring needed here, the browser just navigates.
   window.addEventListener('cart:change', updateBadge);
   updateBadge();
 }

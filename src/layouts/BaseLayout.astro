@@ -3,7 +3,6 @@ import '../styles/global.css';
 import WhatsAppButton from '../components/WhatsAppButton.astro';
 import Footer from '../components/Footer.astro';
 import ProductModal from '../components/ProductModal.astro';
-import CartDrawer from '../components/CartDrawer.astro';
 import { Icon } from 'astro-icon/components';
 interface Props {
   title: string;
@@ -55,8 +54,8 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
         <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" class="js-hover-fx w-8 h-8 rounded-full border border-border-strong flex items-center justify-center text-muted hover:text-accent hover:border-accent transition-colors">
           <Icon name="simple-icons:whatsapp" class="w-4 h-4" />
         </a>
-        <button
-          type="button"
+        <a
+          href="/carrito"
           id="cart-toggle"
           aria-label="Ver carrito"
           class="relative w-8 h-8 rounded-full border border-border-strong flex items-center justify-center text-muted hover:text-accent hover:border-accent transition-colors"
@@ -66,7 +65,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
             id="cart-badge"
             class="hidden absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-accent text-background text-[10px] font-bold flex items-center justify-center"
           >0</span>
-        </button>
+        </a>
         <button
           type="button"
           id="theme-toggle"
@@ -82,7 +81,6 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     <Footer />
     <WhatsAppButton />
     <ProductModal />
-    <CartDrawer />
     <script>
       import '../scripts/theme';
       import '../scripts/hover-fx';

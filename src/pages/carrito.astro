@@ -1,53 +1,39 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { Icon } from 'astro-icon/components';
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 ---
-<div id="cart-backdrop" class="fixed inset-0 z-40 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"></div>
-<aside
-  id="cart-drawer"
-  data-phone={whatsapp}
-  class="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-surface border-l border-border flex flex-col pointer-events-none"
-  aria-label="Carrito"
-  role="dialog"
-  aria-modal="true"
-  inert
->
-  <div class="flex items-center justify-between p-4 border-b border-border">
-    <h2 class="font-display text-lg font-semibold text-foreground">Tu carrito</h2>
-    <button type="button" id="cart-close" aria-label="Cerrar carrito" class="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-accent">
-      <Icon name="line-md:close" class="w-4 h-4" />
-    </button>
+<BaseLayout title="Tu carrito">
+  <div class="max-w-2xl mx-auto px-6 py-10" data-phone={whatsapp}>
+    <h1 class="font-display text-2xl font-semibold text-foreground mb-6">Tu carrito</h1>
+    <div id="cart-list-view"></div>
+    <div id="cart-checkout-view" class="hidden flex flex-col">
+      <button type="button" id="cart-back" class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent mb-4">
+        <Icon name="line-md:arrow-left" class="w-3.5 h-3.5" />
+        Volver
+      </button>
+      <div id="cart-checkout-summary" class="text-sm text-muted mb-4"></div>
+      <label for="cart-note" class="text-sm text-foreground font-medium mb-2 block">
+        Cuéntanos qué colores, estilo o detalles te gustaría (opcional)
+      </label>
+      <textarea id="cart-note" rows="4" class="w-full rounded-xl border border-border bg-background text-foreground p-3 text-sm mb-4"></textarea>
+      <button type="button" id="cart-send" class="bg-brand-lilac border border-accent text-brand-black font-medium rounded-full py-3 hover:opacity-90">
+        Enviar por WhatsApp
+      </button>
+    </div>
   </div>
-  <div id="cart-list-view" class="flex-1 overflow-y-auto p-4"></div>
-  <div id="cart-checkout-view" class="hidden flex-1 overflow-y-auto p-4 flex flex-col">
-    <button type="button" id="cart-back" class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent mb-4">
-      <Icon name="line-md:arrow-left" class="w-3.5 h-3.5" />
-      Volver
-    </button>
-    <div id="cart-checkout-summary" class="text-sm text-muted mb-4"></div>
-    <label for="cart-note" class="text-sm text-foreground font-medium mb-2 block">
-      Cuéntanos qué colores, estilo o detalles te gustaría (opcional)
-    </label>
-    <textarea id="cart-note" rows="4" class="w-full rounded-xl border border-border bg-background text-foreground p-3 text-sm mb-4"></textarea>
-    <button type="button" id="cart-send" class="bg-brand-lilac border border-accent text-brand-black font-medium rounded-full py-3 hover:opacity-90">
-      Enviar por WhatsApp
-    </button>
-  </div>
-</aside>
+</BaseLayout>
 
 <script>
   import gsap from 'gsap';
   import { getCart, removeItem, setQuantity, getTotal, clearCart, buildWhatsAppMessage, esc } from '../scripts/cart';
 
-  const backdrop = document.getElementById('cart-backdrop');
-  const drawer = document.getElementById('cart-drawer');
+  const page = document.querySelector<HTMLElement>('[data-phone]');
   const listView = document.getElementById('cart-list-view');
   const checkoutView = document.getElementById('cart-checkout-view');
   const checkoutSummary = document.getElementById('cart-checkout-summary');
   const noteInput = document.getElementById('cart-note') as HTMLTextAreaElement | null;
-  const phone = drawer?.dataset.phone ?? '';
-
-  let isOpen = false;
+  const phone = page?.dataset.phone ?? '';
 
   const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -57,7 +43,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 
     if (cart.length === 0) {
       listView.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-full text-center gap-4 py-12">
+        <div class="flex flex-col items-center gap-4 py-12 text-center">
           <p class="text-muted">Tu carrito está vacío</p>
           <a href="/catalogo" class="text-accent hover:opacity-80 text-sm font-medium">Ver catálogo</a>
         </div>
@@ -69,7 +55,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
       .map(
         (item) => `
           <div class="cart-item flex gap-3 py-3 border-b border-border" data-slug="${esc(item.slug)}" data-producto-slug="${esc(item.productoSlug)}">
-            <img src="${esc(item.foto)}" alt="${esc(item.nombre)}" class="w-14 h-14 rounded-lg object-cover shrink-0" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
+            <img src="${esc(item.foto)}" alt="${esc(item.nombre)}" class="w-16 h-16 rounded-lg object-cover shrink-0" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
             <div class="flex-1 min-w-0">
               <p class="text-sm text-foreground font-medium truncate">${esc(item.nombre)}</p>
               <p class="text-xs text-muted">RD$ ${item.precio.toLocaleString('es-DO')} c/u</p>
@@ -98,16 +84,7 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     `;
   }
 
-  // Instant, no crossfade — used only to put the drawer in a known state
-  // while it's not visible yet (opening) or on its way out (closing), so
-  // there's nothing to animate.
-  function resetToListView() {
-    gsap.set([listView, checkoutView], { clearProps: 'opacity' });
-    listView?.classList.remove('hidden');
-    checkoutView?.classList.add('hidden');
-  }
-
-  // Crossfades between the two views instead of the instant hidden-class
+  // Crossfades between the two views instead of an instant hidden-class
   // swap — this is a visible, user-triggered switch (Finalizar pedido /
   // Volver), so a hard cut would read as a jarring teleport.
   function switchView(hide: HTMLElement | null, show: HTMLElement | null) {
@@ -154,36 +131,6 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     switchView(listView, checkoutView);
   }
 
-  function openDrawer() {
-    if (!drawer || !backdrop || isOpen) return;
-    isOpen = true;
-    renderList();
-    resetToListView();
-    drawer.inert = false;
-    drawer.classList.remove('pointer-events-none');
-    backdrop.classList.remove('opacity-0', 'pointer-events-none');
-    document.body.style.overflow = 'hidden';
-    gsap.to(drawer, { opacity: 1, x: 0, duration: prefersReducedMotion() ? 0.2 : 0.35, ease: 'power3.out', overwrite: 'auto' });
-    document.getElementById('cart-close')?.focus();
-  }
-
-  function closeDrawer() {
-    if (!drawer || !backdrop || !isOpen) return;
-    isOpen = false;
-    drawer.inert = true;
-    resetToListView();
-    backdrop.classList.add('opacity-0', 'pointer-events-none');
-    document.body.style.overflow = '';
-    gsap.to(drawer, {
-      opacity: 0,
-      x: prefersReducedMotion() ? 0 : '100%',
-      duration: prefersReducedMotion() ? 0.2 : 0.3,
-      ease: 'power2.in',
-      overwrite: 'auto',
-      onComplete: () => drawer.classList.add('pointer-events-none'),
-    });
-  }
-
   listView?.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
 
@@ -211,22 +158,17 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
   document.getElementById('cart-back')?.addEventListener('click', showListView);
 
   document.getElementById('cart-send')?.addEventListener('click', () => {
-    // Defensive guard (Review Focus): the button that reaches this view only
-    // renders when the cart has items, but this stays safe if that ever changes.
+    // Defensive guard: the button that reaches this view only renders when
+    // the cart has items, but this stays safe if that ever changes.
     const cart = getCart();
     if (cart.length === 0) return;
     const mensaje = buildWhatsAppMessage(cart, noteInput?.value ?? '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`, '_blank', 'noopener');
     clearCart();
     if (noteInput) noteInput.value = '';
-    closeDrawer();
+    showListView();
   });
 
-  document.getElementById('cart-close')?.addEventListener('click', closeDrawer);
-  backdrop?.addEventListener('click', closeDrawer);
-  window.addEventListener('cart:open', openDrawer);
   window.addEventListener('cart:change', renderList);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isOpen) closeDrawer();
-  });
+  renderList();
 </script>

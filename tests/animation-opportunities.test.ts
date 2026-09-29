@@ -12,15 +12,16 @@ describe('opportunity 1: add-to-cart press feedback', () => {
   });
 });
 
-describe('opportunity 2: cart drawer view crossfade instead of an instant hidden-class swap', () => {
-  it('CartDrawer.astro crossfades on user-triggered view switches, not on open/close reset', async () => {
-    const src = await read('src/components/CartDrawer.astro');
+describe('opportunity 2: cart page view crossfade instead of an instant hidden-class swap', () => {
+  it('carrito.astro crossfades on user-triggered view switches (Finalizar pedido / Volver)', async () => {
+    // The cart moved from a slide-in drawer to a dedicated /carrito page
+    // (the user didn't want "everything about the cart" living in a
+    // panel) — the crossfade between the list and checkout views is the
+    // part of the old drawer that carried over unchanged.
+    const src = await read('src/pages/carrito.astro');
     expect(src, 'missing the crossfade helper').toContain('function switchView(');
-    expect(src, 'missing the instant reset helper').toContain('function resetToListView(');
     expect(src, 'showListView should route through the crossfade').toMatch(/function showListView\(\) \{\s*switchView\(/);
     expect(src, 'showCheckoutView should route through the crossfade').toContain('switchView(listView, checkoutView)');
-    expect(src, 'openDrawer should reset instantly, not crossfade').toMatch(/renderList\(\);\s*resetToListView\(\);/);
-    expect(src, 'closeDrawer should reset instantly, not crossfade').toMatch(/drawer\.inert = true;\s*resetToListView\(\);/);
   });
 });
 
