@@ -1,75 +1,75 @@
 ---
-interface Servicio { titulo: string; descripcion: string; icono: string; imagen: string }
+interface Servicio { titulo: string; descripcion: string; imagen: string }
 
 const servicios: Servicio[] = [
   {
     titulo: 'Identidad visual',
     descripcion: 'Logos, paleta de colores y estilo de marca que te representan.',
-    icono: 'palette',
-    imagen: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
   },
   {
     titulo: 'Flyers',
     descripcion: 'Diseños llamativos para promociones, eventos y redes sociales.',
-    icono: 'megaphone',
-    imagen: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=800&q=80',
   },
   {
     titulo: 'Papelería',
     descripcion: 'Tarjetas, facturas y membretes con un acabado profesional.',
-    icono: 'stack',
-    imagen: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=800&q=80',
   },
   {
     titulo: 'Personalización',
     descripcion: 'Tazas, camisetas, llaveros y más con tu diseño o foto.',
-    icono: 'mug',
-    imagen: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
   },
   {
     titulo: 'Sublimación',
     descripcion: 'Impresión de alta calidad y duradera sobre distintos materiales.',
-    icono: 'flame',
-    imagen: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
   },
   {
     titulo: 'Redes Sociales',
     descripcion: 'Publicaciones y contenido visual que conectan con tu audiencia.',
-    icono: 'heart',
-    imagen: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=1200&q=80',
+    imagen: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
-const icons: Record<string, string> = {
-  palette:
-    '<circle cx="12" cy="12" r="7"/><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="9.5" cy="14.5" r="1" fill="currentColor" stroke="none"/>',
-  megaphone: '<path d="M3 10v4h3l5 4V6l-5 4H3Z"/><path d="M16.5 9a4 4 0 0 1 0 6"/>',
-  stack: '<rect x="5" y="7" width="12" height="13" rx="1"/><rect x="8" y="4" width="12" height="13" rx="1"/>',
-  mug: '<rect x="4" y="7" width="12" height="11" rx="2"/><path d="M16 9.5h2a2 2 0 0 1 0 4h-2"/><line x1="7" y1="4" x2="7" y2="6"/><line x1="10.5" y1="3" x2="10.5" y2="6"/>',
-  flame: '<path d="M12 3c-1.2 2.8-4 4.2-4 7.8a4 4 0 1 0 8 0c0-1-.3-1.8-.8-2.5.1 1.3-.7 2-1.2 1.7.6-2-.3-4.3-2-7Z"/>',
-  heart: '<circle cx="9" cy="9" r="3"/><circle cx="15" cy="9" r="3"/><path d="M6.5 11.5 12 18l5.5-6.5"/>',
-};
+const introImagen = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80';
 ---
-<section id="servicios" class="max-w-5xl mx-auto px-6 py-16 scroll-mt-24">
-  <div class="text-center mb-10">
-    <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Servicios</h2>
-    <p class="text-muted mt-2">Todo lo que Creative Design hace por ti, de la idea a la pieza final.</p>
+<section id="servicios" class="relative scroll-mt-24">
+  <div class="film-grain"></div>
+
+  <div id="servicios-intro" class="relative h-screen overflow-hidden">
+    <div class="servicios-intro-image absolute inset-0">
+      <img src={introImagen} alt="" class="w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
+    </div>
+    <div class="relative z-10 h-full flex flex-col justify-end px-6 pb-16 max-w-5xl mx-auto">
+      <span class="font-mono text-xs tracking-[0.2em] uppercase text-white/70 mb-4">Estudio — Creative Design</span>
+      <h2 data-gsap="kinetic-heading" class="font-display text-5xl sm:text-7xl font-bold text-white uppercase tracking-tight leading-[0.9]">
+        Servicios
+      </h2>
+      <p class="text-white/80 mt-4 max-w-md">Todo lo que Creative Design hace por ti, de la idea a la pieza final.</p>
+    </div>
   </div>
-  <div id="servicios-stage" class="lg:h-[75vh]">
-    {servicios.map((s) => (
-      <div class="service-panel grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-16 py-10 lg:py-0 lg:h-full">
-        <div class="service-panel-image rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[60vh]">
-          <img src={s.imagen} alt="" loading="lazy" class="w-full h-full object-cover" />
-        </div>
-        <div class="text-left">
-          <span class="flex items-center justify-center w-11 h-11 rounded-full border border-border-strong text-accent" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={icons[s.icono]} />
-          </span>
-          <h3 class="font-display text-2xl lg:text-3xl font-bold mt-4">{s.titulo}</h3>
-          <p class="text-muted mt-3 leading-relaxed max-w-md">{s.descripcion}</p>
+
+  <div id="servicios-list" class="max-w-5xl mx-auto px-6 py-16">
+    {servicios.map((s, i) => (
+      <div class="service-row group relative border-b border-border py-8 flex items-baseline justify-between gap-6" data-service-image={s.imagen}>
+        <h3 data-gsap="kinetic-heading" class="font-display text-3xl sm:text-5xl font-bold uppercase tracking-tight group-hover:text-accent transition-colors">
+          {s.titulo}
+        </h3>
+        <div class="hidden sm:flex items-baseline gap-4 text-right shrink-0 max-w-xs">
+          <span class="font-mono text-xs text-muted">{String(i + 1).padStart(2, '0')}</span>
+          <p class="font-mono text-xs text-muted leading-relaxed">{s.descripcion}</p>
         </div>
       </div>
     ))}
+  </div>
+
+  <div id="service-preview" class="hidden lg:block fixed top-0 left-0 pointer-events-none z-50 opacity-0 w-56 h-40 rounded-xl overflow-hidden" aria-hidden="true">
+    <img class="service-preview-blur absolute inset-0 w-full h-full object-cover blur-xl scale-110" />
+    <img class="service-preview-sharp absolute inset-0 w-full h-full object-cover opacity-0" />
   </div>
 </section>
 
@@ -81,37 +81,58 @@ const icons: Record<string, string> = {
 
   const mm = gsap.matchMedia();
 
-  // Pin-and-crossfade storytelling is a desktop-only flourish: on narrow
-  // viewports pinning fights with mobile browser chrome (notably iOS
-  // Safari's address bar resizing mid-scroll), so panels just stack in
-  // normal document flow there instead.
+  // Intro pin + Ken Burns: a single cinematic beat before the list, desktop
+  // + motion-safe only (pinning fights mobile browser chrome).
   mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-    const stage = document.getElementById('servicios-stage');
-    const panels = stage ? Array.from(stage.querySelectorAll<HTMLElement>('.service-panel')) : [];
-    if (!stage || panels.length < 2) return;
+    const intro = document.getElementById('servicios-intro');
+    const introImg = intro?.querySelector<HTMLElement>('.servicios-intro-image img');
+    if (!intro || !introImg) return;
 
-    gsap.set(stage, { position: 'relative' });
-    gsap.set(panels, { position: 'absolute', inset: 0, opacity: 0 });
-    gsap.set(panels[0], { opacity: 1 });
-
-    const tl = gsap.timeline({
+    gsap.timeline({
       scrollTrigger: {
-        trigger: stage,
+        trigger: intro,
         start: 'top top',
-        end: `+=${panels.length * 600}`,
+        end: '+=600',
         pin: true,
-        scrub: 0.6,
+        scrub: 0.8,
       },
-    });
+    }).fromTo(introImg, { scale: 1.15 }, { scale: 1, ease: 'none' });
+  });
 
-    panels.forEach((panel, i) => {
-      if (i === 0) return;
-      const image = panel.querySelector<HTMLElement>('.service-panel-image img');
-      tl.to(panels[i - 1], { opacity: 0, duration: 0.5 }, i)
-        .fromTo(panel, { opacity: 0 }, { opacity: 1, duration: 0.5 }, i);
-      if (image) {
-        tl.fromTo(image, { scale: 1.12 }, { scale: 1, duration: 0.7, ease: 'power2.out' }, i);
-      }
+  // Cursor-following service preview: fine-pointer, hover-capable, motion-safe
+  // only — mobile just gets the plain list, no hover mechanism exists there.
+  mm.add('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)', () => {
+    const preview = document.getElementById('service-preview');
+    const blurImg = preview?.querySelector<HTMLImageElement>('.service-preview-blur');
+    const sharpImg = preview?.querySelector<HTMLImageElement>('.service-preview-sharp');
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('.service-row'));
+    if (!preview || !blurImg || !sharpImg || rows.length === 0) return;
+
+    const moveX = gsap.quickTo(preview, 'x', { duration: 0.4, ease: 'power3.out' });
+    const moveY = gsap.quickTo(preview, 'y', { duration: 0.4, ease: 'power3.out' });
+
+    function handleMove(e: PointerEvent) {
+      moveX(e.clientX + 24);
+      moveY(e.clientY - 80);
+    }
+
+    rows.forEach((row) => {
+      const src = row.dataset.serviceImage;
+      if (!src) return;
+
+      row.addEventListener('pointerenter', () => {
+        blurImg.src = src;
+        sharpImg.src = src;
+        gsap.set(sharpImg, { opacity: 0 });
+        gsap.to(preview, { opacity: 1, duration: 0.2 });
+        gsap.to(sharpImg, { opacity: 1, duration: 0.4, delay: 0.05 });
+        window.addEventListener('pointermove', handleMove);
+      });
+
+      row.addEventListener('pointerleave', () => {
+        gsap.to(preview, { opacity: 0, duration: 0.2 });
+        window.removeEventListener('pointermove', handleMove);
+      });
     });
   });
 </script>

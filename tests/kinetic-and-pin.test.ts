@@ -28,27 +28,43 @@ describe('kinetic word reveal', () => {
   });
 });
 
-describe('Services scroll-pin storytelling', () => {
+describe('Services pinned intro (cinematic header)', () => {
   it('is excluded from the generic per-card fade (scroll-reveal.ts), so it is not double-animated', async () => {
     const src = await read('src/scripts/scroll-reveal.ts');
-    // A comment mentioning .service-card (explaining the exclusion) is
-    // fine; the actual querySelectorAll selector must not include it.
     expect(src).toContain("querySelectorAll('.product-card, .valor-card')");
   });
 
-  it('Services.astro pins the section and scrubs the card reveal, desktop + motion-safe only', async () => {
+  it('pins the intro and Ken-Burns the background image, desktop + motion-safe only', async () => {
     const src = await read('src/components/Services.astro');
     expect(src).toContain('pin: true');
     expect(src).toContain('scrub:');
     expect(src, 'should gate on a desktop-width media query').toContain('min-width: 1024px');
     expect(src, 'should still respect reduced motion').toContain('prefers-reduced-motion: no-preference');
+    expect(src, 'the intro image should subtly zoom out (Ken Burns) while pinned').toContain('scale: 1.15');
   });
+});
 
-  it('Services tells a per-service scroll story with image panels that crossfade (not a flat card grid)', async () => {
+describe('Services editorial list with cursor-following preview', () => {
+  it('renders a service list where each row carries its own preview image', async () => {
     const src = await read('src/components/Services.astro');
     expect(src, 'each service needs its own representative image').toContain('imagen:');
-    expect(src).toContain('service-panel-image');
-    expect(src, 'panels are stacked and crossfaded via absolute positioning').toContain("position: 'absolute'");
-    expect(src, 'the image should subtly scale as its panel becomes active').toContain('scale: 1');
+    expect(src).toContain('service-row');
+    expect(src).toContain('data-service-image={s.imagen}');
+  });
+
+  it('shows a cursor-following preview with a blur-to-sharp crossfade, fine-pointer + hover-capable only', async () => {
+    const src = await read('src/components/Services.astro');
+    expect(src).toContain('service-preview');
+    expect(src, 'should gate on hover-capable, fine-pointer devices').toContain('(hover: hover) and (pointer: fine)');
+    expect(src).toContain('service-preview-blur');
+    expect(src).toContain('service-preview-sharp');
+    expect(src, 'preview position should follow the pointer').toContain('pointermove');
+  });
+
+  it('has a subtle film-grain texture over the section', async () => {
+    const src = await read('src/components/Services.astro');
+    const css = await read('src/styles/global.css');
+    expect(src).toContain('film-grain');
+    expect(css).toContain('.film-grain');
   });
 });
