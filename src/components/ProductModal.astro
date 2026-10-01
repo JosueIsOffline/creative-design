@@ -110,54 +110,67 @@
     expandedLink = link;
   }
 
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
+  // Capture phase + stopImmediatePropagation: data-product-trigger is a real
+  // <a href>, and Astro's ClientRouter has its own document click listener
+  // that intercepts same-origin links and starts its own soft navigation.
+  // Listeners on the same node/phase run in attachment order, and
+  // ClientRouter's (injected in <head>) attaches before this one — by the
+  // time preventDefault() ran here in the bubble phase, Astro's navigation
+  // had already started. Running first, in capture, and fully neutralizing
+  // the event is the only way to reliably win that race.
+  document.addEventListener(
+    'click',
+    (e) => {
+      const target = e.target as HTMLElement;
 
-    const closeBtn = target.closest('.card-close');
-    if (closeBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      closeExpanded();
-      return;
-    }
-
-    const addBtn = target.closest<HTMLElement>('.card-add-to-cart');
-    if (addBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      const raw = addBtn.dataset.product;
-      if (raw) {
-        addItem(JSON.parse(raw));
-        const label = addBtn.querySelector<HTMLElement>('.card-add-label');
-        const labelAdded = addBtn.querySelector<HTMLElement>('.card-add-label-added');
-        label?.classList.add('hidden');
-        labelAdded?.classList.remove('hidden');
-        window.setTimeout(() => {
-          label?.classList.remove('hidden');
-          labelAdded?.classList.add('hidden');
-        }, 1200);
-      }
-      return;
-    }
-
-    const trigger = target.closest<HTMLElement>('[data-product-trigger]');
-    if (trigger) {
-      const article = trigger.querySelector<HTMLElement>('.product-card');
-      if (article) {
+      const closeBtn = target.closest('.card-close');
+      if (closeBtn) {
         e.preventDefault();
-        if (article.classList.contains('is-expanded')) {
-          closeExpanded();
-        } else {
-          openExpanded(trigger, article);
+        e.stopImmediatePropagation();
+        closeExpanded();
+        return;
+      }
+
+      const addBtn = target.closest<HTMLElement>('.card-add-to-cart');
+      if (addBtn) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const raw = addBtn.dataset.product;
+        if (raw) {
+          addItem(JSON.parse(raw));
+          const label = addBtn.querySelector<HTMLElement>('.card-add-label');
+          const labelAdded = addBtn.querySelector<HTMLElement>('.card-add-label-added');
+          label?.classList.add('hidden');
+          labelAdded?.classList.remove('hidden');
+          window.setTimeout(() => {
+            label?.classList.remove('hidden');
+            labelAdded?.classList.add('hidden');
+          }, 1200);
         }
         return;
       }
-    }
 
-    if (target === backdrop) {
-      closeExpanded();
-    }
-  });
+      const trigger = target.closest<HTMLElement>('[data-product-trigger]');
+      if (trigger) {
+        const article = trigger.querySelector<HTMLElement>('.product-card');
+        if (article) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (article.classList.contains('is-expanded')) {
+            closeExpanded();
+          } else {
+            openExpanded(trigger, article);
+          }
+          return;
+        }
+      }
+
+      if (target === backdrop) {
+        closeExpanded();
+      }
+    },
+    true
+  );
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && expandedArticle) closeExpanded();

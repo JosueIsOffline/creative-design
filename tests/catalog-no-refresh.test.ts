@@ -29,4 +29,17 @@ describe('catalog category switching uses client-side navigation (no full refres
     expect(src, 'should revert the previous matchMedia context before rebuilding it').toContain('mm?.revert()');
     expect(src, 'should listen for every client-side navigation, not just the first load').toContain("addEventListener('astro:page-load', setup)");
   });
+
+  it('theme.ts re-applies the stored theme after a ClientRouter swap, so data-theme is never left unset', async () => {
+    const src = await read('src/scripts/theme.ts');
+    expect(src, 'ClientRouter swaps <html> attributes from the unexecuted fetched document, wiping data-theme').toContain("addEventListener('astro:after-swap'");
+    expect(src).toContain('resolveTheme(stored,');
+  });
+
+  it('ProductModal intercepts product-card clicks in the capture phase before ClientRouter can start a soft navigation', async () => {
+    const src = await read('src/components/ProductModal.astro');
+    expect(src, 'must register in capture phase to run before the ClientRouter listener attached in <head>').toMatch(/addEventListener\(\s*'click',[\s\S]*?true\s*\)/);
+    expect(src, 'stopPropagation alone does not stop a sibling listener on the same node/phase').not.toContain('e.stopPropagation()');
+    expect(src, 'stopImmediatePropagation is required to fully neutralize the event for this click').toContain('e.stopImmediatePropagation()');
+  });
 });
