@@ -14,16 +14,16 @@ describe('kinetic word reveal', () => {
     );
   });
 
-  it('Services and About headings are marked for the scroll-triggered word reveal', async () => {
+  it('Services headings use the kinetic-heading reveal; About uses the paragraph variant for its manifesto', async () => {
     const services = await read('src/components/Services.astro');
     const about = await read('src/components/About.astro');
     expect(services).toContain('data-gsap="kinetic-heading"');
-    expect(about).toContain('data-gsap="kinetic-heading"');
+    expect(about).toContain('data-gsap="kinetic-paragraph"');
   });
 
   it('scroll-reveal.ts splits [data-gsap="kinetic-heading"] elements into characters (not just words)', async () => {
     const src = await read('src/scripts/scroll-reveal.ts');
-    expect(src).toContain("import { splitChars } from './split-text'");
+    expect(src).toContain('splitChars');
     expect(src).toContain('splitChars(heading)');
     expect(src).toContain('[data-gsap="kinetic-heading"]');
   });
@@ -83,21 +83,31 @@ describe('Services editorial list with cursor-following preview', () => {
 });
 
 describe('About and Catálogo integrated into the editorial/cinematic language', () => {
-  it('About pairs the story with a photo and lists valores as a hairline editorial list (not boxed cards)', async () => {
+  it('About is a typographic manifesto (no photo, no boxed/listed valores) — deliberately distinct from Services', async () => {
     const src = await read('src/components/About.astro');
-    expect(src, 'should show a photo alongside the brand story').toContain('imagen =');
-    expect(src).toContain('valor-row');
-    expect(src, 'should have dropped the old boxed-card layout').not.toContain('valor-card');
+    expect(src, 'should no longer pair the story with a photo').not.toContain('<img');
+    expect(src, 'should have dropped the hairline valores list').not.toContain('valor-row');
+    expect(src, 'should have dropped the old boxed-card layout too').not.toContain('valor-card');
+    expect(src, 'the historia paragraph reveals word-by-word, not character-by-character like short titles').toContain('data-gsap="kinetic-paragraph"');
+    expect(src, 'should sign off in the same script font as the Hero signature').toContain('font-script');
     expect(src).toContain('film-grain');
   });
 
-  it('Catálogo pages get the same mono-eyebrow + kinetic-heading header treatment', async () => {
+  it('scroll-reveal.ts reveals [data-gsap="kinetic-paragraph"] word-by-word with a blur, for longer passages', async () => {
+    const src = await read('src/scripts/scroll-reveal.ts');
+    expect(src).toContain("import { splitChars, splitWords } from './split-text'");
+    expect(src).toContain('[data-gsap="kinetic-paragraph"]');
+    expect(src, 'should still blur-reveal, consistent with kinetic-heading').toContain("filter: 'blur(8px)'");
+  });
+
+  it('Catálogo pages get a much bigger title inside a distinct background band, not just a text-style swap', async () => {
     const index = await read('src/pages/catalogo/index.astro');
     const category = await read('src/pages/catalogo/[categoria].astro');
     for (const src of [index, category]) {
       expect(src).toContain('data-gsap="kinetic-heading"');
       expect(src).toContain('film-grain');
-      expect(src, 'should keep the mono eyebrow label pattern').toContain('tracking-[0.2em]');
+      expect(src, 'the header should sit on a visibly distinct background band').toContain('bg-surface');
+      expect(src, 'title should be hero-scale, not a modest heading size').toContain('text-8xl');
     }
   });
 });

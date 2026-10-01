@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { splitChars } from './split-text';
+import { splitChars, splitWords } from './split-text';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -34,6 +34,25 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       scrollTrigger: {
         trigger: heading,
         start: 'top 85%',
+        toggleActions: 'play none none none',
+      },
+    });
+  });
+
+  // Word-grained version of the same blur reveal, for longer passages
+  // (a manifesto paragraph) where a per-character stagger would drag on.
+  document.querySelectorAll<HTMLElement>('[data-gsap="kinetic-paragraph"]').forEach((el) => {
+    const words = splitWords(el);
+    gsap.from(words, {
+      opacity: 0,
+      y: 10,
+      filter: 'blur(8px)',
+      stagger: 0.025,
+      duration: 0.6,
+      ease: 'power1.out',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 80%',
         toggleActions: 'play none none none',
       },
     });

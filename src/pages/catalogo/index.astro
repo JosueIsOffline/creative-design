@@ -8,12 +8,15 @@ const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
 const categories = getCategories(products);
 ---
 <BaseLayout title="Catálogo">
-  <section class="relative max-w-5xl mx-auto px-6 pt-10 pb-6">
+  <section class="relative bg-surface border-b border-border">
     <div class="film-grain"></div>
-    <span class="font-mono text-xs tracking-[0.2em] uppercase text-muted mb-4 block">Estudio — Creative Design</span>
-    <h1 data-gsap="kinetic-heading" class="font-display text-4xl sm:text-6xl font-bold uppercase tracking-tight text-accent leading-[0.95]">
-      Catálogo
-    </h1>
+    <div class="max-w-5xl mx-auto px-6 pt-16 pb-12">
+      <span class="font-mono text-xs tracking-[0.2em] uppercase text-muted mb-4 block">Estudio — Creative Design</span>
+      <h1 data-gsap="kinetic-heading" class="font-display text-6xl sm:text-8xl font-bold uppercase tracking-tight text-accent leading-[0.9]">
+        Catálogo
+      </h1>
+      <p class="text-muted mt-4 max-w-md">Piezas personalizadas, hechas a tu medida.</p>
+    </div>
   </section>
   <CategoryFilter categories={categories} active={null} />
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-6 pb-16">
