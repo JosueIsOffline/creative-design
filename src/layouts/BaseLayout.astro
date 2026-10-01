@@ -80,6 +80,15 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
           <Icon name="line-md:sunny-filled" class="theme-icon-sun w-4 h-4" aria-hidden="true" />
           <Icon name="line-md:moon-filled" class="theme-icon-moon w-4 h-4" aria-hidden="true" />
         </button>
+        <details class="relative sm:hidden">
+          <summary class="list-none cursor-pointer w-8 h-8 rounded-full border border-border-strong flex items-center justify-center text-muted" aria-label="Abrir menú">
+            <Icon name="lucide:menu" class="w-4 h-4" />
+          </summary>
+          <nav aria-label="Principal" class="absolute right-0 top-10 w-40 rounded-xl border border-border bg-background shadow-lg py-2 z-50">
+            <a href="/catalogo" class="block px-4 py-2 text-sm text-muted hover:text-accent transition-colors">Catálogo</a>
+            <a href="/#sobre-la-marca" class="block px-4 py-2 text-sm text-muted hover:text-accent transition-colors">Nosotros</a>
+          </nav>
+        </details>
       </div>
     </header>
     <slot />
