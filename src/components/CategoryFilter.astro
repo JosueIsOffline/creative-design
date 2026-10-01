@@ -3,10 +3,10 @@ interface Category { slug: string; name: string }
 interface Props { categories: Category[]; active: string | null }
 const { categories, active } = Astro.props;
 ---
-<nav class="flex flex-wrap gap-6 px-6 py-6 border-b border-border" aria-label="Categorías">
+<nav class="flex gap-6 px-6 py-6 border-b border-border overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Categorías">
   <a
     href="/catalogo"
-    class={`relative text-sm pb-2 border-b-2 border-transparent transition-colors duration-200 ${active === null ? 'text-foreground font-semibold' : 'text-muted hover:text-foreground hover:border-border-strong'}`}
+    class={`relative shrink-0 text-sm pb-2 border-b-2 border-transparent transition-colors duration-200 ${active === null ? 'text-foreground font-semibold' : 'text-muted hover:text-foreground hover:border-border-strong'}`}
   >
     Todos
     {active === null && <span transition:name="category-indicator" class="absolute left-0 right-0 -bottom-0.5 h-0.5 bg-accent" />}
@@ -14,7 +14,7 @@ const { categories, active } = Astro.props;
   {categories.map((cat) => (
     <a
       href={`/catalogo/${encodeURIComponent(cat.slug)}`}
-      class={`relative text-sm pb-2 border-b-2 border-transparent transition-colors duration-200 ${active === cat.slug ? 'text-foreground font-semibold' : 'text-muted hover:text-foreground hover:border-border-strong'}`}
+      class={`relative shrink-0 text-sm pb-2 border-b-2 border-transparent transition-colors duration-200 ${active === cat.slug ? 'text-foreground font-semibold' : 'text-muted hover:text-foreground hover:border-border-strong'}`}
     >
       {cat.name}
       {active === cat.slug && <span transition:name="category-indicator" class="absolute left-0 right-0 -bottom-0.5 h-0.5 bg-accent" />}
