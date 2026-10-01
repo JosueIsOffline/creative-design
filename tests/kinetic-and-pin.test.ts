@@ -44,10 +44,11 @@ describe('Services scroll-pin storytelling', () => {
     expect(src, 'should still respect reduced motion').toContain('prefers-reduced-motion: no-preference');
   });
 
-  it('Services card reveal has 3D depth (rotation + perspective), not just a flat fade', async () => {
+  it('Services tells a per-service scroll story with image panels that crossfade (not a flat card grid)', async () => {
     const src = await read('src/components/Services.astro');
-    expect(src).toContain('[perspective:1200px]');
-    expect(src).toContain('rotationX:');
-    expect(src).toContain('transformPerspective:');
+    expect(src, 'each service needs its own representative image').toContain('imagen:');
+    expect(src).toContain('service-panel-image');
+    expect(src, 'panels are stacked and crossfaded via absolute positioning').toContain("position: 'absolute'");
+    expect(src, 'the image should subtly scale as its panel becomes active').toContain('scale: 1');
   });
 });

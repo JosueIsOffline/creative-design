@@ -1,36 +1,42 @@
 ---
-interface Servicio { titulo: string; descripcion: string; icono: string }
+interface Servicio { titulo: string; descripcion: string; icono: string; imagen: string }
 
 const servicios: Servicio[] = [
   {
     titulo: 'Identidad visual',
     descripcion: 'Logos, paleta de colores y estilo de marca que te representan.',
     icono: 'palette',
+    imagen: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=1200&q=80',
   },
   {
     titulo: 'Flyers',
     descripcion: 'Diseños llamativos para promociones, eventos y redes sociales.',
     icono: 'megaphone',
+    imagen: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1200&q=80',
   },
   {
     titulo: 'Papelería',
     descripcion: 'Tarjetas, facturas y membretes con un acabado profesional.',
     icono: 'stack',
+    imagen: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=1200&q=80',
   },
   {
     titulo: 'Personalización',
     descripcion: 'Tazas, camisetas, llaveros y más con tu diseño o foto.',
     icono: 'mug',
+    imagen: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80',
   },
   {
     titulo: 'Sublimación',
     descripcion: 'Impresión de alta calidad y duradera sobre distintos materiales.',
     icono: 'flame',
+    imagen: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=80',
   },
   {
     titulo: 'Redes Sociales',
     descripcion: 'Publicaciones y contenido visual que conectan con tu audiencia.',
     icono: 'heart',
+    imagen: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&w=1200&q=80',
   },
 ];
 
@@ -49,14 +55,19 @@ const icons: Record<string, string> = {
     <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Servicios</h2>
     <p class="text-muted mt-2">Todo lo que Creative Design hace por ti, de la idea a la pieza final.</p>
   </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 [perspective:1200px]">
+  <div id="servicios-stage" class="lg:h-[75vh]">
     {servicios.map((s) => (
-      <div class="service-card rounded-2xl bg-surface border border-border p-6 text-left">
-        <span class="flex items-center justify-center w-11 h-11 rounded-full border border-border-strong text-accent" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={icons[s.icono]} />
-        </span>
-        <h3 class="font-display text-lg font-bold mt-4">{s.titulo}</h3>
-        <p class="text-muted text-sm mt-2 leading-relaxed">{s.descripcion}</p>
+      <div class="service-panel grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-16 py-10 lg:py-0 lg:h-full">
+        <div class="service-panel-image rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[60vh]">
+          <img src={s.imagen} alt="" loading="lazy" class="w-full h-full object-cover" />
+        </div>
+        <div class="text-left">
+          <span class="flex items-center justify-center w-11 h-11 rounded-full border border-border-strong text-accent" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={icons[s.icono]} />
+          </span>
+          <h3 class="font-display text-2xl lg:text-3xl font-bold mt-4">{s.titulo}</h3>
+          <p class="text-muted mt-3 leading-relaxed max-w-md">{s.descripcion}</p>
+        </div>
       </div>
     ))}
   </div>
@@ -70,31 +81,37 @@ const icons: Record<string, string> = {
 
   const mm = gsap.matchMedia();
 
-  // Pin-and-reveal storytelling is a desktop-only flourish: on narrow
+  // Pin-and-crossfade storytelling is a desktop-only flourish: on narrow
   // viewports pinning fights with mobile browser chrome (notably iOS
-  // Safari's address bar resizing mid-scroll), so this section just
-  // becomes normal scroll there instead.
+  // Safari's address bar resizing mid-scroll), so panels just stack in
+  // normal document flow there instead.
   mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-    const section = document.getElementById('servicios');
-    const cards = section ? Array.from(section.querySelectorAll<HTMLElement>('.service-card')) : [];
-    if (!section || cards.length === 0) return;
+    const stage = document.getElementById('servicios-stage');
+    const panels = stage ? Array.from(stage.querySelectorAll<HTMLElement>('.service-panel')) : [];
+    if (!stage || panels.length < 2) return;
 
-    gsap.timeline({
+    gsap.set(stage, { position: 'relative' });
+    gsap.set(panels, { position: 'absolute', inset: 0, opacity: 0 });
+    gsap.set(panels[0], { opacity: 1 });
+
+    const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: section,
+        trigger: stage,
         start: 'top top',
-        end: `+=${cards.length * 150}`,
+        end: `+=${panels.length * 600}`,
         pin: true,
         scrub: 0.6,
       },
-    }).from(cards, {
-      opacity: 0,
-      y: 60,
-      rotationX: -30,
-      transformPerspective: 1200,
-      z: -150,
-      stagger: 0.5,
-      duration: 1,
+    });
+
+    panels.forEach((panel, i) => {
+      if (i === 0) return;
+      const image = panel.querySelector<HTMLElement>('.service-panel-image img');
+      tl.to(panels[i - 1], { opacity: 0, duration: 0.5 }, i)
+        .fromTo(panel, { opacity: 0 }, { opacity: 1, duration: 0.5 }, i);
+      if (image) {
+        tl.fromTo(image, { scale: 1.12 }, { scale: 1, duration: 0.7, ease: 'power2.out' }, i);
+      }
     });
   });
 </script>
