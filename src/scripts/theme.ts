@@ -22,7 +22,16 @@ if (typeof document !== 'undefined') {
     }
 
     if (document.startViewTransition) {
-      document.startViewTransition(() => applyTheme(theme));
+      // Scope the crossfade to just the toggle icon (see the
+      // .is-theme-transition rule in global.css) — without this marker
+      // class the browser's default root transition group crossfades the
+      // ENTIRE page for ~250ms on every click, which reads as a full-page
+      // flash/wash rather than a simple icon swap.
+      document.documentElement.classList.add('is-theme-transition');
+      const transition = document.startViewTransition(() => applyTheme(theme));
+      transition.finished.catch(() => {}).finally(() => {
+        document.documentElement.classList.remove('is-theme-transition');
+      });
     } else {
       applyTheme(theme);
     }

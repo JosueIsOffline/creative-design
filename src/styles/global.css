@@ -44,6 +44,26 @@
   display: none;
 }
 
+/* Scope the theme-toggle crossfade to just the icon, not the whole page.
+   Without this, the browser's default root view-transition group
+   crossfades every element on the page for ~250ms on each click — a
+   full-page flash instead of a simple icon swap. .is-theme-transition is
+   added right before startViewTransition() and removed once it settles
+   (see theme.ts), so this never touches Astro's separate page-navigation
+   transitions, which don't set that class. */
+html.is-theme-transition::view-transition-old(root),
+html.is-theme-transition::view-transition-new(root) {
+  animation: none;
+}
+
+#theme-toggle {
+  view-transition-name: theme-icon;
+}
+
+html.is-theme-transition::view-transition-group(theme-icon) {
+  animation-duration: 0.15s;
+}
+
 /* Plain ease-out for the card's own box (no bounce — an overshoot curve
    stretches the flat snapshot's baked-in photo past its real size before
    settling, which reads as a flicker/shimmer). */
