@@ -4,6 +4,7 @@ import WhatsAppButton from '../components/WhatsAppButton.astro';
 import Footer from '../components/Footer.astro';
 import ProductModal from '../components/ProductModal.astro';
 import { Icon } from 'astro-icon/components';
+import { ClientRouter } from 'astro:transitions';
 interface Props {
   title: string;
   description?: string;
@@ -41,9 +42,10 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     <meta property="og:image" content="/logo.jpg" />
     <link rel="icon" href="/logo.jpg" type="image/jpeg" />
     <title>{title}</title>
+    <ClientRouter />
   </head>
   <body class="bg-background text-foreground font-display">
-    <header class="sticky top-0 z-40 h-16 flex items-center justify-between gap-4 px-6 py-4 bg-background/80 backdrop-blur-md border-b border-border">
+    <header transition:persist class="sticky top-0 z-40 h-16 flex items-center justify-between gap-4 px-6 py-4 bg-background/80 backdrop-blur-md border-b border-border">
       <a href="/" class="flex items-center gap-2 text-foreground shrink-0">
         <img src="/logo.jpg" alt="Creative Design" class="h-8 w-8 rounded-full" />
         <span class="font-semibold">Creative Design</span>
@@ -92,9 +94,9 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
       </div>
     </header>
     <slot />
-    {!hideFooter && <Footer />}
-    <WhatsAppButton />
-    <ProductModal />
+    {!hideFooter && <Footer transition:persist />}
+    <WhatsAppButton transition:persist />
+    <ProductModal transition:persist />
     <script>
       import '../scripts/theme';
       import '../scripts/hover-fx';

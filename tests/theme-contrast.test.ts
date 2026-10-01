@@ -12,7 +12,6 @@ import path from 'node:path';
 const FILES = [
   'src/components/Hero.astro',
   'src/components/ProductCard.astro',
-  'src/components/CategoryFilter.astro',
   'src/pages/catalogo/[categoria]/[producto].astro',
 ];
 
