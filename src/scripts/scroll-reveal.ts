@@ -26,11 +26,11 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     const chars = splitChars(heading);
     gsap.from(chars, {
       opacity: 0,
-      y: 12,
-      filter: 'blur(10px)',
-      stagger: 0.015,
-      duration: 0.45,
-      ease: 'power2.out',
+      y: 8,
+      filter: 'blur(14px)',
+      stagger: 0.02,
+      duration: 0.7,
+      ease: 'power1.out',
       scrollTrigger: {
         trigger: heading,
         start: 'top 85%',
