@@ -27,6 +27,11 @@ describe('kinetic word reveal', () => {
     expect(src).toContain('splitChars(heading)');
     expect(src).toContain('[data-gsap="kinetic-heading"]');
   });
+
+  it('kinetic heading characters reveal from a blur, not just a plain fade', async () => {
+    const src = await read('src/scripts/scroll-reveal.ts');
+    expect(src, 'should animate the CSS filter from blurred to sharp').toContain("filter: 'blur(");
+  });
 });
 
 describe('Services pinned intro (cinematic header)', () => {

@@ -27,8 +27,9 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     gsap.from(chars, {
       opacity: 0,
       y: 12,
+      filter: 'blur(10px)',
       stagger: 0.015,
-      duration: 0.35,
+      duration: 0.45,
       ease: 'power2.out',
       scrollTrigger: {
         trigger: heading,
