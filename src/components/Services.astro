@@ -120,10 +120,15 @@ const introImagen = 'https://images.unsplash.com/photo-1744686909434-fd158fca1c3
       const src = row.dataset.serviceImage;
       if (!src) return;
 
-      row.addEventListener('pointerenter', () => {
+      row.addEventListener('pointerenter', (e) => {
         blurImg.src = src;
         sharpImg.src = src;
         gsap.set(sharpImg, { opacity: 0 });
+        // Snap to the pointer's current position immediately — if the
+        // cursor arrived here via scroll (not a mousemove), there is no
+        // pointermove event to wait for, and the preview would otherwise
+        // flash at its default (0,0) position.
+        gsap.set(preview, { x: e.clientX + 24, y: e.clientY - 80 });
         gsap.to(preview, { opacity: 1, duration: 0.2 });
         gsap.to(sharpImg, { opacity: 1, duration: 0.4, delay: 0.05 });
         window.addEventListener('pointermove', handleMove);

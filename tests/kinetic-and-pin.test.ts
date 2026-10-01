@@ -67,6 +67,12 @@ describe('Services editorial list with cursor-following preview', () => {
     expect(src, 'preview position should follow the pointer').toContain('pointermove');
   });
 
+  it('snaps the preview to the pointer position on enter, so arriving via scroll does not flash it at (0,0)', async () => {
+    const src = await read('src/components/Services.astro');
+    expect(src, 'pointerenter should receive the event to read its coordinates').toContain("addEventListener('pointerenter', (e)");
+    expect(src, 'should set the preview position immediately from the enter event').toContain('gsap.set(preview, { x: e.clientX + 24, y: e.clientY - 80 })');
+  });
+
   it('has a subtle film-grain texture over the section', async () => {
     const src = await read('src/components/Services.astro');
     const css = await read('src/styles/global.css');
