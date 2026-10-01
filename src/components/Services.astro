@@ -49,7 +49,7 @@ const icons: Record<string, string> = {
     <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Servicios</h2>
     <p class="text-muted mt-2">Todo lo que Creative Design hace por ti, de la idea a la pieza final.</p>
   </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 [perspective:1200px]">
     {servicios.map((s) => (
       <div class="service-card rounded-2xl bg-surface border border-border p-6 text-left">
         <span class="flex items-center justify-center w-11 h-11 rounded-full border border-border-strong text-accent" aria-hidden="true">
@@ -87,6 +87,14 @@ const icons: Record<string, string> = {
         pin: true,
         scrub: 0.6,
       },
-    }).from(cards, { opacity: 0, y: 60, stagger: 0.5, duration: 1 });
+    }).from(cards, {
+      opacity: 0,
+      y: 60,
+      rotationX: -30,
+      transformPerspective: 1200,
+      z: -150,
+      stagger: 0.5,
+      duration: 1,
+    });
   });
 </script>

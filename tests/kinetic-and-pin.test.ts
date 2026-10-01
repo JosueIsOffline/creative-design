@@ -43,4 +43,11 @@ describe('Services scroll-pin storytelling', () => {
     expect(src, 'should gate on a desktop-width media query').toContain('min-width: 1024px');
     expect(src, 'should still respect reduced motion').toContain('prefers-reduced-motion: no-preference');
   });
+
+  it('Services card reveal has 3D depth (rotation + perspective), not just a flat fade', async () => {
+    const src = await read('src/components/Services.astro');
+    expect(src).toContain('[perspective:1200px]');
+    expect(src).toContain('rotationX:');
+    expect(src).toContain('transformPerspective:');
+  });
 });
