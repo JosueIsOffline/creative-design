@@ -55,11 +55,11 @@ const introImagen = 'https://images.unsplash.com/photo-1716471330463-f475b00f050
 
   <div id="servicios-list" class="max-w-5xl mx-auto px-6 py-16">
     {servicios.map((s, i) => (
-      <div class="service-row group relative border-b border-border py-8 flex items-baseline justify-between gap-6" data-service-image={s.imagen}>
+      <div class="service-row group relative border-b border-border py-6 sm:py-8 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-6" data-service-image={s.imagen}>
         <h3 data-gsap="kinetic-heading" class="font-display text-3xl sm:text-5xl font-bold uppercase tracking-tight group-hover:text-accent transition-colors">
           {s.titulo}
         </h3>
-        <div class="hidden sm:flex items-baseline gap-4 text-right shrink-0 max-w-xs">
+        <div class="flex items-baseline gap-4 sm:text-right shrink-0 sm:max-w-xs">
           <span class="font-mono text-xs text-muted">{String(i + 1).padStart(2, '0')}</span>
           <p class="font-mono text-xs text-muted leading-relaxed">{s.descripcion}</p>
         </div>

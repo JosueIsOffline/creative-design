@@ -59,6 +59,12 @@ describe('Services editorial list with cursor-following preview', () => {
     expect(src).toContain('data-service-image={s.imagen}');
   });
 
+  it('shows the description on mobile too, stacked under the title instead of hidden', async () => {
+    const src = await read('src/components/Services.astro');
+    expect(src, 'description column should no longer be hidden on mobile').not.toContain('hidden sm:flex');
+    expect(src, 'row should stack vertically on mobile and go side-by-side at sm+').toContain('flex-col sm:flex-row');
+  });
+
   it('shows a cursor-following preview with a blur-to-sharp crossfade, fine-pointer + hover-capable only', async () => {
     const src = await read('src/components/Services.astro');
     expect(src).toContain('service-preview');
