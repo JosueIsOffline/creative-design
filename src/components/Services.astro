@@ -46,7 +46,7 @@ const icons: Record<string, string> = {
 ---
 <section id="servicios" class="max-w-5xl mx-auto px-6 py-16 scroll-mt-24">
   <div class="text-center mb-10">
-    <h2 class="font-display text-2xl font-semibold text-accent">Servicios</h2>
+    <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Servicios</h2>
     <p class="text-muted mt-2">Todo lo que Creative Design hace por ti, de la idea a la pieza final.</p>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -61,3 +61,32 @@ const icons: Record<string, string> = {
     ))}
   </div>
 </section>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const mm = gsap.matchMedia();
+
+  // Pin-and-reveal storytelling is a desktop-only flourish: on narrow
+  // viewports pinning fights with mobile browser chrome (notably iOS
+  // Safari's address bar resizing mid-scroll), so this section just
+  // becomes normal scroll there instead.
+  mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+    const section = document.getElementById('servicios');
+    const cards = section ? Array.from(section.querySelectorAll<HTMLElement>('.service-card')) : [];
+    if (!section || cards.length === 0) return;
+
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top top',
+        end: `+=${cards.length * 150}`,
+        pin: true,
+        scrub: 0.6,
+      },
+    }).from(cards, { opacity: 0, y: 60, stagger: 0.5, duration: 1 });
+  });
+</script>

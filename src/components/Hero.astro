@@ -62,12 +62,15 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
 
 <script>
   import gsap from 'gsap';
+  import { splitWords } from '../scripts/split-text';
 
   const mm = gsap.matchMedia();
 
   mm.add('(prefers-reduced-motion: no-preference)', () => {
     const tl = gsap.timeline();
     const shape = document.querySelector<SVGPathElement>('[data-gsap="hero-shape"]');
+    const subtitleEl = document.querySelector<HTMLElement>('[data-gsap="hero-subtitle"]');
+    const subtitleWords = subtitleEl ? splitWords(subtitleEl) : [];
 
     if (shape) {
       const length = shape.getTotalLength();
@@ -78,7 +81,7 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
     tl.from('[data-gsap="hero-confetti"]', { opacity: 0, stagger: 0.06, duration: 0.3 }, '<0.1')
       .from('[data-gsap="hero-title"]', { opacity: 0, y: 40, duration: 0.8, ease: 'power3.out' }, '-=0.2')
       .from('[data-gsap="hero-chip"]', { opacity: 0, y: 10, stagger: 0.08, duration: 0.4, ease: 'power2.out' }, '-=0.4')
-      .from('[data-gsap="hero-subtitle"]', { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' }, '-=0.2')
+      .from(subtitleWords, { opacity: 0, y: 14, stagger: 0.03, duration: 0.4, ease: 'power2.out' }, '-=0.2')
       .from('[data-gsap="hero-cta"]', { opacity: 0, y: 10, duration: 0.5, ease: 'power3.out' }, '-=0.3');
   });
 </script>
