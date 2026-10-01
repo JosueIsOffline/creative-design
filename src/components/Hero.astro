@@ -4,7 +4,7 @@ interface Props { nombreMarca: string; frase: string }
 const { nombreMarca, frase } = Astro.props;
 const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', 'Sublimación'];
 ---
-<section class="relative min-h-screen flex flex-col items-center justify-center text-center px-6">
+<section class="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center text-center px-6">
   <div class="flex flex-wrap justify-center gap-3 mb-8">
     {chips.map((chip, i) => (
       <span data-gsap="hero-chip" class={`px-4 py-1.5 rounded-full text-sm border ${i === chips.length - 1 ? 'bg-brand-lilac text-brand-black border-accent' : 'border-border-strong text-muted'}`}>
