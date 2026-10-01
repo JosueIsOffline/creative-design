@@ -83,13 +83,15 @@ describe('Services editorial list with cursor-following preview', () => {
 });
 
 describe('About and Catálogo integrated into the editorial/cinematic language', () => {
-  it('About is a typographic manifesto (no photo, no boxed/listed valores) — deliberately distinct from Services', async () => {
+  it('About is a static full-bleed photo section — no pin, no hover list, no script signature', async () => {
     const src = await read('src/components/About.astro');
-    expect(src, 'should no longer pair the story with a photo').not.toContain('<img');
+    expect(src, 'should have a full-bleed background photo with a dark scrim').toContain('bg-black/70');
     expect(src, 'should have dropped the hairline valores list').not.toContain('valor-row');
     expect(src, 'should have dropped the old boxed-card layout too').not.toContain('valor-card');
+    expect(src, 'should have dropped the script-font signature from the manifesto attempt').not.toContain('font-script');
+    expect(src, 'should not be pinned/scrubbed like Services').not.toContain('ScrollTrigger');
     expect(src, 'the historia paragraph reveals word-by-word, not character-by-character like short titles').toContain('data-gsap="kinetic-paragraph"');
-    expect(src, 'should sign off in the same script font as the Hero signature').toContain('font-script');
+    expect(src, 'the heading reveals letter-by-letter, consistent with Services/Catálogo').toContain('data-gsap="kinetic-heading"');
     expect(src).toContain('film-grain');
   });
 

@@ -1,13 +1,28 @@
 ---
-interface Props { historia: string; sello?: string }
-const { historia, sello = 'Personalizado · Hecho a mano · Con propósito' } = Astro.props;
+interface Props { historia: string }
+const { historia } = Astro.props;
+
+const imagen = 'https://images.unsplash.com/photo-1617912760084-ee42e538a91e?auto=format&fit=crop&w=1600&q=80';
+const datos = ['100% Personalizado', 'Hecho a mano', 'Con propósito'];
 ---
-<section id="sobre-la-marca" class="relative max-w-3xl mx-auto px-6 py-24 lg:py-32 text-center scroll-mt-24">
+<section id="sobre-la-marca" class="relative scroll-mt-24 overflow-hidden">
   <div class="film-grain"></div>
-  <h2 class="font-mono text-xs tracking-[0.2em] uppercase text-muted mb-8">Sobre la marca</h2>
-  <p data-gsap="kinetic-paragraph" class="font-display text-3xl sm:text-4xl lg:text-5xl font-medium leading-snug text-foreground">
-    {historia}
-  </p>
-  <p class="font-script text-2xl sm:text-3xl text-accent mt-10">— Ailyn Japa</p>
-  <p class="font-mono text-[0.65rem] tracking-[0.15em] uppercase text-muted mt-12">{sello}</p>
+  <div class="absolute inset-0">
+    <img src={imagen} alt="" loading="lazy" class="w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-black/70"></div>
+  </div>
+  <div class="relative z-10 max-w-3xl mx-auto px-6 py-24 lg:py-32 text-center">
+    <span class="font-mono text-xs tracking-[0.2em] uppercase text-white/70 mb-6 block">Estudio — Creative Design</span>
+    <h2 data-gsap="kinetic-heading" class="font-display text-5xl sm:text-6xl font-bold uppercase tracking-tight text-white leading-[0.95] mb-8">
+      Sobre la marca
+    </h2>
+    <p data-gsap="kinetic-paragraph" class="text-white/85 leading-relaxed max-w-xl mx-auto">
+      {historia}
+    </p>
+    <div class="flex flex-wrap justify-center gap-x-10 gap-y-4 mt-12">
+      {datos.map((dato) => (
+        <span class="font-display text-lg sm:text-xl font-bold uppercase tracking-tight text-white">{dato}</span>
+      ))}
+    </div>
+  </div>
 </section>

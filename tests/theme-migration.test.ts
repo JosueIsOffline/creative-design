@@ -30,15 +30,16 @@ const FORBIDDEN_EVERYWHERE = [
 
 // Hero.astro's CTA icon chip, ProductCard.astro's card-close overlay button
 // and card-whatsapp icon chip, the product-detail page's WhatsApp icon chip,
-// and Services.astro's pinned intro (text over a photo with a fixed dark
-// scrim) intentionally KEEP `bg-brand-black`/`text-white` (see Global
-// Constraints — brand-fixed elements). Only files with no such exception
-// get checked for these two classes.
+// and Services.astro's and About.astro's full-bleed sections (text over a
+// photo with a fixed dark scrim) intentionally KEEP `bg-brand-black`/
+// `text-white` (see Global Constraints — brand-fixed elements). Only files
+// with no such exception get checked for these two classes.
 const FORBIDDEN_NO_BRAND_FIXED_EXCEPTIONS = ['bg-brand-black', 'text-white'];
 const FILES_WITH_BRAND_FIXED_EXCEPTIONS = new Set([
   'src/components/Hero.astro',
   'src/components/ProductCard.astro',
   'src/components/Services.astro',
+  'src/components/About.astro',
   'src/pages/catalogo/[categoria]/[producto].astro',
 ]);
 
