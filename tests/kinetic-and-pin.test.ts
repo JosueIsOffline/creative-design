@@ -21,9 +21,10 @@ describe('kinetic word reveal', () => {
     expect(about).toContain('data-gsap="kinetic-heading"');
   });
 
-  it('scroll-reveal.ts splits and reveals [data-gsap="kinetic-heading"] elements', async () => {
+  it('scroll-reveal.ts splits [data-gsap="kinetic-heading"] elements into characters (not just words)', async () => {
     const src = await read('src/scripts/scroll-reveal.ts');
-    expect(src).toContain("import { splitWords } from './split-text'");
+    expect(src).toContain("import { splitChars } from './split-text'");
+    expect(src).toContain('splitChars(heading)');
     expect(src).toContain('[data-gsap="kinetic-heading"]');
   });
 });

@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { splitWords } from './split-text';
+import { splitChars } from './split-text';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,12 +23,12 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   });
 
   document.querySelectorAll<HTMLElement>('[data-gsap="kinetic-heading"]').forEach((heading) => {
-    const words = splitWords(heading);
-    gsap.from(words, {
+    const chars = splitChars(heading);
+    gsap.from(chars, {
       opacity: 0,
-      y: 16,
-      stagger: 0.04,
-      duration: 0.4,
+      y: 12,
+      stagger: 0.015,
+      duration: 0.35,
       ease: 'power2.out',
       scrollTrigger: {
         trigger: heading,

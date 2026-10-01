@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { wordsOf } from '../src/scripts/split-text';
+import { wordsOf, charsOf } from '../src/scripts/split-text';
 
 describe('wordsOf', () => {
   it('splits text into words', () => {
@@ -17,5 +17,19 @@ describe('wordsOf', () => {
   it('returns an empty array for empty or whitespace-only input', () => {
     expect(wordsOf('')).toEqual([]);
     expect(wordsOf('   ')).toEqual([]);
+  });
+});
+
+describe('charsOf', () => {
+  it('splits a word into individual characters', () => {
+    expect(charsOf('hola')).toEqual(['h', 'o', 'l', 'a']);
+  });
+
+  it('handles accented characters as single units', () => {
+    expect(charsOf('ñoño')).toEqual(['ñ', 'o', 'ñ', 'o']);
+  });
+
+  it('returns an empty array for an empty string', () => {
+    expect(charsOf('')).toEqual([]);
   });
 });
