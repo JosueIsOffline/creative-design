@@ -35,9 +35,10 @@ describe('kinetic word reveal', () => {
 });
 
 describe('Services pinned intro (cinematic header)', () => {
-  it('is excluded from the generic per-card fade (scroll-reveal.ts), so it is not double-animated', async () => {
+  it('editorial list rows (Services, About) are not double-animated by the generic card fade', async () => {
     const src = await read('src/scripts/scroll-reveal.ts');
-    expect(src).toContain("querySelectorAll('.product-card, .valor-card')");
+    expect(src).toContain("querySelectorAll('.product-card')");
+    expect(src, 'should no longer target the retired .valor-card boxed layout').not.toContain('.valor-card');
   });
 
   it('pins the intro and Ken-Burns the background image, desktop + motion-safe only', async () => {
@@ -78,5 +79,25 @@ describe('Services editorial list with cursor-following preview', () => {
     const css = await read('src/styles/global.css');
     expect(src).toContain('film-grain');
     expect(css).toContain('.film-grain');
+  });
+});
+
+describe('About and Catálogo integrated into the editorial/cinematic language', () => {
+  it('About pairs the story with a photo and lists valores as a hairline editorial list (not boxed cards)', async () => {
+    const src = await read('src/components/About.astro');
+    expect(src, 'should show a photo alongside the brand story').toContain('imagen =');
+    expect(src).toContain('valor-row');
+    expect(src, 'should have dropped the old boxed-card layout').not.toContain('valor-card');
+    expect(src).toContain('film-grain');
+  });
+
+  it('Catálogo pages get the same mono-eyebrow + kinetic-heading header treatment', async () => {
+    const index = await read('src/pages/catalogo/index.astro');
+    const category = await read('src/pages/catalogo/[categoria].astro');
+    for (const src of [index, category]) {
+      expect(src).toContain('data-gsap="kinetic-heading"');
+      expect(src).toContain('film-grain');
+      expect(src, 'should keep the mono eyebrow label pattern').toContain('tracking-[0.2em]');
+    }
   });
 });

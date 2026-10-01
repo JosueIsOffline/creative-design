@@ -7,9 +7,9 @@ gsap.registerPlugin(ScrollTrigger);
 const mm = gsap.matchMedia();
 
 mm.add('(prefers-reduced-motion: no-preference)', () => {
-  // .service-card is excluded here — Services.astro pins and reveals its
-  // own cards as a scroll-scrubbed sequence instead of this generic fade.
-  document.querySelectorAll('.product-card, .valor-card').forEach((card) => {
+  // Services and About rows are editorial lists (hairline dividers, no card
+  // box) revealed only through their kinetic-heading titles, not this fade.
+  document.querySelectorAll('.product-card').forEach((card) => {
     gsap.from(card, {
       opacity: 0,
       y: 30,

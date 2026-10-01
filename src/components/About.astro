@@ -1,5 +1,4 @@
 ---
-import { Icon } from 'astro-icon/components';
 interface Valor { numero: string; titulo: string; descripcion: string }
 interface Props { historia: string; valores?: Valor[] }
 const {
@@ -10,21 +9,33 @@ const {
     { numero: '03', titulo: 'Diseño con propósito', descripcion: 'Creatividad que conecta y vende.' },
   ],
 } = Astro.props;
+
+const imagen = 'https://images.unsplash.com/photo-1772442126046-29faff1ad234?auto=format&fit=crop&w=1000&q=80';
 ---
-<section id="sobre-la-marca" class="max-w-2xl mx-auto px-6 py-16 text-center scroll-mt-24">
-  <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold mb-4 text-accent">Sobre la marca</h2>
-  <p class="text-muted leading-relaxed">{historia}</p>
+<section id="sobre-la-marca" class="relative max-w-5xl mx-auto px-6 py-20 lg:py-28 scroll-mt-24">
+  <div class="film-grain"></div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+    <div class="order-2 lg:order-1 text-center lg:text-left">
+      <span class="font-mono text-xs tracking-[0.2em] uppercase text-muted mb-4 block">Estudio — Creative Design</span>
+      <h2 data-gsap="kinetic-heading" class="font-display text-4xl sm:text-5xl font-bold uppercase tracking-tight text-accent leading-[0.95] mb-6">
+        Sobre la marca
+      </h2>
+      <p class="text-muted leading-relaxed max-w-md mx-auto lg:mx-0">{historia}</p>
+    </div>
+    <div class="order-1 lg:order-2 rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-[3/4]">
+      <img src={imagen} alt="" loading="lazy" class="w-full h-full object-cover" />
+    </div>
+  </div>
 </section>
 
-<section class="max-w-5xl mx-auto px-6 pb-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
+<section class="max-w-5xl mx-auto px-6 pb-20 lg:pb-28">
   {valores.map((v) => (
-    <div class="valor-card relative rounded-2xl bg-surface border border-border p-6 text-left">
-      <span class="font-display text-accent text-sm">/{v.numero}</span>
-      <h3 class="font-display text-xl font-bold mt-2">{v.titulo}</h3>
-      <p class="text-muted text-sm mt-2">{v.descripcion}</p>
-      <span class="js-hover-fx mt-4 flex items-center justify-center w-8 h-8 rounded-full border border-border-strong text-accent">
-        <Icon name="line-md:external-link" class="w-4 h-4" />
-      </span>
+    <div class="valor-row border-b border-border py-8 flex items-baseline justify-between gap-6">
+      <div class="flex items-baseline gap-4">
+        <span class="font-mono text-xs text-muted">{v.numero}</span>
+        <h3 class="font-display text-2xl sm:text-3xl font-bold uppercase tracking-tight">{v.titulo}</h3>
+      </div>
+      <p class="hidden sm:block font-mono text-xs text-muted leading-relaxed max-w-xs text-right">{v.descripcion}</p>
     </div>
   ))}
 </section>

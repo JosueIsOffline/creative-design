@@ -28,7 +28,13 @@ const { categoria } = Astro.params;
 const { products, categories, categoryName } = Astro.props;
 ---
 <BaseLayout title={`Catálogo - ${categoryName}`}>
-  <h1 class="text-3xl font-bold px-6 pt-6 text-accent">Catálogo - {categoryName}</h1>
+  <section class="relative max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <div class="film-grain"></div>
+    <span class="font-mono text-xs tracking-[0.2em] uppercase text-muted mb-4 block">Catálogo</span>
+    <h1 data-gsap="kinetic-heading" class="font-display text-4xl sm:text-6xl font-bold uppercase tracking-tight text-accent leading-[0.95]">
+      {categoryName}
+    </h1>
+  </section>
   <CategoryFilter categories={categories} active={categoria ?? null} />
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-6 pb-16">
     {products.map((product) => <ProductCard product={product} />)}
