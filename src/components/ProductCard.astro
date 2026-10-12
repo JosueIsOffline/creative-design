@@ -10,7 +10,7 @@ const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
     <button type="button" class="card-close absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-brand-black/80 text-white flex items-center justify-center cursor-pointer" aria-label="Cerrar">
       <Icon name="line-md:close" class="w-4 h-4" />
     </button>
-    <div class="overflow-hidden rounded-2xl">
+    <div class="relative overflow-hidden rounded-2xl" data-tilt data-spot>
       <img
         src={product.fotos[0]}
         alt={product.nombre}
@@ -27,6 +27,7 @@ const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
       <button
         type="button"
         class="card-add-to-cart mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/40 text-accent text-sm font-medium px-4 py-1.5 hover:bg-accent/10 transition-colors cursor-pointer"
+        data-magnetic
         data-product={JSON.stringify({ slug: product.slug, productoSlug: product.productoSlug, nombre: product.nombre, precio: product.precio, foto: product.fotos[0] })}
       >
         <span class="card-add-label">Agregar al carrito</span>

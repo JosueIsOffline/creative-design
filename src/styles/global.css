@@ -60,6 +60,22 @@ html.is-theme-transition::view-transition-new(root) {
   view-transition-name: theme-icon;
 }
 
+/* Pointer spotlight (see micro-interactions.ts): a soft glow that follows
+   the cursor, positioned via --mx/--my set on pointermove. */
+[data-spot]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), color-mix(in oklab, var(--accent) 25%, transparent), transparent 70%);
+  transition: opacity 0.3s ease;
+}
+
+[data-spot]:hover::after {
+  opacity: 1;
+}
+
 html.is-theme-transition::view-transition-group(theme-icon) {
   animation-duration: 0.15s;
 }

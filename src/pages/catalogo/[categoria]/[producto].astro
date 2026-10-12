@@ -40,6 +40,7 @@ const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
         <button
           type="button"
           class="card-add-to-cart mt-8 inline-flex items-center rounded-full bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 cursor-pointer"
+          data-magnetic
           data-product={JSON.stringify({ slug: product.slug, productoSlug: product.productoSlug, nombre: product.nombre, precio: product.precio, foto: product.fotos[0] })}
         >
           <span class="card-add-label text-brand-black font-medium pr-4">Agregar al carrito</span>
