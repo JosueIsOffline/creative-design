@@ -9,7 +9,7 @@ import ProductCard from '../components/ProductCard.astro';
 import { fetchCatalog } from '../lib/sheets';
 
 const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
-const destacados = products.slice(0, 4);
+const destacados = products.slice(0, 6);
 ---
 <BaseLayout title="Inicio">
   <Hero
@@ -22,16 +22,27 @@ const destacados = products.slice(0, 4);
   <Services />
 
   {destacados.length > 0 && (
-    <section class="max-w-5xl mx-auto px-6 py-16">
-      <div class="flex items-end justify-between mb-8">
-        <h2 class="font-display text-2xl font-semibold text-accent">Destacados</h2>
-        <a href="/catalogo" class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
-          Ver catálogo completo
-          <Icon name="line-md:arrow-right" class="w-3.5 h-3.5" />
-        </a>
+    <section id="destacados" class="relative py-16">
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="flex items-end justify-between mb-8">
+          <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Destacados</h2>
+          <a href="/catalogo" class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
+            Ver catálogo completo
+            <Icon name="line-md:arrow-right" class="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {destacados.map((product) => <ProductCard product={product} />)}
+      <div class="lg:overflow-hidden" data-rail>
+        <div
+          class="flex gap-6 px-6 pb-6 lg:pb-0 overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          data-rail-track
+        >
+          {destacados.map((product) => (
+            <div class="w-[75vw] sm:w-[320px] lg:w-[320px] shrink-0 snap-start">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )}
@@ -41,4 +52,43 @@ const destacados = products.slice(0, 4);
 
 <script>
   import '../scripts/scroll-reveal';
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Destacados rail: on desktop the section pins and vertical scroll drives
+  // the row horizontally (adapted from the Halo reference's WorkRail); on
+  // phones/tablets it's left as a plain swipeable row (data-rail-track's
+  // own overflow-x-auto), which is simpler and feels more native to touch.
+  function mountRail() {
+    document.querySelectorAll<HTMLElement>('[data-rail]').forEach((root) => {
+      if (root.dataset.railMounted) return;
+      root.dataset.railMounted = 'true';
+
+      const track = root.querySelector<HTMLElement>('[data-rail-track]');
+      if (!track) return;
+
+      const mm = gsap.matchMedia();
+      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+        const distance = track.scrollWidth - track.clientWidth;
+        if (distance <= 0) return;
+
+        gsap.to(track, {
+          x: -distance,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: root,
+            start: 'top top',
+            end: `+=${distance}`,
+            pin: true,
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+          },
+        });
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', mountRail);
 </script>
