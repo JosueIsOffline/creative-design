@@ -67,6 +67,27 @@ function setup() {
         },
       });
     });
+
+    // Parallax drift (adapted from the Halo reference's depth()): the
+    // element moves slower/faster than the scroll itself, tied to its
+    // nearest section so the whole backdrop drifts together.
+    document.querySelectorAll<HTMLElement>('[data-depth]').forEach((el) => {
+      const amount = Number(el.dataset.depthAmount ?? 40);
+      gsap.fromTo(
+        el,
+        { y: -amount },
+        {
+          y: amount,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: el.closest('section') ?? el,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+          },
+        }
+      );
+    });
   });
 }
 
