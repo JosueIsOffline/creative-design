@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import Marquee from '../components/Marquee.astro';
 import Services from '../components/Services.astro';
+import Gallery from '../components/Gallery.astro';
 import About from '../components/About.astro';
 import { Icon } from 'astro-icon/components';
 import ProductCard from '../components/ProductCard.astro';
@@ -10,6 +11,7 @@ import { fetchCatalog } from '../lib/sheets';
 
 const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
 const destacados = products.slice(0, 6);
+const galeria = products.slice(0, 8);
 ---
 <BaseLayout title="Inicio">
   <Hero
@@ -46,6 +48,8 @@ const destacados = products.slice(0, 6);
       </div>
     </section>
   )}
+
+  {galeria.length > 0 && <Gallery products={galeria} />}
 
   <About historia="Creative Design, de Ailyn Japa, crea artículos personalizados por sublimación (tazas, camisetas, fundas, llaveros y más) y servicios de diseño gráfico a medida: invitaciones, catálogos, banners y contenido para redes. Creatividad que conecta y vende." />
 </BaseLayout>

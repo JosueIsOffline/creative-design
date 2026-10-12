@@ -1,0 +1,66 @@
+---
+import type { Product } from '../lib/sheets';
+interface Props { products: Product[] }
+const { products } = Astro.props;
+---
+<section class="relative bg-background py-24 lg:py-32 overflow-hidden" data-gallery>
+  <div class="film-grain"></div>
+  <div class="max-w-5xl mx-auto px-6 mb-12 text-center">
+    <span class="font-mono text-xs tracking-[0.2em] uppercase text-muted mb-4 block">Piezas hechas con amor</span>
+    <h2 data-gsap="kinetic-heading" class="font-display text-3xl sm:text-4xl font-bold text-accent">Galería</h2>
+  </div>
+  <div class="relative max-w-6xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-6 lg:gap-10">
+    {products.map((product, i) => (
+      <div
+        class={`rounded-2xl overflow-hidden ${i % 2 === 1 ? 'mt-10 lg:mt-20' : ''}`}
+        data-float
+        data-float-speed={(0.4 + (i % 3) * 0.25).toFixed(2)}
+      >
+        <img
+          src={product.fotos[0]}
+          alt={product.nombre}
+          class="w-full aspect-square object-cover"
+          loading="lazy"
+          onerror="this.onerror=null;this.src='/placeholder.jpg';"
+        />
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Floating gallery: each picture drifts vertically at its own speed as it
+  // crosses the viewport (adapted from the Halo reference's Gallery).
+  function mount() {
+    document.querySelectorAll<HTMLElement>('[data-float]').forEach((el) => {
+      if (el.dataset.floatMounted) return;
+      el.dataset.floatMounted = 'true';
+
+      const mm = gsap.matchMedia();
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        const speed = Number(el.dataset.floatSpeed ?? 0.5);
+        gsap.fromTo(
+          el,
+          { y: 50 * speed },
+          {
+            y: -50 * speed,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+            },
+          }
+        );
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', mount);
+</script>
