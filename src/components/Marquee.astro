@@ -1,0 +1,47 @@
+---
+interface Props { items: string[] }
+const { items } = Astro.props;
+---
+<div class="relative overflow-hidden border-y border-border py-4" data-marquee aria-hidden="true">
+  <div class="flex w-max" data-marquee-track>
+    <div class="flex gap-8 pr-8" data-marquee-group>
+      {items.map((item) => <span class="font-mono text-xs tracking-[0.15em] uppercase text-muted">{item}</span>)}
+    </div>
+    <div class="flex gap-8 pr-8" data-marquee-group>
+      {items.map((item) => <span class="font-mono text-xs tracking-[0.15em] uppercase text-muted">{item}</span>)}
+    </div>
+  </div>
+</div>
+
+<script>
+  import gsap from 'gsap';
+
+  function mount() {
+    document.querySelectorAll<HTMLElement>('[data-marquee]').forEach((root) => {
+      if (root.dataset.marqueeMounted) return;
+      root.dataset.marqueeMounted = 'true';
+
+      const track = root.querySelector<HTMLElement>('[data-marquee-track]');
+      const firstGroup = root.querySelector<HTMLElement>('[data-marquee-group]');
+      if (!track || !firstGroup) return;
+
+      const mm = gsap.matchMedia();
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        const width = firstGroup.getBoundingClientRect().width;
+        const tween = gsap.to(track, { x: -width, duration: 22, ease: 'none', repeat: -1 });
+        root.addEventListener('pointerenter', () => gsap.to(tween, { timeScale: 0.25, duration: 0.4 }));
+        root.addEventListener('pointerleave', () => gsap.to(tween, { timeScale: 1, duration: 0.4 }));
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', mount);
+</script>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    [data-marquee-group]:nth-child(2) {
+      display: none;
+    }
+  }
+</style>

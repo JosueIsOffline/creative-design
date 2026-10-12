@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
+import Marquee from '../components/Marquee.astro';
 import Services from '../components/Services.astro';
 import About from '../components/About.astro';
 import { Icon } from 'astro-icon/components';
@@ -15,6 +16,8 @@ const destacados = products.slice(0, 4);
     nombreMarca="Creative Design"
     frase="Diseño gráfico y sublimación | artículos personalizados y piezas de diseño hechas con amor."
   />
+
+  <Marquee items={['Tazas', 'Vasos', 'Bolsos', 'Fundas', 'Camisetas', 'Llaveros', 'Identidad Visual', 'Flyers', 'Papelería', 'Personalización', 'Sublimación', 'Redes Sociales']} />
 
   <Services />
 
