@@ -15,6 +15,10 @@ const destacados = products.slice(0, 6);
 const galeria = products.slice(0, 8);
 ---
 <BaseLayout title="Inicio">
+  <div id="intro-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center bg-background" data-intro>
+    <span class="font-display text-2xl font-semibold text-accent">Creative Design</span>
+  </div>
+
   <Hero
     nombreMarca="Creative Design"
     frase="Diseño gráfico y sublimación | artículos personalizados y piezas de diseño hechas con amor."
@@ -98,4 +102,50 @@ const galeria = products.slice(0, 8);
   }
 
   document.addEventListener('astro:page-load', mountRail);
+
+  // First-visit intro (adapted from the Halo reference's Intro): a brief
+  // flourish shown once per session, skipped on repeat visits within the
+  // same session and under reduced motion. The overlay starts with the
+  // `hidden` class, so without JavaScript it never shows at all — it is
+  // only ever revealed here, never by default.
+  function mountIntro() {
+    const overlay = document.querySelector<HTMLElement>('[data-intro]');
+    if (!overlay || overlay.dataset.introMounted) return;
+    overlay.dataset.introMounted = 'true';
+
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem('intro-seen') === '1';
+    } catch {
+      // sessionStorage can throw in restrictive private-browsing modes —
+      // treat it as unseen rather than blocking the intro.
+    }
+
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || seen) {
+      overlay.remove();
+      return;
+    }
+
+    try {
+      sessionStorage.setItem('intro-seen', '1');
+    } catch {
+      // Nothing to persist to; the intro still plays once for this load.
+    }
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+
+    gsap
+      .timeline({
+        onComplete: () => {
+          overlay.remove();
+          document.body.style.overflow = '';
+        },
+      })
+      .from(overlay.querySelector('span'), { opacity: 0, scale: 0.9, duration: 0.4, ease: 'power2.out' })
+      .to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.inOut', delay: 0.3 });
+  }
+
+  document.addEventListener('astro:page-load', mountIntro);
 </script>
