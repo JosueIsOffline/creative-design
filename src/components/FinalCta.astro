@@ -1,0 +1,71 @@
+---
+const whatsapp = import.meta.env.WHATSAPP_NUMBER;
+const message = encodeURIComponent('Hola! Quiero hacer una pieza personalizada.');
+---
+<section id="cta-final" class="relative" data-final-cta>
+  <div class="relative lg:h-screen overflow-hidden" data-final-cta-stage>
+    <div
+      class="lg:absolute lg:inset-0 bg-brand-lilac border border-accent flex flex-col items-center justify-center text-center px-8 py-20 rounded-[2rem] lg:rounded-[2rem] max-w-xl lg:max-w-none mx-auto my-10 lg:my-0"
+      data-final-cta-panel
+    >
+      <span class="font-mono text-xs tracking-[0.2em] uppercase text-brand-black/60 mb-4">Creative Design</span>
+      <h2 data-gsap="kinetic-heading" class="font-display text-3xl sm:text-5xl lg:text-6xl font-bold text-brand-black uppercase tracking-tight leading-[0.95]">
+        ¿Creamos tu pieza?
+      </h2>
+      <p class="text-brand-black/80 mt-4 max-w-md">Contanos tu idea y la hacemos realidad, personalizada para vos.</p>
+      <a
+        href={`https://wa.me/${whatsapp}?text=${message}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-magnetic
+        class="mt-8 inline-flex items-center gap-2 rounded-full bg-brand-black text-white px-6 py-3 font-medium hover:opacity-90"
+      >
+        Escribinos por WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Closing plate: grows from a small card to fill the screen as you scroll
+  // through it (adapted from the Halo reference's FinalCta). Desktop +
+  // motion-safe only — on phones it's just a normal, modestly-sized card,
+  // consistent with how this project gates every other pin effect.
+  function mount() {
+    document.querySelectorAll<HTMLElement>('[data-final-cta]').forEach((root) => {
+      if (root.dataset.finalCtaMounted) return;
+      root.dataset.finalCtaMounted = 'true';
+
+      const stage = root.querySelector<HTMLElement>('[data-final-cta-stage]');
+      const panel = root.querySelector<HTMLElement>('[data-final-cta-panel]');
+      if (!stage || !panel) return;
+
+      const mm = gsap.matchMedia();
+      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+        gsap.fromTo(
+          panel,
+          { scale: 0.4, borderRadius: '2rem' },
+          {
+            scale: 1,
+            borderRadius: '0rem',
+            ease: 'none',
+            scrollTrigger: {
+              trigger: stage,
+              start: 'top top',
+              end: '+=80%',
+              pin: true,
+              scrub: 0.6,
+            },
+          }
+        );
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', mount);
+</script>
