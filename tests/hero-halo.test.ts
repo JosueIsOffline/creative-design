@@ -5,6 +5,14 @@ import path from 'node:path';
 const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 
 describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not an adaptation)', () => {
+  it("headlines with the brand name \"Creative Design\", with the cursor-icon standing in for the \"a\" of \"Creative\" (Hero.astro's own trick) — not a generic tagline", async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src).toContain('<span class="sr-only">Creative Design</span>');
+    expect(src).toContain('Cre<svg viewBox="-8 0 32 32" class="panel__cursor"');
+    expect(src).toContain('tive Design');
+    expect(src).toContain('d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z"');
+  });
+
   it('uses the same motion package and scroll-driven math as the reference, not GSAP', async () => {
     const src = await read('src/components/HeroHalo.astro');
     expect(src).toContain("import { animate, scroll, stagger } from 'motion'");
