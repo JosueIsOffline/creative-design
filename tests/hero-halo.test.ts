@@ -21,14 +21,35 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
     expect(src).toContain('root.addEventListener(\'pointermove\'');
   });
 
-  it('scopes the Halo "halo" preset tokens to .show instead of touching the site-wide tokens in global.css', async () => {
+  it("points Halo's token names at this project's own brand colors instead of Halo's violet/lime preset", async () => {
     const src = await read('src/components/HeroHalo.astro');
     expect(src).toContain('.show {');
-    expect(src).toContain('--accent: #C6FF3D');
-    expect(src).toContain('--glow: #7C3AED');
+    expect(
+      src,
+      "the palette must be ours (var(--color-brand-lilac) etc.), not Halo's hardcoded violet/lime hex values"
+    ).not.toContain('#C6FF3D');
+    expect(src).not.toContain('#7C3AED');
+    expect(src).toContain('--accent: var(--color-brand-lilac)');
+    expect(src).toContain('--glow: var(--color-brand-lilac)');
+    expect(src).toContain('--bg: var(--background)');
+    expect(src).toContain('--fg: var(--foreground)');
     const globalCss = await read('src/styles/global.css');
     expect(globalCss, "the site's own global tokens must not be touched by this port").not.toContain('#C6FF3D');
   });
+
+  it(
+    "aliases --bg-2 and --muted through the --color-* theme names, not the bare --surface/--muted names this rule " +
+      "also redeclares for Halo's own CSS (a custom property redeclared in the same rule always wins over an earlier " +
+      "var() reference to the same name, so --bg-2: var(--surface) would silently resolve to Halo's own glass-surface " +
+      "formula instead of our dark surface color — this is the bug that made the identity tile render white-on-white)",
+    async () => {
+      const src = await read('src/components/HeroHalo.astro');
+      expect(src).toContain('--bg-2: var(--color-surface)');
+      expect(src).toContain('--muted: var(--color-muted)');
+      expect(src).not.toContain('--bg-2: var(--surface)');
+      expect(src).not.toContain('--muted: var(--muted)');
+    }
+  );
 
   it('gates the pinned/absolute scene behind the .js marker and reduced motion, matching the reference exactly', async () => {
     const src = await read('src/components/HeroHalo.astro');
