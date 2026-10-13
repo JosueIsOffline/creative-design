@@ -57,9 +57,6 @@ const b = {
 };
 const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8 7.2 12.8 0 12C7.2 11.2 11.2 7.2 12 0Z';
 ---
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;560;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
-
 <section class="show" data-show>
   <div class="show__pin">
     <div class="panel" data-panel>
@@ -264,9 +261,12 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     --line: color-mix(in oklab, var(--fg) 14%, transparent);
     --stage-bg: radial-gradient(80% 70% at 60% 110%, var(--glow-2), var(--glow) 40%, transparent 85%),
       linear-gradient(160deg, color-mix(in oklab, var(--glow) 38%, var(--bg)), color-mix(in oklab, var(--glow) 62%, var(--bg)));
-    --display: 'Inter Tight', system-ui, sans-serif;
-    --text: 'Inter Tight', system-ui, sans-serif;
-    --label: 'JetBrains Mono', ui-monospace, monospace;
+    /* Space Grotesk is already loaded site-wide (global.css) and is the
+       body's own font (BaseLayout's <body> carries font-display) — so
+       --text uses it too, matching how the rest of the site reads. */
+    --display: var(--font-display);
+    --text: var(--font-display);
+    --label: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     --r: 20px; --r-sm: 999px; --r-lg: 28px;
     --dur-1: 400ms;
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

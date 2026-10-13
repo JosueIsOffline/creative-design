@@ -37,6 +37,15 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
     expect(globalCss, "the site's own global tokens must not be touched by this port").not.toContain('#C6FF3D');
   });
 
+  it("uses this project's own fonts (Space Grotesk, already loaded site-wide) instead of Halo's Inter Tight / JetBrains Mono", async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src, "Inter Tight / JetBrains Mono were only needed for Halo's own fonts").not.toContain('Inter Tight');
+    expect(src).not.toContain('JetBrains Mono');
+    expect(src, 'a separate Google Fonts <link> is unneeded now — Space Grotesk is already loaded by global.css').not.toContain('fonts.googleapis.com');
+    expect(src).toContain('--display: var(--font-display)');
+    expect(src).toContain('--text: var(--font-display)');
+  });
+
   it(
     "aliases --bg-2 and --muted through the --color-* theme names, not the bare --surface/--muted names this rule " +
       "also redeclares for Halo's own CSS (a custom property redeclared in the same rule always wins over an earlier " +
