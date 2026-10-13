@@ -13,6 +13,14 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
     expect(src).toContain('d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z"');
   });
 
+  it('drags the cursor icon off as the headline fades, on scroll — the cursor "does something" instead of just fading with the text', async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src).toContain('data-cursor');
+    expect(src).toContain("const cursorIcon = root.querySelector<SVGElement>('[data-cursor]')");
+    expect(src).toContain('const drag = out(seg(m, 0, 0.3))');
+    expect(src).toContain('cursorIcon.style.transform = `translate(${drag * 20}px, ${drag * 16}px) rotate(${-14 * drag}deg) scale(${mix(1, 0.75, drag)})`');
+  });
+
   it('uses the same motion package and scroll-driven math as the reference, not GSAP', async () => {
     const src = await read('src/components/HeroHalo.astro');
     expect(src).toContain("import { animate, scroll, stagger } from 'motion'");

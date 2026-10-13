@@ -48,7 +48,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
           <span data-line>
             <span class="sr-only">Creative Design</span>
             <span aria-hidden="true">
-              Cre<svg viewBox="-8 0 32 32" class="panel__cursor" fill="none">
+              Cre<svg viewBox="-8 0 32 32" class="panel__cursor" data-cursor fill="none">
                 <g transform="rotate(-1 12.5 20.5)">
                   <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
                   <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
@@ -137,6 +137,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     if (reduced()) continue;
     const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
     const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), fill = $('[data-fill]'), stage = $('.stage');
+    const cursorIcon = root.querySelector<SVGElement>('[data-cursor]');
     const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
     const late = root.querySelectorAll<HTMLElement>('[data-late]');
     const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
@@ -199,6 +200,13 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       });
 
       copy.forEach((c) => { const o = 1 - seg(m, 0, 0.3); c.style.opacity = String(o); c.style.visibility = o > 0 ? '' : 'hidden'; }); // hidden = out of the Tab order too
+      // The cursor standing in for the "a" of "Creative" drags itself off as the
+      // headline fades — same 0 -> 0.3 window — as if it were the thing pulling
+      // the panel open to reveal the card underneath.
+      if (cursorIcon) {
+        const drag = out(seg(m, 0, 0.3));
+        cursorIcon.style.transform = `translate(${drag * 20}px, ${drag * 16}px) rotate(${-14 * drag}deg) scale(${mix(1, 0.75, drag)})`;
+      }
       const co = seg(m, 0.85, 1);
       cap.style.opacity = String(co); cap.style.translate = `0 ${16 * (1 - co)}px`;
       fill.style.transform = `scaleX(${seg(now, SETTLE[0], FIRST + 3 * EVERY + LAND)})`;
@@ -302,7 +310,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   .panel__title { position: relative; z-index: 2; --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
   .panel__title em { font-style: normal; color: color-mix(in oklab, var(--glow-2) 70%, var(--fg)); }
   /* The cursor icon standing in for the "a" of "Creative" — Hero.astro's own trick, ported as-is. */
-  .panel__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); }
+  .panel__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); transform-origin: 50% 50%; will-change: transform; }
   .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
   .panel__line > span { display: inline-block; }
   .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }
