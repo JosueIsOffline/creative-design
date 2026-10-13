@@ -21,26 +21,35 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
     expect(src).toContain('cursorIcon.style.transform = `translate(${drag * 20}px, ${drag * 16}px) rotate(${-14 * drag}deg) scale(${mix(1, 0.75, drag)})`');
   });
 
-  it('the cursor taps each board piece as its own caption takes over, instead of only appearing once at the start', async () => {
+  it('the cursor drags each board piece from the shared centre to its own slot, instead of just tapping it after the fact', async () => {
     const src = await read('src/components/HeroHalo.astro');
-    expect(src).toContain('data-click');
-    expect(src).toContain("const clickMark = root.querySelector<HTMLElement>('[data-click]')");
-    expect(
-      src,
-      'a bug this test guards: the card can flash as "arrived" mid-flight (s===0 while still animating in) before it settles — arrived must require settled for s===0'
-    ).toContain('const arrived = s !== step && (s > 0 || settled)');
-    expect(src).toContain("animate(clickMark, { scale: [0, 1.15, 1, 0], opacity: [0, 1, 1, 0] }, { duration: 0.7, ease: 'easeOut' })");
+    expect(src).toContain('data-drag-cursor');
+    expect(src).toContain("const dragCursor = root.querySelector<HTMLElement>('[data-drag-cursor]')");
+    expect(src, 'the card rides B (settle progress); each tile rides its own landing T — both from the same shared centre point').toContain(
+      'const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND))'
+    );
+    expect(src).toContain('const dx = mix(center.x, to.x, travelP), dy = mix(center.y, to.y, travelP)');
+  });
+
+  it("computes every piece's resting centre once in measure(), not every frame, and shares the same centre point every piece already flies in from (home/from[])", async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src).toContain('cardFinal = { x: card.offsetLeft + cw / 2, y: card.offsetTop + ch / 2 }');
+    expect(src).toContain('tileFinals = tiles.map((el) => ({ x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }))');
+    expect(src).toContain('center = { x: W / 2, y: H / 2 }');
   });
 
   it(
-    "rests the click-mark at transform: scale(0), not the standalone scale property (a bug found in review — " +
-      "motion's animate() writes scale keyframes to transform, and `transform` and the standalone `scale` property " +
-      "compose/multiply rather than one overriding the other, so `scale: 0` here would permanently zero the element " +
-      "no matter what the animation sets `transform` to, and the pulse would never actually become visible)",
+    "keeps the drag-cursor's centring on the CSS `translate` property, separate from the `transform` the script " +
+      "sets every frame for rotate/scale (a bug found in review on the previous version of this element: motion's " +
+      "animate() wrote scale to `transform`, which composes with — doesn't override — a standalone `scale` CSS " +
+      "property, so a rest value there permanently zeroed the element regardless of what the animation did; keeping " +
+      "`transform` as the single owner of rotate/scale here, with centring on the separate `translate` property, " +
+      "avoids that class of bug entirely)",
     async () => {
       const src = await read('src/components/HeroHalo.astro');
-      expect(src).toContain('transform: scale(0)');
+      expect(src).toContain('translate: -50% -50%; opacity: 0; pointer-events: none; color: var(--accent);');
       expect(src).not.toContain('scale: 0;');
+      expect(src).toContain('dragCursor.style.transform = `rotate(${lean * 14 * (1 - travelP)}deg) scale(${squeeze})`');
     }
   );
 

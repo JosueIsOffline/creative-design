@@ -111,9 +111,11 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       </div>
     </div>
 
-    <!-- The cursor from the headline reappears here, tapping each piece of
-         the board as its own caption becomes active — it leads the story. -->
-    <div class="click-mark" data-click aria-hidden="true">
+    <!-- The cursor from the headline reappears here and drags each board
+         piece into place — travelling from the centre to the card, then
+         from the card's spot to each tile's, in step with its own landing
+         progress. It's the one telling the story, not just reacting to it. -->
+    <div class="drag-cursor" data-drag-cursor aria-hidden="true">
       <svg viewBox="-8 0 32 32"><path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" /></svg>
     </div>
   </div>
@@ -144,7 +146,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
     const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), fill = $('[data-fill]'), stage = $('.stage');
     const cursorIcon = root.querySelector<SVGElement>('[data-cursor]');
-    const clickMark = root.querySelector<HTMLElement>('[data-click]');
+    const dragCursor = root.querySelector<HTMLElement>('[data-drag-cursor]');
     const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
     const late = root.querySelectorAll<HTMLElement>('[data-late]');
     const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
@@ -155,9 +157,16 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     // Sizes. The card's own box is its small place on the board; in the hero it is scaled up (big) and moved to the centre.
     let phone = false, big = 1, home = { x: 0, y: 0 }, rest = { x: 0, y: 0, s: 1 }, crop = { x: 0, y: 0 }, radius = 20;
     let from: { x: number; y: number }[] = [], peekScale = 1;
+    // Where the drag-cursor travels to: every piece starts from this shared
+    // centre point (that's what `home` / `from[]` already fly them in from)
+    // and ends at its own resting slot — the cursor rides the same path.
+    let center = { x: 0, y: 0 }, cardFinal = { x: 0, y: 0 }, tileFinals: { x: number; y: number }[] = [];
     const measure = () => {
       phone = innerWidth < 810;
       const W = stage.offsetWidth, H = stage.offsetHeight, cw = card.offsetWidth, ch = card.offsetHeight;
+      center = { x: W / 2, y: H / 2 };
+      cardFinal = { x: card.offsetLeft + cw / 2, y: card.offsetTop + ch / 2 };
+      tileFinals = tiles.map((el) => ({ x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }));
       const bigW = phone ? Math.min(0.66 * W, 0.42 * H) : Math.min(0.36 * W, 0.51 * H);
       big = bigW / cw;
       home = { x: W / 2 - (card.offsetLeft + cw / 2), y: H / 2 - (card.offsetTop + ch / 2) };
@@ -216,23 +225,35 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       }
       const co = seg(m, 0.85, 1);
       cap.style.opacity = String(co); cap.style.translate = `0 ${16 * (1 - co)}px`;
-      fill.style.transform = `scaleX(${seg(now, SETTLE[0], FIRST + 3 * EVERY + LAND)})`;
+      const lastLand = FIRST + 3 * EVERY + LAND;
+      fill.style.transform = `scaleX(${seg(now, SETTLE[0], lastLand)})`;
       late.forEach((l) => { const o = seg(now, 0.9, 0.96); l.style.opacity = String(o); l.style.pointerEvents = o > 0.5 ? '' : 'none'; l.style.visibility = o > 0 ? '' : 'hidden'; });
       const s = now < FIRST + LAND / 2 ? 0 : Math.min(tiles.length, Math.floor((now - FIRST - LAND / 2) / EVERY) + 1);
       const settled = now > SETTLE[1] - 0.02;
       if (s !== step || lit[0].classList.contains('is-lit') !== (settled && s === 0)) {
-        const arrived = s !== step && (s > 0 || settled); // the card only counts once it's actually settled, not mid-flight
         step = s;
         steps.forEach((li, i) => li.classList.toggle('is-on', i === s));
         lit.forEach((el, i) => el.classList.toggle('is-lit', i === s && settled));
-        // The same cursor taps each piece as its caption takes over — the
-        // story has one guide throughout, not just an opening flourish.
-        if (arrived && clickMark && lit[s]) {
-          const r = lit[s].getBoundingClientRect();
-          clickMark.style.left = `${r.left + r.width / 2}px`;
-          clickMark.style.top = `${r.top + r.height / 2}px`;
-          animate(clickMark, { scale: [0, 1.15, 1, 0], opacity: [0, 1, 1, 0] }, { duration: 0.7, ease: 'easeOut' });
-        }
+      }
+
+      // The cursor drags each piece from the shared centre to its own slot:
+      // the card first (riding B, the settle progress), then each tile in
+      // turn (riding its own landing T) — it's what's moving them, not a
+      // marker reacting after the fact.
+      if (dragCursor) {
+        const atCard = s === 0;
+        const i = atCard ? -1 : s - 1;
+        const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND));
+        const to = atCard ? cardFinal : tileFinals[i];
+        const dx = mix(center.x, to.x, travelP), dy = mix(center.y, to.y, travelP);
+        const lean = to.x > center.x ? 1 : -1;
+        const squeeze = 1 + 0.18 * Math.sin(Math.PI * clamp(travelP));
+        const overall = seg(now, SETTLE[0], lastLand); // fades in once dragging starts, out once the last piece lands
+        const visible = seg(overall, 0, 0.05) * (1 - seg(overall, 0.95, 1));
+        dragCursor.style.left = `${dx}px`;
+        dragCursor.style.top = `${dy}px`;
+        dragCursor.style.opacity = String(visible);
+        dragCursor.style.transform = `rotate(${lean * 14 * (1 - travelP)}deg) scale(${squeeze})`;
       }
     };
     // Scroll sets the target; the scene eases toward it every frame, so wheel steps glide like a smooth scroll.
@@ -332,20 +353,16 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   /* The cursor icon standing in for the "a" of "Creative" — Hero.astro's own trick, ported as-is. */
   .panel__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); transform-origin: 50% 50%; will-change: transform; }
 
-  /* The cursor's second appearance: a brief tap on whichever piece the
-     caption is currently telling you about. Positioned in JS (left/top,
-     viewport coordinates), animated in JS (motion's animate()) — this
-     rule only sets its rest/shape. */
-  .click-mark {
+  /* The cursor's second life: it drags each piece from the centre to its
+     own slot (render()'s dragCursor block positions/rotates/scales it
+     every frame). `translate` handles the -50%/-50% centring on its own
+     left/top point, independently of the `transform` the script sets each
+     frame — the two compose rather than collide, unlike `scale` would. */
+  .drag-cursor {
     position: fixed; top: 0; left: 0; z-index: 5; width: 28px; height: 28px;
-    /* Rest scale lives on `transform`, not the standalone `scale` property —
-       motion's animate() writes scale keyframes to `transform`, and the two
-       compose (multiply) rather than one overriding the other, so a
-       standalone `scale: 0` here would permanently zero the element no
-       matter what `transform` animates to. */
-    translate: -50% -50%; opacity: 0; transform: scale(0); pointer-events: none; color: var(--accent);
+    translate: -50% -50%; opacity: 0; pointer-events: none; color: var(--accent);
   }
-  .click-mark svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 2px 6px color-mix(in oklab, var(--bg) 60%, transparent)); }
+  .drag-cursor svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 2px 6px color-mix(in oklab, var(--bg) 60%, transparent)); }
   .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
   .panel__line > span { display: inline-block; }
   .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }
