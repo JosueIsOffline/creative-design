@@ -1,0 +1,392 @@
+---
+// A faithful port of the Halo reference template's HeroDeck.astro: same
+// math, same CSS, same structure — only the content changed. Halo's own
+// tokens are scoped to .show below so the rest of the site keeps its own
+// brand tokens untouched; HeroStory.astro stays in the codebase, on hold,
+// in case we go back to it.
+import { Icon } from 'astro-icon/components';
+import { Image } from 'astro:assets';
+import catalogoPreview from '../assets/hero/catalogo-preview.jpg';
+import sublimationSvg from '../../tools/heat-press-figure/figure.svg?raw';
+import designSvg from '../../tools/design-figure/figure.svg?raw';
+import packagingSvg from '../../tools/packaging-figure/figure.svg?raw';
+
+// Ported verbatim from Halo's src/lib/format.ts (splitTitle).
+type Part = { text: string; em?: boolean };
+function splitTitle(s: string): Part[] {
+  const out: Part[] = [];
+  const re = /\*([^*]+)\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s))) {
+    if (m.index > last) out.push({ text: s.slice(last, m.index) });
+    out.push({ text: m[1], em: true });
+    last = re.lastIndex;
+  }
+  if (last < s.length) out.push({ text: s.slice(last) });
+  return out;
+}
+
+const whatsapp = import.meta.env.WHATSAPP_NUMBER;
+const waMessage = encodeURIComponent('Hola! Quiero más información sobre Creative Design.');
+
+const h = {
+  title: ['Diseño y sublimación', 'hechos con *amor*.'],
+  lead: 'Creative Design, de Ailyn Japa: artículos personalizados por sublimación y piezas de diseño gráfico a medida.',
+  button: 'Ver catálogo',
+  href: '/catalogo',
+  button2: 'Escribinos',
+  href2: `https://wa.me/${whatsapp}?text=${waMessage}`,
+  art: 'Prensa de sublimación, ilustración isométrica',
+};
+
+const b = {
+  identity: { label: 'Identidad', name: 'Creative Design', type: 'Space Grotesk' },
+  packaging: { label: 'Empaquetado', line: 'Lista para entregar' },
+  design: { label: 'Diseño', line: 'Antes de imprimir' },
+  web: { label: 'Catálogo', url: '/catalogo', line: 'Todo en un clic' },
+  steps: [
+    { day: '01', text: 'Cada pieza nace del calor y la presión.' },
+    { day: '02', text: 'Tu marca, tu estilo, en cada detalle.' },
+    { day: '03', text: 'Lista para sorprender, lista para entregar.' },
+    { day: '04', text: 'Ideas que cobran forma antes de imprimirse.' },
+    { day: '05', text: 'Todo tu catálogo, a un clic de distancia.' },
+  ],
+  button: 'Ver catálogo completo',
+  href: '/catalogo',
+};
+const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8 7.2 12.8 0 12C7.2 11.2 11.2 7.2 12 0Z';
+---
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;560;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+
+<section class="show" data-show>
+  <div class="show__pin">
+    <div class="panel" data-panel>
+      <h1 class="panel__title display" data-copy>
+        {h.title.map((line) => (
+          <span class="panel__line"><span data-line>{splitTitle(line).map((p) => (p.em ? <em>{p.text}</em> : p.text))}</span></span>
+        ))}
+      </h1>
+      <div class="panel__foot" data-copy data-in>
+        <p class="panel__lead">{h.lead}</p>
+        <div class="panel__cta">
+          <a class="btn btn--solid" href={h.href}>{h.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
+          <a class="btn" href={h.href2} target="_blank" rel="noopener">{h.button2}</a>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="sr">Cómo trabajamos</h2>
+    <div class="stage">
+      <div class="board">
+        <article class="tile tile--id" data-tile>
+          <p class="tile__label">{b.identity.label}</p>
+          <p class="tile__mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={star} /></svg>{b.identity.name}</p>
+          <div class="tile__row" aria-hidden="true"><span class="tile__swatches"><i></i><i></i><i></i><i></i></span><span class="tile__aa">{b.identity.type}</span></div>
+        </article>
+        <article class="key" data-card>
+          <div class="anatomy-figure iso key__figure" data-theme="dark" aria-label={h.art}><Fragment set:html={sublimationSvg} /></div>
+        </article>
+        <article class="tile tile--ad on-photo" data-tile>
+          <div class="anatomy-figure iso tile__figure" data-theme="dark"><Fragment set:html={packagingSvg} /></div>
+          <p class="tile__label">{b.packaging.label}</p>
+          <p class="tile__line">{b.packaging.line}</p>
+        </article>
+        <article class="tile tile--film on-photo" data-tile>
+          <div class="anatomy-figure iso tile__figure" data-theme="dark"><Fragment set:html={designSvg} /></div>
+          <p class="tile__label">{b.design.label}</p>
+          <p class="tile__line">{b.design.line}</p>
+        </article>
+        <article class="tile tile--web" data-tile>
+          <p class="tile__bar"><span class="tile__label">{b.web.label}</span><span class="tile__url">{b.web.url}</span></p>
+          <div class="tile__page on-photo">
+            <Image src={catalogoPreview} alt="Vista previa del catálogo" fill sizes="(max-width: 809px) 60vw, 480px" />
+            <p class="tile__line">{b.web.line}</p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="cap" data-cap>
+      <ol class="cap__steps">
+        {b.steps.map((s) => <li data-step><span class="cap__day label">{s.day}</span><span class="cap__text">{s.text}</span></li>)}
+      </ol>
+      <div class="cap__rail" aria-hidden="true"><i data-fill></i></div>
+      <div class="cap__cta" data-late>
+        <a class="btn" href={b.href}>{b.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { animate, scroll, stagger } from 'motion';
+
+  // Ported from Halo's src/scripts/motion.ts — only the two helpers this
+  // component actually uses (the rest of that file is site-wide hover/
+  // reveal/parallax helpers this component doesn't need).
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
+
+  const clamp = (x: number) => Math.min(1, Math.max(0, x));
+  const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a)); // 0→1 while p runs from a to b
+  const inOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+  const out = (x: number) => 1 - (1 - x) ** 4;
+  const mix = (a: number, b: number, k: number) => a + (b - a) * k;
+
+  // The scene's timeline (share of the pinned scroll): the panel becomes the card, the card settles, a tile lands per step.
+  const MORPH = [0.02, 0.24], SETTLE = [0.28, 0.42], FIRST = 0.4, EVERY = 0.12, LAND = 0.14;
+  // Where the two front tiles peek out from behind the portrait in the hero (in card widths / heights) and how they lean.
+  const PEEK = [{ x: -0.5, y: -0.2, r: -10 }, { x: 0.52, y: 0.16, r: 9 }];
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-show]')) {
+    if (reduced()) continue;
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), fill = $('[data-fill]'), stage = $('.stage');
+    const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
+    const late = root.querySelectorAll<HTMLElement>('[data-late]');
+    const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
+    const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
+    const lit = [card, ...tiles];
+    const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    // Sizes. The card's own box is its small place on the board; in the hero it is scaled up (big) and moved to the centre.
+    let phone = false, big = 1, home = { x: 0, y: 0 }, rest = { x: 0, y: 0, s: 1 }, crop = { x: 0, y: 0 }, radius = 20;
+    let from: { x: number; y: number }[] = [], peekScale = 1;
+    const measure = () => {
+      phone = innerWidth < 810;
+      const W = stage.offsetWidth, H = stage.offsetHeight, cw = card.offsetWidth, ch = card.offsetHeight;
+      const bigW = phone ? Math.min(0.66 * W, 0.42 * H) : Math.min(0.36 * W, 0.51 * H);
+      big = bigW / cw;
+      home = { x: W / 2 - (card.offsetLeft + cw / 2), y: H / 2 - (card.offsetTop + ch / 2) };
+      rest = { x: W * 0.1, y: H * 0.03, s: 0.84 };
+      if (phone) { // on phones the card rests in the gap between the headline and the lead, as big as the gap allows
+        const title = panel.querySelector<HTMLElement>('.panel__title')!, foot = panel.querySelector<HTMLElement>('.panel__foot')!;
+        const top = title.offsetTop + title.offsetHeight, gap = foot.offsetTop - top;
+        rest = { x: W * 0.2, y: panel.offsetTop + top + gap / 2 - H / 2, s: Math.max(0.3, Math.min(0.56, (gap - 24) / (ch * big))) };
+      }
+      crop = { x: (panel.offsetWidth - bigW) / 2, y: (panel.offsetHeight - ch * big) / 2 };
+      radius = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 20;
+      from = tiles.map((el) => ({ x: W / 2 - (el.offsetLeft + el.offsetWidth / 2), y: H / 2 - (el.offsetTop + el.offsetHeight / 2) }));
+      peekScale = (bigW * rest.s * 0.8) / tiles[0].offsetWidth;
+    };
+
+    let open = 0; // the entrance: the panel opens from its centre
+    let target = 0, now = 0, raf = 0;
+    const ptr = { x: 0, y: 0, tx: 0, ty: 0 }; // pointer, -0.5 … 0.5 from the centre of the screen
+    let step = -1;
+    const render = () => {
+      const m = seg(now, MORPH[0], MORPH[1]), e = inOut(m); // the morph: panel → card
+      const k = inOut(seg(m, 0.08, 0.82));                  // how far the panel has cropped around the card
+      const turn = Math.sin(Math.PI * e);                    // 0 → 1 → 0: the turn swings out and back
+      const rz = 30 * turn, rx = 12 * turn, grow = 1 + 0.06 * turn;
+      const B = inOut(seg(now, SETTLE[0], SETTLE[1]));       // the card leaves the centre for its place on the board
+      const calm = 1 - seg(m, 0, 0.3);                       // pointer depth only while the hero is at rest
+
+      const ix = mix(crop.x, 0.2 * panel.offsetWidth, 1 - open), iy = mix(crop.y, 0.3 * panel.offsetHeight, 1 - open);
+      panel.style.clipPath = `inset(${iy * Math.max(k, 1 - open)}px ${ix * Math.max(k, 1 - open)}px round ${mix(28, radius * big, k)}px)`;
+      panel.style.transform = `rotateX(${rx}deg) rotateZ(${rz}deg) scale(${grow})`;
+      panel.style.opacity = String(1 - seg(m, 0.9, 1)); // hidden once the card fully covers it
+
+      const cx = home.x * (1 - B) + rest.x * (1 - k) + ptr.x * 14 * calm, cy = home.y * (1 - B) + rest.y * (1 - k) + ptr.y * 10 * calm;
+      card.style.transform = `translate3d(${cx}px, ${cy}px, 0) rotateX(${rx - ptr.y * 5 * calm}deg) rotateY(${ptr.x * 7 * calm}deg) rotateZ(${rz}deg) scale(${grow * mix(big * mix(rest.s, 1, k), 1, B)})`;
+
+      tiles.forEach((el, i) => {
+        const a = FIRST + i * EVERY, T = out(seg(now, a, a + LAND));
+        const peek = PEEK[i], show = peek && !phone ? calm * open : 0;
+        if (T > 0 || !show) { // on its way to (or at) its place on the board
+          el.style.transform = `translate3d(${from[i].x * (1 - T)}px, ${from[i].y * (1 - T)}px, 0) rotate(${(i % 2 ? 7 : -7) * (1 - T)}deg) scale(${mix(0.55, 1, T)})`;
+          el.style.opacity = String(seg(T, 0, 0.35));
+        } else { // tucked behind the portrait in the hero, leaning out at the sides
+          const bw = card.offsetWidth * big * rest.s, bh = card.offsetHeight * big * rest.s, d = i ? 1 : -1;
+          el.style.transform = `translate3d(${from[i].x + rest.x + peek.x * bw * calm + ptr.x * d * 30}px, ${from[i].y + rest.y + peek.y * bh * calm + ptr.y * d * 22}px, 0) rotate(${peek.r * calm}deg) scale(${peekScale})`;
+          el.style.opacity = String(show);
+        }
+      });
+
+      copy.forEach((c) => { const o = 1 - seg(m, 0, 0.3); c.style.opacity = String(o); c.style.visibility = o > 0 ? '' : 'hidden'; }); // hidden = out of the Tab order too
+      const co = seg(m, 0.85, 1);
+      cap.style.opacity = String(co); cap.style.translate = `0 ${16 * (1 - co)}px`;
+      fill.style.transform = `scaleX(${seg(now, SETTLE[0], FIRST + 3 * EVERY + LAND)})`;
+      late.forEach((l) => { const o = seg(now, 0.9, 0.96); l.style.opacity = String(o); l.style.pointerEvents = o > 0.5 ? '' : 'none'; l.style.visibility = o > 0 ? '' : 'hidden'; });
+      const s = now < FIRST + LAND / 2 ? 0 : Math.min(tiles.length, Math.floor((now - FIRST - LAND / 2) / EVERY) + 1);
+      const settled = now > SETTLE[1] - 0.02;
+      if (s !== step || lit[0].classList.contains('is-lit') !== (settled && s === 0)) {
+        step = s;
+        steps.forEach((li, i) => li.classList.toggle('is-on', i === s));
+        lit.forEach((el, i) => el.classList.toggle('is-lit', i === s && settled));
+      }
+    };
+    // Scroll sets the target; the scene eases toward it every frame, so wheel steps glide like a smooth scroll.
+    const tick = () => {
+      now += (target - now) * 0.14;
+      if (Math.abs(target - now) < 0.0004) now = target;
+      ptr.x += (ptr.tx - ptr.x) * 0.08; ptr.y += (ptr.ty - ptr.y) * 0.08;
+      const still = Math.abs(ptr.tx - ptr.x) + Math.abs(ptr.ty - ptr.y) < 0.002;
+      render();
+      raf = now === target && still ? 0 : requestAnimationFrame(tick);
+    };
+    const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    measure(); addEventListener('resize', () => { measure(); render(); });
+    scroll((p: number) => { target = p; wake(); }, { target: root, offset: ['start start', 'end end'] });
+    // Keyboard focus on the late case link: jump to the end of the scene, where it is shown.
+    late.forEach((l) => l.addEventListener('focusin', () => { if (now < 0.96) scrollTo(0, root.offsetTop + root.offsetHeight - innerHeight); }));
+    // Pointer depth on desktop: the portrait and the two tiles behind it shift by different amounts.
+    if (fine) root.addEventListener('pointermove', (ev) => { ptr.tx = ev.clientX / innerWidth - 0.5; ptr.ty = ev.clientY / innerHeight - 0.5; if (now < MORPH[1]) wake(); });
+
+    // Entrance: the panel opens, the lines rise one by one, then the cards and the rest.
+    const delay = 0.1;
+    animate(0, 1, { duration: 0.9, ease: ease.outExpo, delay: delay - 0.1, onUpdate: (v) => { open = v; render(); } });
+    animate(root.querySelectorAll('[data-line]'), { y: ['105%', '0%'] }, { duration: 1.1, ease: ease.outExpo, delay: stagger(0.09, { startDelay: delay + 0.15 }) });
+    animate(card, { opacity: [0, 1] }, { duration: 1.1, ease: ease.outExpo, delay: delay + 0.3 });
+    animate(root.querySelectorAll('[data-in]'), { opacity: [0, 1], y: [24, 0] }, { duration: 1, ease: ease.outExpo, delay: delay + 0.2 });
+  }
+</script>
+
+<style>
+  /* Halo's own "halo" preset tokens and the generic layout tokens HeroDeck's
+     CSS references, scoped to .show only — the rest of the site keeps its
+     own brand tokens (global.css) untouched. Values copied from the
+     reference's src/styles/global.css. */
+  .show {
+    --bg: #07070A; --bg-2: #101016; --fg: #F4F3F8; --muted: #9A98A8;
+    --accent: #C6FF3D; --accent-ink: #07070A;
+    --glow: #7C3AED; --glow-2: #A78BFA;
+    --scrim: rgb(4 4 8 / 0.6);
+    --surface: color-mix(in oklab, var(--fg) 5%, transparent);
+    --line: color-mix(in oklab, var(--fg) 14%, transparent);
+    --stage-bg: radial-gradient(80% 70% at 60% 110%, var(--glow-2), var(--glow) 40%, transparent 85%),
+      linear-gradient(160deg, color-mix(in oklab, var(--glow) 38%, var(--bg)), color-mix(in oklab, var(--glow) 62%, var(--bg)));
+    --display: 'Inter Tight', system-ui, sans-serif;
+    --text: 'Inter Tight', system-ui, sans-serif;
+    --label: 'JetBrains Mono', ui-monospace, monospace;
+    --r: 20px; --r-sm: 999px; --r-lg: 28px;
+    --dur-1: 400ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --gut: clamp(16px, 2.5vw, 32px);
+    --w: 1280px;
+    --head: 72px;
+    --space: clamp(88px, 11vw, 160px);
+    --fs-hero: clamp(3.2rem, 8.4vw, 8.5rem);
+    --gap: 16px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 48px; padding: 0 22px; border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--surface); color: var(--fg); font: 500 15px/1 var(--text); text-decoration: none; white-space: nowrap;
+    transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), scale 200ms var(--ease-out);
+  }
+  .btn--solid { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn:active { scale: 0.97; }
+  .btn .icon { transition: translate var(--dur-1) var(--ease-out); }
+  @media (hover: hover) {
+    .btn:hover { background: color-mix(in oklab, var(--fg) 12%, transparent); border-color: color-mix(in oklab, var(--fg) 30%, transparent); }
+    .btn--solid:hover { background: color-mix(in oklab, var(--accent) 86%, var(--fg)); border-color: transparent; }
+    .btn:hover .icon--after { translate: 3px 0; }
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Light ground around the panel: the page ink, so every preset keeps its contrast. */
+  .show { position: relative; background: var(--fg); color: var(--bg); overflow: clip; }
+  .show__pin { display: grid; gap: clamp(40px, 5vw, 64px); justify-items: center; padding: 12px 12px var(--space); }
+
+  /* The panel */
+  .panel {
+    position: relative; width: 100%; min-height: calc(100svh - 24px); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
+    padding: calc(var(--head) + 20px) clamp(20px, 3vw, 44px) clamp(24px, 3vw, 44px);
+    border-radius: var(--r-lg); background: var(--stage-bg); color: var(--fg);
+  }
+  .panel__title { position: relative; z-index: 2; --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; }
+  .panel__title em { font-style: normal; color: color-mix(in oklab, var(--glow-2) 70%, var(--fg)); }
+  .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
+  .panel__line > span { display: inline-block; }
+  .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }
+  .panel__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 36ch; }
+  .panel__cta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* The board: the portrait in the middle, two tiles either side. Without motion this is simply how it looks. */
+  .stage { width: min(100%, var(--w)); padding-inline: var(--gut); }
+  .board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); grid-template-rows: 1fr 1fr; gap: var(--gap); }
+  .key { grid-area: 1 / 2 / 3 / 3; position: relative; aspect-ratio: 3 / 4; border-radius: var(--r); background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 10%; }
+  .key__figure { width: 100%; height: 100%; }
+  .tile { position: relative; display: flex; flex-direction: column; min-height: 0; padding: clamp(10px, 1.5vw, 22px); border-radius: var(--r); background: var(--bg); color: var(--fg); container-type: inline-size; }
+  .tile--id { grid-area: 1 / 1; } .tile--ad { grid-area: 1 / 3; } .tile--film { grid-area: 2 / 1; } .tile--web { grid-area: 2 / 3; }
+  .tile__figure { position: absolute; inset: 12%; z-index: 0; }
+  /* The ring round whichever piece the caption is talking about. */
+  .key::after, .tile::after { content: ""; position: absolute; inset: -6px; border: 2px solid var(--glow); border-radius: calc(var(--r) + 6px); opacity: 0; transition: opacity var(--dur-1) var(--ease-out); pointer-events: none; }
+  .is-lit::after { opacity: 1; }
+
+  .tile__label { position: relative; z-index: 1; font: 500 max(10px, 4cqi)/1 var(--label); color: color-mix(in oklab, var(--fg) 72%, transparent); }
+  .tile__line { position: relative; z-index: 1; margin-top: auto; font: 560 9.5cqi/1 var(--display); letter-spacing: -0.04em; }
+  .tile--ad::before, .tile--film::before, .tile__page::after { content: ""; position: absolute; z-index: 1; inset: 0; border-radius: inherit; background: linear-gradient(180deg, var(--scrim), transparent 45%, var(--scrim)); pointer-events: none; }
+  /* Identity: the mark and name, the palette and a type sample */
+  .tile--id { background: var(--bg-2); }
+  .tile__mark { display: flex; align-items: center; gap: 0.12em; margin-block: auto; font: 560 20cqi/1 var(--display); letter-spacing: -0.045em; }
+  .tile__mark svg { width: 0.62em; height: 0.62em; fill: currentColor; }
+  .tile__row { display: flex; justify-content: space-between; align-items: center; }
+  .tile__swatches { display: flex; }
+  .tile__swatches i { width: 9cqi; height: 9cqi; border-radius: 50%; border: 1px solid var(--bg-2); background: var(--glow); }
+  .tile__swatches i + i { margin-left: -2.4cqi; }
+  .tile__swatches i:nth-child(2) { background: var(--glow-2); } .tile__swatches i:nth-child(3) { background: var(--accent); } .tile__swatches i:nth-child(4) { background: var(--fg); }
+  .tile__aa { font: 560 9cqi/1 var(--display); letter-spacing: -0.04em; color: var(--muted); }
+  /* Website: a browser bar over the page */
+  .tile--web { padding: 0; }
+  .tile__bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: clamp(8px, 1vw, 14px) clamp(10px, 1.5vw, 22px); }
+  .tile__url { padding: 1.4cqi 4cqi; border: 1px solid var(--line); border-radius: var(--r-sm); font: 500 max(9px, 3.4cqi)/1.2 var(--label); color: var(--muted); }
+  .tile__page { position: relative; flex: 1; display: flex; padding: clamp(10px, 1.5vw, 22px); border-radius: 0 0 var(--r) var(--r); overflow: hidden; }
+  .tile__page :global(img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+  .tile__page .tile__line { z-index: 2; font-size: 8.4cqi; max-width: 12ch; }
+
+  /* The caption */
+  .cap { display: grid; justify-items: center; gap: 20px; width: min(100%, var(--w)); padding-inline: var(--gut); text-align: center; }
+  .cap__steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; text-align: left; }
+  .cap__steps li { display: grid; align-content: start; gap: 8px; }
+  .cap__day { color: color-mix(in oklab, var(--bg) 58%, transparent); }
+  .cap__text { font: 520 clamp(17px, 1.5vw, 21px)/1.2 var(--display); letter-spacing: -0.025em; }
+  .cap__rail { display: none; }
+  .cap__cta :global(.btn) { background: var(--bg); color: var(--fg); border-color: var(--bg); }
+
+  /* Scroll-driven version (JS on, motion allowed): one pinned scene. Set before paint through the .js class, so no jump. */
+  @media (prefers-reduced-motion: no-preference) {
+  :global(.js) .show { height: 460svh; --ch: min(56svh, 40vw); --cw: calc(var(--ch) * 0.75); --th: calc((var(--ch) - var(--gap)) / 2); --tw: calc(var(--th) * 1.45); --caph: 24svh; }
+  :global(.js) .show .show__pin { position: sticky; top: 0; height: 100svh; padding: 0; display: block; perspective: 1400px; }
+  :global(.js) .show .panel { position: absolute; inset: 12px; width: auto; min-height: 0; z-index: 2; clip-path: inset(30% 20% round var(--r-lg)); will-change: transform, clip-path; }
+  :global(.js) .show .stage { position: absolute; inset: 0; z-index: 3; width: auto; padding: calc(var(--head) + 8px) 0 var(--caph); display: grid; place-items: center; perspective: 1400px; pointer-events: none; }
+  :global(.js) .show .board { grid-template-columns: var(--tw) var(--cw) var(--tw); grid-template-rows: var(--th) var(--th); }
+  :global(.js) .show .key { aspect-ratio: auto; z-index: 2; opacity: 0; will-change: transform; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
+  :global(.js) .show .tile { opacity: 0; will-change: transform, opacity; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
+  :global(.js) .show .cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; width: auto; height: var(--caph); align-content: center; gap: 16px; opacity: 0; }
+  :global(.js) .show .cap__steps { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; width: 100%; }
+  /* One caption at a time: the leaving one fades out fast (160ms), the next waits for it before it rises in, so two
+     captions are never readable on top of each other. */
+  :global(.js) .show .cap__steps li { grid-area: 1 / 1; justify-items: center; opacity: 0; translate: 0 12px; transition: opacity 160ms linear, translate 0s 160ms; }
+  :global(.js) .show .cap__steps li.is-on { opacity: 1; translate: 0 0; transition: opacity var(--dur-1) var(--ease-out) 160ms, translate var(--dur-1) var(--ease-out) 160ms; }
+  :global(.js) .show .cap__text { font-size: clamp(22px, 2.8vw, 42px); letter-spacing: -0.035em; }
+  :global(.js) .show .cap__rail { display: block; width: min(240px, 50%); height: 2px; border-radius: 2px; background: color-mix(in oklab, var(--bg) 14%, transparent); overflow: hidden; }
+  :global(.js) .show .cap__rail i { display: block; height: 100%; background: var(--bg); transform-origin: 0 50%; transform: scaleX(0); }
+  :global(.js) .show .cap__cta { position: absolute; right: var(--gut); bottom: max(20px, 3svh); opacity: 0; }
+  :global(.js) .show [data-in] { opacity: 0; }
+  }
+
+  @media (max-width: 809px) {
+    .show { --gap: 10px; }
+    .show__pin { padding: 8px 8px var(--space); }
+    .panel { min-height: calc(100svh - 16px); padding: calc(var(--head) + 4px) 18px 22px; border-radius: 22px; }
+    .panel__title { --size: clamp(2.6rem, 12.5vw, 4rem); }
+    .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto; }
+    .key { grid-area: auto / 1 / auto / -1; order: -1; width: 62%; justify-self: center; }
+    .tile { grid-area: auto; aspect-ratio: 3 / 2; }
+    .cap__steps { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  }
+  @media (max-width: 809px) and (prefers-reduced-motion: no-preference) {
+    :global(.js) .show { --ch: min(33svh, 64vw); --th: 14svh; --caph: 21svh; }
+    :global(.js) .show .panel { inset: 8px; }
+    :global(.js) .show .stage { padding-top: calc(var(--head) + 4px); }
+    :global(.js) .show .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: var(--ch) var(--th) var(--th); width: calc(100% - 32px); }
+    :global(.js) .show .key { width: var(--cw); }
+    :global(.js) .show .tile { aspect-ratio: auto; }
+    :global(.js) .show .cap__cta { position: static; }
+    :global(.js) .show .cap { gap: 10px; align-content: start; }
+  }
+</style>

@@ -98,11 +98,11 @@ describe('HeroStory (Hero as scroll storytelling, ported from the Halo reference
     expect(src).toContain("addEventListener('astro:page-load', mount)");
   });
 
-  it('replaces the direct Hero usage on the home page, and the old standalone SublimationFigure section is gone', async () => {
+  it('is on hold — kept in the codebase but no longer wired into the home page (see HeroHalo instead)', async () => {
     const src = await read('src/pages/index.astro');
-    expect(src).toContain("import HeroStory from '../components/HeroStory.astro'");
-    expect(src).toContain('<HeroStory');
-    expect(src).not.toContain('SublimationFigure');
+    expect(src).not.toContain("components/HeroStory.astro");
+    expect(src).toContain("import HeroHalo from '../components/HeroHalo.astro'");
+    expect(src).toContain('<HeroHalo');
   });
 
   it('Hero.astro keeps a stable id for HeroStory to target from outside', async () => {
