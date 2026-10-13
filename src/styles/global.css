@@ -222,3 +222,146 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+
+/* Styling for every "anatomy" skill figure embedded on the site (the
+   sublimation press, design desk, packaging box — see tools/*-figure/).
+   Scoped under .anatomy-figure, remapped from the kit's default palette
+   to this site's brand colors instead of leaving the kit's own grays. */
+.anatomy-figure.iso {
+  --anatomy-page: transparent;
+  --anatomy-card: transparent;
+  --anatomy-text: rgba(255, 255, 255, 0.6);
+  --anatomy-strong: #ffffff;
+  --anatomy-muted: rgba(255, 255, 255, 0.4);
+  --anatomy-paper: #151216;
+  --anatomy-face: #1c1820;
+  --anatomy-top: #1d1a20;
+  --anatomy-shade-0: #121014;
+  --anatomy-shade-1: #161318;
+  --anatomy-shade-2: #19161c;
+  --anatomy-shade-3: #1d1a20;
+  --anatomy-lit-top: #2a2430;
+  --anatomy-lit-shade: #241f28;
+  --anatomy-hi: #d9a8d9;
+  --anatomy-mid: #6a6470;
+  --anatomy-lo: #3a3640;
+  --anatomy-faint: #28242c;
+  --anatomy-lit: #d9a8d9;
+  --anatomy-halo: #000000;
+  --anatomy-halo-opacity: 0.55;
+  --anatomy-dot: #d9a8d9;
+}
+
+.anatomy-figure .iso-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.anatomy-figure .iso-svg path,
+.anatomy-figure .iso-svg circle {
+  vector-effect: non-scaling-stroke;
+}
+
+.anatomy-figure .iso-fill {
+  fill: var(--anatomy-paper);
+  stroke: none;
+}
+.anatomy-figure .iso-solid[data-lit] > .iso-fill {
+  fill: var(--anatomy-face);
+}
+.anatomy-figure .iso-shade,
+.anatomy-figure .iso-top {
+  stroke: none;
+}
+.anatomy-figure .iso-shade[data-shade='0'] {
+  fill: var(--anatomy-shade-0);
+}
+.anatomy-figure .iso-shade[data-shade='1'] {
+  fill: var(--anatomy-shade-1);
+}
+.anatomy-figure .iso-shade[data-shade='2'] {
+  fill: var(--anatomy-shade-2);
+}
+.anatomy-figure .iso-shade[data-shade='3'] {
+  fill: var(--anatomy-shade-3);
+}
+.anatomy-figure .iso-top {
+  fill: var(--anatomy-top);
+}
+.anatomy-figure .iso-solid[data-lit] > .iso-top {
+  fill: var(--anatomy-lit-top);
+}
+.anatomy-figure .iso-solid[data-lit] > .iso-shade {
+  fill: var(--anatomy-lit-shade);
+}
+.anatomy-figure .iso-solid[data-lit] > .iso-edge {
+  stroke: var(--anatomy-lit);
+}
+.anatomy-figure .iso-halo {
+  fill: var(--anatomy-halo);
+  stroke: none;
+  filter: blur(9px);
+  opacity: var(--anatomy-halo-opacity);
+  transform: translateY(3px);
+}
+.anatomy-figure .iso-line {
+  fill: none;
+  stroke: var(--anatomy-lo);
+  stroke-width: 0.6px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.anatomy-figure .iso-line[data-tone='hi'] {
+  stroke: var(--anatomy-hi);
+}
+.anatomy-figure .iso-line[data-tone='mid'] {
+  stroke: var(--anatomy-mid);
+}
+.anatomy-figure .iso-line[data-tone='lo'] {
+  stroke: var(--anatomy-lo);
+}
+.anatomy-figure .iso-line[data-tone='faint'] {
+  stroke: var(--anatomy-faint);
+}
+.anatomy-figure .iso-line[data-tone='lit'] {
+  stroke: var(--anatomy-lit);
+}
+.anatomy-figure .iso-dots circle {
+  fill: var(--anatomy-dot);
+  stroke: none;
+  opacity: 0.32;
+}
+.anatomy-figure .iso-dots[data-tone='hi'] circle {
+  opacity: 0.85;
+}
+.anatomy-figure .iso-dots[data-tone='mid'] circle {
+  opacity: 0.45;
+}
+.anatomy-figure .iso-dots[data-tone='lo'] circle {
+  opacity: 0.22;
+}
+.anatomy-figure .iso-dots[data-tone='faint'] circle {
+  opacity: 0.12;
+}
+.anatomy-figure .iso-face-text {
+  fill: var(--anatomy-mid);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+.anatomy-figure .iso-face-text[data-tone='hi'] {
+  fill: var(--anatomy-hi);
+}
+.anatomy-figure .iso-face-text[data-tone='lo'] {
+  fill: var(--anatomy-lo);
+}
+.anatomy-figure .iso-face-text[data-tone='faint'] {
+  fill: var(--anatomy-faint);
+}
+.anatomy-figure .iso-face-text[data-tone='lit'] {
+  fill: var(--anatomy-lit);
+}
+.anatomy-figure [data-part='heat-face'] {
+  transition: opacity 0.15s linear;
+}

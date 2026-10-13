@@ -1,0 +1,153 @@
+---
+// Hero as scroll storytelling (inspired by the Halo reference's HeroDeck):
+// three anatomy figures sit behind the Hero's own solid background, tucked
+// into the corners the headline doesn't reach. Moving the cursor over the
+// Hero cuts a peephole (desktop only) that previews them; scrolling fades
+// the cover away for real, settling the three pieces into view with their
+// captions — "despejar el hero con el cursor" before scroll commits to it.
+import Hero from './Hero.astro';
+import sublimationSvg from '../../tools/heat-press-figure/figure.svg?raw';
+import designSvg from '../../tools/design-figure/figure.svg?raw';
+import packagingSvg from '../../tools/packaging-figure/figure.svg?raw';
+
+interface Props { nombreMarca: string; frase: string }
+const { nombreMarca, frase } = Astro.props;
+
+const cards = [
+  { key: 'design', svg: designSvg, label: 'Diseño', corner: 'top-left' },
+  { key: 'packaging', svg: packagingSvg, label: 'Empaquetado', corner: 'top-right' },
+  { key: 'sublimation', svg: sublimationSvg, label: 'Sublimación', corner: 'bottom' },
+];
+---
+<section class="relative" data-hero-story>
+  <div class="relative lg:h-[180vh]" data-hero-stage>
+    <div class="lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden">
+      <div class="absolute inset-0 hidden lg:block" data-hero-board aria-hidden="true">
+        {cards.map((c) => (
+          <div
+            class:list={[
+              'landing-card absolute w-[clamp(180px,16vw,230px)] scale-90',
+              c.corner === 'top-left' && 'top-[14%] left-[5%] translate-y-6',
+              c.corner === 'top-right' && 'top-[14%] right-[5%] translate-y-6',
+              c.corner === 'bottom' && 'bottom-[8%] left-1/2 -translate-x-1/2 translate-y-6',
+            ]}
+            data-landing={c.key}
+          >
+            <div class="anatomy-figure iso" data-theme="dark">
+              <Fragment set:html={c.svg} />
+            </div>
+            <p class="font-mono text-[0.65rem] text-white/60 mt-1 text-center uppercase tracking-[0.15em]">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="relative bg-background" data-hero-cover>
+        <Hero nombreMarca={nombreMarca} frase={frase} />
+      </div>
+    </div>
+  </div>
+
+  <!-- Phones/tablets: no pin, no spotlight — the three pieces just follow in normal flow. -->
+  <div class="lg:hidden px-6 py-16 bg-background">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
+      {cards.map((c) => (
+        <div class="anatomy-figure iso" data-theme="dark">
+          <Fragment set:html={c.svg} />
+          <p class="font-mono text-[0.65rem] text-white/60 mt-1 text-center uppercase tracking-[0.15em]">{c.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  function mount() {
+    const stage = document.querySelector<HTMLElement>('[data-hero-stage]');
+    if (!stage || stage.dataset.heroMounted) return;
+    stage.dataset.heroMounted = 'true';
+
+    const cover = stage.querySelector<HTMLElement>('[data-hero-cover]');
+    const cards = Array.from(stage.querySelectorAll<HTMLElement>('[data-landing]'));
+
+    const mm = gsap.matchMedia();
+
+    mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+      if (!cover) return;
+      // The sticky inner content only stays pinned for (stage height - one
+      // viewport) of scroll — past that it un-sticks and scrolls away on
+      // its own. Scrubbing the animation over the stage's FULL height
+      // (e.g. via 'bottom bottom') desyncs it from the un-stick point, so
+      // the content visibly scrolls out from under a still-mid-animation
+      // state. Matching `end` to that exact range keeps them in lockstep.
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: stage,
+          start: 'top top',
+          end: () => `+=${stage.offsetHeight - window.innerHeight}`,
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+        },
+      });
+      tl.to(cover, { opacity: 0, ease: 'none' }, 0);
+      if (cards.length) {
+        tl.to(cards, { opacity: 1, scale: 1, y: 0, stagger: 0.12, ease: 'none' }, 0.1);
+      }
+    });
+
+    // The peephole: a transparent hole in the Hero's own cover (masked
+    // directly on [data-hero-cover], not a separate overlay — the hole has
+    // to cut through the cover itself to reveal the board behind it). The
+    // radius animates 0 -> 160 on enter so it never just pops into place.
+    mm.add('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)', () => {
+      if (!cover) return;
+      const move = (e: PointerEvent) => {
+        const r = cover.getBoundingClientRect();
+        cover.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        cover.style.setProperty('--my', `${e.clientY - r.top}px`);
+      };
+      const enter = () => gsap.to(cover, { '--radius': 160, duration: 0.4, ease: 'power2.out' });
+      const leave = () => gsap.to(cover, { '--radius': 0, duration: 0.3, ease: 'power2.in' });
+      cover.addEventListener('pointermove', move);
+      cover.addEventListener('pointerenter', enter);
+      cover.addEventListener('pointerleave', leave);
+    });
+  }
+
+  document.addEventListener('astro:page-load', mount);
+</script>
+
+<style>
+  [data-hero-cover] {
+    min-height: 100vh;
+  }
+
+  .landing-card {
+    transition: none;
+  }
+
+  /* The peephole: a transparent hole cut directly in the Hero's cover,
+     following the cursor, that lets the board underneath show through.
+     --radius animates 0 -> 160 on hover (JS) — at 0 every stop in the
+     gradient collapses to ~0px, so the mask is effectively solid (no
+     hole) by default, never showing on load or on touch devices. */
+  [data-hero-cover] {
+    --radius: 0;
+    -webkit-mask-image: radial-gradient(
+      circle calc(var(--radius) * 1px) at var(--mx, 50%) var(--my, 50%),
+      transparent 0,
+      transparent calc((var(--radius) - 40) * 1px),
+      black calc(var(--radius) * 1px)
+    );
+    mask-image: radial-gradient(
+      circle calc(var(--radius) * 1px) at var(--mx, 50%) var(--my, 50%),
+      transparent 0,
+      transparent calc((var(--radius) - 40) * 1px),
+      black calc(var(--radius) * 1px)
+    );
+  }
+</style>
