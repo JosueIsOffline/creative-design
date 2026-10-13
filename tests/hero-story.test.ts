@@ -35,6 +35,23 @@ describe('HeroStory (Hero as scroll storytelling, ported from the Halo reference
     expect(src).toContain('card.style.transform');
   });
 
+  it("fades the panel's own readable content out fast, early in the morph, so it's gone before the dramatic turn/crop slices through it", async () => {
+    const src = await read('src/components/HeroStory.astro');
+    expect(
+      src,
+      'a bug found during review — the headline stayed fully opaque while rotating up to 22deg and being clipped, reading as broken instead of a morph'
+    ).toContain('const copy = Array.from(panel.children)');
+    expect(src).toContain("const textOut = 1 - seg(m, 0, 0.3)");
+  });
+
+  it('crossfades the card in as the headline fades out, instead of showing both fully at rest (the edge-to-edge headline sits right behind the centred card)', async () => {
+    const src = await read('src/components/HeroStory.astro');
+    expect(
+      src,
+      'a bug found in review — the card was opaque from scroll 0, overlapping the full-width headline before any scroll happened'
+    ).toContain("card.style.opacity = String(seg(m, 0, 0.3))");
+  });
+
   it('stages the morph -> settle -> staggered tile landings on one scroll timeline, matching the HeroDeck beat order', async () => {
     const src = await read('src/components/HeroStory.astro');
     expect(src).toContain('const MORPH = [0.02, 0.26]');

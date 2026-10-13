@@ -89,6 +89,12 @@ const [card, ...tiles] = steps;
     const capSteps = Array.from(stage.querySelectorAll<HTMLElement>('[data-step]'));
     if (!panel || !card || !cap || !fill) return;
     const lit = [card, ...tiles];
+    // The Hero's own readable content (headline, chips, subtitle, CTA,
+    // "Desliza" cue) — faded out fast, in the first 30% of the morph, so
+    // it's gone well before the panel's dramatic turn/crop. Without this
+    // the headline stays fully opaque while it rotates and gets sliced by
+    // the shrinking clip-path, which reads as broken rather than a morph.
+    const copy = Array.from(panel.children) as HTMLElement[];
 
     const mm = gsap.matchMedia();
 
@@ -152,9 +158,20 @@ const [card, ...tiles] = steps;
         panel.style.transform = `rotateZ(${rz}deg) scale(${grow})`;
         panel.style.opacity = String(1 - seg(m, 0.9, 1));
 
+        const textOut = 1 - seg(m, 0, 0.3);
+        copy.forEach((c) => {
+          c.style.opacity = String(textOut);
+          c.style.visibility = textOut > 0 ? '' : 'hidden';
+        });
+
         const cx = home.x * (1 - B);
         const cy = home.y * (1 - B);
         card.style.transform = `translate3d(${cx}px, ${cy}px, 0) rotateZ(${rz}deg) scale(${grow * mix(big, 1, B)})`;
+        // The headline spans edge to edge, so at rest it sits right behind
+        // the centred card — this crossfades the two on the same curve
+        // (card in as the headline fades out) instead of letting both show
+        // fully at once and visually collide before any scroll happens.
+        card.style.opacity = String(seg(m, 0, 0.3));
 
         tiles.forEach((el, i) => {
           const a = FIRST + i * EVERY;
