@@ -177,6 +177,41 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   transform: scale(0.95);
 }
 
+/* Floating header pill (adapted from the Halo reference header): glass
+   over the page, hides on scroll-down, reappears on scroll-up, and goes
+   fully solid once the page has scrolled so content passing underneath
+   never reads through it. data-tone="forced-dark" is set by header.ts
+   when the pill is floating over a section that's always a dark photo
+   regardless of the site's light/dark theme (Services' intro, About). */
+#site-header {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#site-header.is-away {
+  transform: translateY(calc(-100% - 24px));
+}
+
+.header-pill {
+  background: color-mix(in oklab, var(--background) 55%, transparent);
+  border-color: var(--border);
+  color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+#site-header.is-scrolled .header-pill {
+  background: var(--background);
+}
+
+#site-header[data-tone="forced-dark"] .header-pill {
+  background: color-mix(in oklab, var(--color-brand-black) 60%, transparent);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+#site-header.is-scrolled[data-tone="forced-dark"] .header-pill {
+  background: color-mix(in oklab, var(--color-brand-black) 92%, transparent);
+}
+
 /* Subtle filmic grain for the Services storytelling section — cheap
    (one SVG noise filter, no asset) and fits a print/sublimation brand. */
 .film-grain {

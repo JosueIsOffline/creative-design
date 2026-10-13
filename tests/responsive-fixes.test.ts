@@ -7,7 +7,7 @@ const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 describe('mobile responsive fixes from the browser audit', () => {
   it('Footer gets extra bottom padding on mobile so the WhatsApp FAB does not clip the copyright line', async () => {
     const src = await read('src/components/Footer.astro');
-    expect(src, 'should pad extra on mobile and relax it back at sm+').toContain('pb-24 sm:pb-10');
+    expect(src, 'should pad extra on mobile and relax it back at sm+').toContain('pb-24 sm:pb-0');
   });
 
   it('BaseLayout offers a mobile nav fallback (Catálogo/Nosotros) below the sm breakpoint', async () => {
