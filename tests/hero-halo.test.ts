@@ -21,6 +21,40 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
     expect(src).toContain('cursorIcon.style.transform = `translate(${drag * 20}px, ${drag * 16}px) rotate(${-14 * drag}deg) scale(${mix(1, 0.75, drag)})`');
   });
 
+  it('the cursor taps each board piece as its own caption takes over, instead of only appearing once at the start', async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src).toContain('data-click');
+    expect(src).toContain("const clickMark = root.querySelector<HTMLElement>('[data-click]')");
+    expect(
+      src,
+      'a bug this test guards: the card can flash as "arrived" mid-flight (s===0 while still animating in) before it settles — arrived must require settled for s===0'
+    ).toContain('const arrived = s !== step && (s > 0 || settled)');
+    expect(src).toContain("animate(clickMark, { scale: [0, 1.15, 1, 0], opacity: [0, 1, 1, 0] }, { duration: 0.7, ease: 'easeOut' })");
+  });
+
+  it(
+    "rests the click-mark at transform: scale(0), not the standalone scale property (a bug found in review — " +
+      "motion's animate() writes scale keyframes to transform, and `transform` and the standalone `scale` property " +
+      "compose/multiply rather than one overriding the other, so `scale: 0` here would permanently zero the element " +
+      "no matter what the animation sets `transform` to, and the pulse would never actually become visible)",
+    async () => {
+      const src = await read('src/components/HeroHalo.astro');
+      expect(src).toContain('transform: scale(0)');
+      expect(src).not.toContain('scale: 0;');
+    }
+  );
+
+  it('tones down the panel background from Halo\'s saturated violet wash to a mostly-dark gradient with a soft accent glow', async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(
+      src,
+      "Halo's own 38%/62% glow mix read as a loud magenta panel against this brand's otherwise sparse accent use"
+    ).not.toContain('color-mix(in oklab, var(--glow) 38%, var(--bg))');
+    expect(src).not.toContain('color-mix(in oklab, var(--glow) 62%, var(--bg))');
+    expect(src).toContain('color-mix(in oklab, var(--glow) 12%, var(--bg))');
+    expect(src).toContain('color-mix(in oklab, var(--glow) 22%, var(--bg))');
+  });
+
   it('uses the same motion package and scroll-driven math as the reference, not GSAP', async () => {
     const src = await read('src/components/HeroHalo.astro');
     expect(src).toContain("import { animate, scroll, stagger } from 'motion'");

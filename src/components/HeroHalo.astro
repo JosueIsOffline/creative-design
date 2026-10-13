@@ -110,6 +110,12 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
         <a class="btn" href={b.href}>{b.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
       </div>
     </div>
+
+    <!-- The cursor from the headline reappears here, tapping each piece of
+         the board as its own caption becomes active — it leads the story. -->
+    <div class="click-mark" data-click aria-hidden="true">
+      <svg viewBox="-8 0 32 32"><path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" /></svg>
+    </div>
   </div>
 </section>
 
@@ -138,6 +144,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
     const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), fill = $('[data-fill]'), stage = $('.stage');
     const cursorIcon = root.querySelector<SVGElement>('[data-cursor]');
+    const clickMark = root.querySelector<HTMLElement>('[data-click]');
     const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
     const late = root.querySelectorAll<HTMLElement>('[data-late]');
     const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
@@ -214,9 +221,18 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       const s = now < FIRST + LAND / 2 ? 0 : Math.min(tiles.length, Math.floor((now - FIRST - LAND / 2) / EVERY) + 1);
       const settled = now > SETTLE[1] - 0.02;
       if (s !== step || lit[0].classList.contains('is-lit') !== (settled && s === 0)) {
+        const arrived = s !== step && (s > 0 || settled); // the card only counts once it's actually settled, not mid-flight
         step = s;
         steps.forEach((li, i) => li.classList.toggle('is-on', i === s));
         lit.forEach((el, i) => el.classList.toggle('is-lit', i === s && settled));
+        // The same cursor taps each piece as its caption takes over — the
+        // story has one guide throughout, not just an opening flourish.
+        if (arrived && clickMark && lit[s]) {
+          const r = lit[s].getBoundingClientRect();
+          clickMark.style.left = `${r.left + r.width / 2}px`;
+          clickMark.style.top = `${r.top + r.height / 2}px`;
+          animate(clickMark, { scale: [0, 1.15, 1, 0], opacity: [0, 1, 1, 0] }, { duration: 0.7, ease: 'easeOut' });
+        }
       }
     };
     // Scroll sets the target; the scene eases toward it every frame, so wheel steps glide like a smooth scroll.
@@ -263,8 +279,12 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     --scrim: color-mix(in oklab, var(--bg) 60%, transparent);
     --surface: color-mix(in oklab, var(--fg) 5%, transparent);
     --line: color-mix(in oklab, var(--fg) 14%, transparent);
-    --stage-bg: radial-gradient(80% 70% at 60% 110%, var(--glow-2), var(--glow) 40%, transparent 85%),
-      linear-gradient(160deg, color-mix(in oklab, var(--glow) 38%, var(--bg)), color-mix(in oklab, var(--glow) 62%, var(--bg)));
+    /* Toned down from Halo's own mix (38%/62% glow) — full violet read as
+       too loud against a brand that otherwise keeps lilac as a sparse
+       accent, not a dominant wash. Mostly our near-black, with a soft
+       lilac glow low-right instead of a saturated purple panel. */
+    --stage-bg: radial-gradient(80% 70% at 60% 110%, color-mix(in oklab, var(--glow-2) 55%, transparent), color-mix(in oklab, var(--glow) 28%, transparent) 40%, transparent 85%),
+      linear-gradient(160deg, color-mix(in oklab, var(--glow) 12%, var(--bg)), color-mix(in oklab, var(--glow) 22%, var(--bg)));
     /* Space Grotesk is already loaded site-wide (global.css) and is the
        body's own font (BaseLayout's <body> carries font-display) — so
        --text uses it too, matching how the rest of the site reads. */
@@ -311,6 +331,21 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   .panel__title em { font-style: normal; color: color-mix(in oklab, var(--glow-2) 70%, var(--fg)); }
   /* The cursor icon standing in for the "a" of "Creative" — Hero.astro's own trick, ported as-is. */
   .panel__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); transform-origin: 50% 50%; will-change: transform; }
+
+  /* The cursor's second appearance: a brief tap on whichever piece the
+     caption is currently telling you about. Positioned in JS (left/top,
+     viewport coordinates), animated in JS (motion's animate()) — this
+     rule only sets its rest/shape. */
+  .click-mark {
+    position: fixed; top: 0; left: 0; z-index: 5; width: 28px; height: 28px;
+    /* Rest scale lives on `transform`, not the standalone `scale` property —
+       motion's animate() writes scale keyframes to `transform`, and the two
+       compose (multiply) rather than one overriding the other, so a
+       standalone `scale: 0` here would permanently zero the element no
+       matter what `transform` animates to. */
+    translate: -50% -50%; opacity: 0; transform: scale(0); pointer-events: none; color: var(--accent);
+  }
+  .click-mark svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 2px 6px color-mix(in oklab, var(--bg) 60%, transparent)); }
   .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
   .panel__line > span { display: inline-block; }
   .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }
