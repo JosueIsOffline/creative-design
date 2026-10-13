@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import Marquee from '../components/Marquee.astro';
 import Services from '../components/Services.astro';
+import SublimationFigure from '../components/SublimationFigure.astro';
 import Gallery from '../components/Gallery.astro';
 import About from '../components/About.astro';
 import FinalCta from '../components/FinalCta.astro';
@@ -27,6 +28,8 @@ const galeria = products.slice(0, 8);
   <Marquee items={['Tazas', 'Vasos', 'Bolsos', 'Fundas', 'Camisetas', 'Llaveros', 'Identidad Visual', 'Flyers', 'Papelería', 'Personalización', 'Sublimación', 'Redes Sociales']} />
 
   <Services />
+
+  <SublimationFigure />
 
   {destacados.length > 0 && (
     <section id="destacados" class="relative py-16">

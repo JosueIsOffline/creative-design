@@ -1,0 +1,315 @@
+---
+// Isometric explainer of the sublimation press cycle (built with the
+// "anatomy" skill — see tools/heat-press-figure/build.mjs for the
+// geometry source and `node build.mjs` to regenerate figure.svg /
+// figure-data.json after any changes there).
+// Vite resolves and inlines these at build time (unlike fs.readFileSync,
+// which breaks in the production build: the compiled component moves
+// into dist/.prerender/chunks/, so an import.meta.url-relative path
+// computed at request time no longer points at tools/).
+import figureSvg from '../../tools/heat-press-figure/figure.svg?raw';
+import { P, OPEN_Z, CLOSED_Z } from '../../tools/heat-press-figure/figure-data.json';
+---
+<section class="relative bg-brand-black py-20 lg:py-28 overflow-hidden" data-nav-theme="dark">
+  <div class="film-grain"></div>
+  <div class="max-w-4xl mx-auto px-6 text-center mb-10">
+    <span class="font-mono text-xs tracking-[0.2em] uppercase text-white/60 mb-4 block">Cómo funciona</span>
+    <h2 data-gsap="kinetic-heading" class="font-display text-3xl sm:text-5xl font-bold uppercase tracking-tight text-white leading-[0.95]">
+      La sublimación
+    </h2>
+    <p class="text-white/70 mt-4 max-w-xl mx-auto">
+      Calor y presión sostenidos pasan la tinta de una hoja impresa a la pieza en blanco — así queda tu diseño fijado para siempre.
+    </p>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-6">
+    <div class="anatomy-figure iso" data-theme="dark" data-press tabindex="0" role="img" aria-label="Animación del ciclo de una prensa de sublimación: cierra, mantiene calor y presión, abre y revela el diseño transferido.">
+      <Fragment set:html={figureSvg} />
+      <p class="anatomy-readout font-mono text-xs text-white/50 mt-3 text-center" data-readout>abierta · 20°C</p>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ P, OPEN_Z, CLOSED_Z }}>
+  // Minimal re-implementation of the anatomy kit's iso()/translateAlong() —
+  // only what's needed to move two parts along Z at runtime, instead of
+  // shipping the ~35KB kit (mostly SVG-string builders we don't need here
+  // since every static path was already baked into figure.svg at build time).
+  const RADIANS = Math.PI / 180;
+  const UNIT = Math.sqrt(1.6);
+
+  function cameraOf({ scale, azimuth, elevation }) {
+    const a = azimuth * RADIANS;
+    const e = elevation * RADIANS;
+    return { sinA: Math.sin(a), cosA: Math.cos(a), sinE: Math.sin(e), cosE: Math.cos(e), k: scale * UNIT };
+  }
+
+  function isoPoint([x, y, z], projection) {
+    const { origin } = projection;
+    const { sinA, cosA, sinE, cosE, k } = cameraOf(projection);
+    return [origin[0] + (x * sinA - y * cosA) * k, origin[1] + ((x * cosA + y * sinA) * sinE - z * cosE) * k];
+  }
+
+  function translateAlong(projection, [dx, dy, dz]) {
+    const o = isoPoint([0, 0, 0], projection);
+    const m = isoPoint([dx, dy, dz], projection);
+    const x = Math.round((m[0] - o[0]) * 100) / 100;
+    const y = Math.round((m[1] - o[1]) * 100) / 100;
+    return `translate(${x} ${y})`;
+  }
+
+  // Press cycle, looped (ms). Heat + pressure + time is the whole idea, so
+  // the hold phase is where the temperature/timer readouts do their work.
+  const PHASES = [
+    { name: 'open', duration: 1400 },
+    { name: 'closing', duration: 700 },
+    { name: 'pressing', duration: 1900 },
+    { name: 'opening', duration: 700 },
+    { name: 'revealing', duration: 800 },
+    { name: 'revealed', duration: 1500 },
+    { name: 'resetting', duration: 600 },
+  ];
+  const TOTAL = PHASES.reduce((sum, p) => sum + p.duration, 0);
+  const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+  function phaseAt(elapsed) {
+    let t = elapsed % TOTAL;
+    for (const phase of PHASES) {
+      if (t < phase.duration) return { name: phase.name, progress: t / phase.duration };
+      t -= phase.duration;
+    }
+    return { name: 'open', progress: 0 };
+  }
+
+  function mount() {
+    const stage = document.querySelector('[data-press]');
+    if (!stage || stage.dataset.pressMounted) return;
+    stage.dataset.pressMounted = 'true';
+
+    const head = stage.querySelector('[data-part="head"]');
+    const paperGroup = stage.querySelector('[data-part="paper"]');
+    const designSub = stage.querySelector('[data-part="design-sub"]');
+    const heatFace = stage.querySelector('[data-part="heat-face"]');
+    const tempText = stage.querySelector('[data-part="temp-text"]');
+    const timeText = stage.querySelector('[data-part="time-text"]');
+    const readout = stage.parentElement?.querySelector('[data-readout]');
+    if (!head || !paperGroup || !designSub || !tempText || !timeText) return;
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let visible = false;
+    let frame = 0;
+    let start = 0;
+
+    function render(elapsed) {
+      const { name, progress } = phaseAt(elapsed);
+      const eased = easeInOut(progress);
+
+      let headZ = OPEN_Z;
+      if (name === 'closing') headZ = OPEN_Z + (CLOSED_Z - OPEN_Z) * eased;
+      else if (name === 'pressing' || name === 'revealing' || name === 'revealed' || name === 'resetting') headZ = CLOSED_Z;
+      else if (name === 'opening') headZ = CLOSED_Z + (OPEN_Z - CLOSED_Z) * eased;
+      head.setAttribute('transform', translateAlong(P, [0, 0, headZ]));
+
+      let peel = 0;
+      if (name === 'revealing') peel = eased;
+      else if (name === 'revealed') peel = 1;
+      else if (name === 'resetting') peel = 1 - eased;
+      paperGroup.setAttribute('transform', translateAlong(P, [0, -60 * peel, 46 * peel]));
+      paperGroup.style.opacity = String(1 - 0.15 * peel);
+      designSub.style.opacity = String(peel);
+
+      const pressing = name === 'pressing';
+      const afterPress = name === 'opening' || name === 'revealing' || name === 'revealed' || name === 'resetting';
+      const temp = pressing ? 20 + (200 - 20) * eased : afterPress ? 200 : 20;
+      const seconds = pressing ? Math.round(45 * eased) : afterPress ? 45 : 0;
+      tempText.textContent = `${Math.round(temp)}°C`;
+      timeText.textContent = `${seconds}s`;
+      if (heatFace) heatFace.style.opacity = pressing ? String(0.75 + 0.25 * Math.sin(eased * Math.PI * 6)) : '1';
+
+      if (readout) {
+        const label =
+          name === 'open'
+            ? 'abierta'
+            : name === 'closing'
+              ? 'cerrando'
+              : name === 'pressing'
+                ? 'calor + presión'
+                : name === 'opening'
+                  ? 'abriendo'
+                  : name === 'revealing' || name === 'revealed'
+                    ? '¡listo! diseño transferido'
+                    : 'reiniciando';
+        const text = `${label} · ${Math.round(temp)}°C`;
+        if (readout.textContent !== text) readout.textContent = text;
+      }
+    }
+
+    function tick(now) {
+      if (!start) start = now;
+      render(now - start);
+      frame = visible && !reduced.matches ? requestAnimationFrame(tick) : 0;
+    }
+
+    function run() {
+      if (!frame && visible && !reduced.matches) {
+        start = 0;
+        frame = requestAnimationFrame(tick);
+      }
+    }
+
+    if (reduced.matches) {
+      render(0);
+    } else {
+      new IntersectionObserver(
+        (entries) => {
+          visible = entries[entries.length - 1].isIntersecting;
+          if (visible) run();
+        },
+        { rootMargin: '120px 0px' }
+      ).observe(stage);
+    }
+  }
+
+  document.addEventListener('astro:page-load', mount);
+</script>
+
+<style is:global>
+  .anatomy-figure.iso {
+    --anatomy-page: transparent;
+    --anatomy-card: transparent;
+    --anatomy-text: rgba(255, 255, 255, 0.6);
+    --anatomy-strong: #ffffff;
+    --anatomy-muted: rgba(255, 255, 255, 0.4);
+    --anatomy-paper: #151216;
+    --anatomy-face: #1c1820;
+    --anatomy-top: #1d1a20;
+    --anatomy-shade-0: #121014;
+    --anatomy-shade-1: #161318;
+    --anatomy-shade-2: #19161c;
+    --anatomy-shade-3: #1d1a20;
+    --anatomy-lit-top: #2a2430;
+    --anatomy-lit-shade: #241f28;
+    --anatomy-hi: #d9a8d9;
+    --anatomy-mid: #6a6470;
+    --anatomy-lo: #3a3640;
+    --anatomy-faint: #28242c;
+    --anatomy-lit: #d9a8d9;
+    --anatomy-halo: #000000;
+    --anatomy-halo-opacity: 0.55;
+    --anatomy-dot: #d9a8d9;
+  }
+
+  .anatomy-figure .iso-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .anatomy-figure .iso-svg path,
+  .anatomy-figure .iso-svg circle {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .anatomy-figure .iso-fill {
+    fill: var(--anatomy-paper);
+    stroke: none;
+  }
+  .anatomy-figure .iso-solid[data-lit] > .iso-fill {
+    fill: var(--anatomy-face);
+  }
+  .anatomy-figure .iso-shade,
+  .anatomy-figure .iso-top {
+    stroke: none;
+  }
+  .anatomy-figure .iso-shade[data-shade='0'] {
+    fill: var(--anatomy-shade-0);
+  }
+  .anatomy-figure .iso-shade[data-shade='1'] {
+    fill: var(--anatomy-shade-1);
+  }
+  .anatomy-figure .iso-shade[data-shade='2'] {
+    fill: var(--anatomy-shade-2);
+  }
+  .anatomy-figure .iso-shade[data-shade='3'] {
+    fill: var(--anatomy-shade-3);
+  }
+  .anatomy-figure .iso-top {
+    fill: var(--anatomy-top);
+  }
+  .anatomy-figure .iso-solid[data-lit] > .iso-top {
+    fill: var(--anatomy-lit-top);
+  }
+  .anatomy-figure .iso-solid[data-lit] > .iso-shade {
+    fill: var(--anatomy-lit-shade);
+  }
+  .anatomy-figure .iso-solid[data-lit] > .iso-edge {
+    stroke: var(--anatomy-lit);
+  }
+  .anatomy-figure .iso-halo {
+    fill: var(--anatomy-halo);
+    stroke: none;
+    filter: blur(9px);
+    opacity: var(--anatomy-halo-opacity);
+    transform: translateY(3px);
+  }
+  .anatomy-figure .iso-line {
+    fill: none;
+    stroke: var(--anatomy-lo);
+    stroke-width: 0.6px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .anatomy-figure .iso-line[data-tone='hi'] {
+    stroke: var(--anatomy-hi);
+  }
+  .anatomy-figure .iso-line[data-tone='mid'] {
+    stroke: var(--anatomy-mid);
+  }
+  .anatomy-figure .iso-line[data-tone='lo'] {
+    stroke: var(--anatomy-lo);
+  }
+  .anatomy-figure .iso-line[data-tone='faint'] {
+    stroke: var(--anatomy-faint);
+  }
+  .anatomy-figure .iso-line[data-tone='lit'] {
+    stroke: var(--anatomy-lit);
+  }
+  .anatomy-figure .iso-dots circle {
+    fill: var(--anatomy-dot);
+    stroke: none;
+    opacity: 0.32;
+  }
+  .anatomy-figure .iso-dots[data-tone='hi'] circle {
+    opacity: 0.85;
+  }
+  .anatomy-figure .iso-dots[data-tone='mid'] circle {
+    opacity: 0.45;
+  }
+  .anatomy-figure .iso-dots[data-tone='lo'] circle {
+    opacity: 0.22;
+  }
+  .anatomy-figure .iso-dots[data-tone='faint'] circle {
+    opacity: 0.12;
+  }
+  .anatomy-figure .iso-face-text {
+    fill: var(--anatomy-mid);
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    letter-spacing: 0.04em;
+  }
+  .anatomy-figure .iso-face-text[data-tone='hi'] {
+    fill: var(--anatomy-hi);
+  }
+  .anatomy-figure .iso-face-text[data-tone='lo'] {
+    fill: var(--anatomy-lo);
+  }
+  .anatomy-figure .iso-face-text[data-tone='faint'] {
+    fill: var(--anatomy-faint);
+  }
+  .anatomy-figure .iso-face-text[data-tone='lit'] {
+    fill: var(--anatomy-lit);
+  }
+  .anatomy-figure [data-part='heat-face'] {
+    transition: opacity 0.15s linear;
+  }
+</style>
