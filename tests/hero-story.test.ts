@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 
-describe('HeroStory (Hero as scroll storytelling, adapted from the Halo reference HeroDeck)', () => {
+describe('HeroStory (Hero as scroll storytelling, ported from the Halo reference HeroDeck mechanic)', () => {
   it('imports all three anatomy figures via Vite raw imports and wraps the existing Hero', async () => {
     const src = await read('src/components/HeroStory.astro');
     expect(src).toContain("import Hero from './Hero.astro'");
@@ -13,24 +13,34 @@ describe('HeroStory (Hero as scroll storytelling, adapted from the Halo referenc
     expect(src).toContain("from '../../tools/packaging-figure/figure.svg?raw'");
   });
 
-  it('the three landing cards are visible from the start (not opacity-0) so the cursor peephole has something to show', async () => {
+  it('has a single card (sublimation) and two side tiles (design, packaging) laid out on a board', async () => {
     const src = await read('src/components/HeroStory.astro');
-    expect(src, 'a past bug: opacity-0 on the cards made the peephole reveal nothing until scroll').not.toContain('opacity-0 scale-90');
-    expect(src).toContain('landing-card absolute');
+    expect(src).toContain('data-card');
+    expect(src).toMatch(/data-tile[^-]/);
+    expect(src).toContain("const [card, ...tiles] = steps");
   });
 
-  it('cuts a cursor-following peephole mask directly on the cover (not a separate overlay), sized via an animated --radius custom property', async () => {
+  it('is no longer the cursor-peephole design — that mechanic is fully gone', async () => {
     const src = await read('src/components/HeroStory.astro');
-    expect(src).toContain('[data-hero-cover] {');
-    expect(src).toContain('--radius: 0');
-    expect(src).toContain('mask-image: radial-gradient(');
-    expect(src).toContain("gsap.to(cover, { '--radius': 160");
-    expect(src).toContain("gsap.to(cover, { '--radius': 0");
+    expect(src, 'rejected design: a cursor-following mask over the Hero').not.toContain('--radius');
+    expect(src).not.toContain('mask-image');
+    expect(src).not.toContain('data-hero-cover');
+    expect(src).not.toContain('pointerenter');
   });
 
-  it('gates the peephole to fine-pointer, hover-capable, motion-safe devices only', async () => {
+  it("crops the Hero panel's own clip-path down toward the card's window, so the panel reads as becoming it", async () => {
     const src = await read('src/components/HeroStory.astro');
-    expect(src).toContain("mm.add('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)'");
+    expect(src).toContain('panel.style.clipPath');
+    expect(src).toContain('panel.style.opacity');
+    expect(src).toContain('card.style.transform');
+  });
+
+  it('stages the morph -> settle -> staggered tile landings on one scroll timeline, matching the HeroDeck beat order', async () => {
+    const src = await read('src/components/HeroStory.astro');
+    expect(src).toContain('const MORPH = [0.02, 0.26]');
+    expect(src).toContain('const SETTLE = [0.3, 0.46]');
+    expect(src).toContain('const FIRST = 0.44');
+    expect(src).toContain('const EVERY = 0.16');
   });
 
   it("syncs the scroll-scrubbed animation to the sticky element's actual pin range, not the stage's full height", async () => {
@@ -42,7 +52,24 @@ describe('HeroStory (Hero as scroll storytelling, adapted from the Halo referenc
     expect(src).toContain('end: () => `+=${stage.offsetHeight - window.innerHeight}`');
   });
 
-  it('phones/tablets get a plain stacked grid instead of the pin + peephole', async () => {
+  it('runs a caption rail with a fill bar that steps through card then each tile', async () => {
+    const src = await read('src/components/HeroStory.astro');
+    expect(src).toContain('data-cap');
+    expect(src).toContain('data-cap-fill');
+    expect(src).toContain('data-step');
+    expect(src).toContain('capSteps.forEach');
+  });
+
+  it('gates the entire pin/absolute storytelling layout behind motion-safe on desktop, so reduced motion falls back to a plain stacked flow (panel, then the finished board)', async () => {
+    const src = await read('src/components/HeroStory.astro');
+    expect(src).toContain('motion-safe:lg:h-[420vh]');
+    expect(src).toContain('motion-safe:lg:sticky');
+    expect(src).toContain('motion-safe:lg:absolute');
+    expect(src).toContain('@media (prefers-reduced-motion: no-preference) and (min-width: 1024px)');
+    expect(src).toContain("mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)'");
+  });
+
+  it('phones/tablets get a plain stacked grid instead of the pin + morph', async () => {
     const src = await read('src/components/HeroStory.astro');
     expect(src).toContain('lg:hidden');
     expect(src).toContain('grid-cols-1 sm:grid-cols-3');
