@@ -6,7 +6,7 @@
 //
 // Then the hero *is* the story (after Halo's deck): it stays pinned, its
 // surface crops down into a card while the headline dissolves, and that
-// card is the first of five — one per service tag. Each next card rises
+// card is the first of six — one per service tag. Each next card rises
 // over the last, which sinks back into the stack; inside each, the
 // service's iso scene assembles part by part (Sublimación last, with the
 // heat press). On desktop the tags slide into a column as the chapter
@@ -15,6 +15,7 @@ import { Icon } from 'astro-icon/components';
 import pressSvg from '../../tools/heat-press-figure/figure.svg?raw';
 import identidadSvg from '../../tools/services-figure/identidad.svg?raw';
 import flyersSvg from '../../tools/services-figure/flyers.svg?raw';
+import redesSvg from '../../tools/services-figure/redes.svg?raw';
 import papeleriaSvg from '../../tools/services-figure/papeleria.svg?raw';
 import personalizacionSvg from '../../tools/services-figure/personalizacion.svg?raw';
 
@@ -40,8 +41,9 @@ const callouts = [
   { label: 'Identidad visual', href: '/catalogo/servicios-de-diseno', ch: 0, x: 0.08, y: -0.6, svg: identidadSvg, line: 'Logo, paleta y tipografía: la cara de tu marca.' },
   { label: 'Flyers', href: '/catalogo/servicios-de-diseno', ch: 5, x: 0.3, y: -1.12, svg: flyersSvg, line: 'Piezas que se ven, se leen y venden.' },
   { label: 'Papelería', href: '/catalogo/servicios-de-diseno/papeleria-personalizada', ch: 7, x: 0.49, y: -0.72, svg: papeleriaSvg, line: 'Hojas, sobres y tarjetas con tu sello.' },
-  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.7, y: -1.12, svg: personalizacionSvg, line: 'Tu diseño en tazas, fundas, llaveros y más.' },
-  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.92, y: -0.58, svg: pressSvg, line: 'Calor y presión: la tinta pasa a la pieza.' },
+  { label: 'Redes sociales', href: '/catalogo/servicios-de-diseno', ch: 12, x: 0.79, y: -0.62, svg: redesSvg, line: 'Contenido que frena el scroll: se mira, se comenta y se comparte.' },
+  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.62, y: -1.12, svg: personalizacionSvg, line: 'Tu diseño en tazas, fundas, llaveros y más.' },
+  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.95, y: -1.12, svg: pressSvg, line: 'Calor y presión: la tinta pasa a la pieza.' },
 ];
 
 ---
@@ -52,7 +54,7 @@ const callouts = [
     {callouts.map((c, i) => (
       <article class="hero__card" data-card>
         <header class="hero__card-head"><span class="hero__card-n">0{i + 1}</span>{c.label}</header>
-        <div class="hero__scene anatomy-figure iso" data-theme="dark" data-scene style={i < 4 ? '--zoom: 1.3' : undefined}><Fragment set:html={c.svg} /></div>
+        <div class="hero__scene anatomy-figure iso" data-theme="dark" data-scene style={i < callouts.length - 1 ? '--zoom: 1.3' : undefined}><Fragment set:html={c.svg} /></div>
         <p class="hero__card-line">{c.line}</p>
       </article>
     ))}
@@ -118,7 +120,7 @@ const callouts = [
   type V = [number, number, number];
   const lerp3 = (a: V, b: V, k: number): V => [mix(a[0], b[0], k), mix(a[1], b[1], k), mix(a[2], b[2], k)];
 
-  // World offsets (≈ mm) → screen px. All five scenes share the press's
+  // World offsets (≈ mm) → screen px. All the scenes share the press's
   // projection (services-figure/build.mjs fits them the same way).
   const { x: AX, y: AY, z: AZ } = press.AXES;
   const toScreen = ([x, y, z]: V) => [x * AX[0] + y * AY[0] + z * AZ[0], x * AX[1] + y * AY[1] + z * AZ[1]];
@@ -135,6 +137,7 @@ const callouts = [
     board: [0, 0, -60], guides: [0, 0, 60], mark: [-20, 30, 130], swatches: [60, -30, 90], type: [40, 50, 80], pencil: [-40, 60, 110],
     stack: [0, 0, -50], flyer0: [142, -20, 46], flyer1: [80, -48, 36], flyer2: [16, -74, 26],
     letter: [-40, -30, 90], envelope: [50, -50, 70], cards: [30, 60, 120], pen: [-50, 50, 100],
+    phone: [0, 0, -50], post: [40, -40, 110], like: [0, 0, -40], comment: [0, 0, -20],
     tee: [0, 0, -50], case: [70, -40, 90], mug: [0, 0, 120], print: [0, 0, 70], keychain: [-30, 60, 110],
   };
 
@@ -151,8 +154,8 @@ const callouts = [
   // tag (the press gets the longest), then the next section rises over the
   // still-pinned deck (its last 100svh: see .after-hero in global.css).
   const INTRO = 0.09;
-  const END = 1 - 100 / (780 - 100);
-  const WEIGHTS = [1, 1, 1, 1, 1.7];
+  const END = 1 - 100 / (880 - 100);
+  const WEIGHTS = [1, 1, 1, 1, 1, 1.7];
   const SPANS = (() => {
     const total = WEIGHTS.reduce((a, b) => a + b, 0);
     let at = INTRO;
@@ -477,7 +480,7 @@ const callouts = [
 
   /* The deck: only with JS and motion allowed. */
   @media (prefers-reduced-motion: no-preference) {
-    :global(.js) .hero { height: 780svh; } /* keep in sync with END in the script */
+    :global(.js) .hero { height: 880svh; } /* keep in sync with END in the script */
     :global(.js) .hero__pin { position: sticky; top: 0; height: 100svh; }
     :global(.js) .hero__deck {
       display: block; position: absolute; z-index: 1; left: 57%; top: 53%; translate: -50% -50%;

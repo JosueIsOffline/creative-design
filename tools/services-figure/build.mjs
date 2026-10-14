@@ -215,28 +215,10 @@ function personalizacion() {
     circle(...PL(24, 60), 12, 7.05, C.pink[0]),
     txt(PL(24, 60), 7.1, 0, 'CD', { size: 9, fill: INK, spacing: -0.5 }),
   ));
-  // The mug: white, a pink print wrapped round it, handle to the right.
-  const mx = 46, my = 22, mr = 25, mh = 62;
-  const handle = k.sideRing([mx + mr + 9, my, mh * 0.5], 17, 'y', P, 36);
-  // The band's own top cap would show inside the mug, so the rim above it
-  // and the handle are drawn again over the print.
-  const rim = [
-    solid(C.paper, k.cylinder(mx, my, mr, mh * 0.72, mh * 0.28, P, 48, 1.4)),
-    circle(mx, my, mr - 3, mh + 0.05, C.ink[1]),
-    `<path d="${k.ring(mx, my, mr - 3, mh + 0.06, P, 48)}" fill="none" stroke="#c9c1cd" stroke-width="1"/>`,
-    `<path d="${handle}" fill="none" stroke="${C.paper[2]}" stroke-width="10" stroke-linecap="round"/>`,
-    `<path d="${handle}" fill="none" stroke="${C.paper[0]}" stroke-width="6.5" stroke-linecap="round"/>`,
-  ].join('');
-  out.push(part('mug',
-    `<path class="iso-halo" d="${k.cylinder(mx, my, mr + 2, -2, 2, P, 48).fill}"/>`,
-    solid(C.paper, k.cylinder(mx, my, mr, 0, mh, P, 48, 1.4)),
-    rim,
-  ));
-  out.push(part('print',
-    solid(C.pink, k.cylinder(mx, my, mr + 0.5, mh * 0.24, mh * 0.48, P, 48, 0), false),
-    `<text transform="${k.sideMatrix([mx, my + mr + 0.6], mh * 0.36, P, 'left')}" font-size="15" fill="${INK}" font-family="'Parkinsans', sans-serif" font-weight="700" text-anchor="middle">CD</text>`,
-    rim,
-  ));
+  const mug = mugSvg(46, 22, 25, 62);
+  out.push(part('mug', mug.body));
+  out.push(part('print', mug.print));
+  out.push(part('steam', mug.steam));
   // Acrylic keychain: a lilac tag on a steel ring.
   const kc = [-16, 58], kdeg = 22, KL = local(kc[0], kc[1], 30, 40, kdeg);
   out.push(part('keychain',
@@ -248,8 +230,145 @@ function personalizacion() {
   return out;
 }
 
+// A heart outline in plan, centred on (cx, cy), pointing toward +v.
+const heart = (L, cu, cv, size) => Array.from({ length: 40 }, (_, i) => {
+  const t = (i / 40) * Math.PI * 2;
+  const x = 16 * Math.sin(t) ** 3, y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+  return L(cu + (x * size) / 17, cv - (y * size) / 17);
+});
+
+function redes() {
+  const out = [];
+  // Upright panels floating over the phone, facing the viewer: drawn on the
+  // y-facing plane (u right, v down from the top-left corner), with a darker
+  // copy just behind for thickness.
+  const plate = (x0, y, zTop, w, h, r, c, inner, thick = 2.4) =>
+    `<g transform="${k.sideMatrix([x0, y - thick], zTop, P, 'left')}"><rect width="${w}" height="${h}" rx="${r}" fill="${c[2]}"/></g>`
+    + `<g transform="${k.sideMatrix([x0, y], zTop, P, 'left')}"><rect width="${w}" height="${h}" rx="${r}" fill="${c[0]}" stroke="${c[3]}" stroke-width="0.6"/>${inner}</g>`;
+  const tether = (x, y, z0, z1) => `<path d="${k.segment([x, y, z0], [x, y, z1], P)}" fill="none" stroke="#6e6475" stroke-width="1" stroke-dasharray="2 3"/>`
+    + `<path d="${k.ring(x, y, 2.4, z1, P, 16)}" fill="${C.lilac[0]}" stroke="none"/>`;
+  const HEART = (x, y, s, fill) => `<path transform="translate(${x} ${y}) scale(${s})" d="M5 9.5 C2 7.2 0 5.4 0 3.2 C0 1.3 1.4 0 3 0 C4 0 4.7 .5 5 1.3 C5.3 .5 6 0 7 0 C8.6 0 10 1.3 10 3.2 C10 5.4 8 7.2 5 9.5Z" fill="${fill}"/>`;
+
+  out.push(part('post',
+    tether(59, -46, 20, 0),
+    plate(26, -46, 104, 66, 84, 5, C.paper, [
+      `<circle cx="7" cy="7" r="3.2" fill="${C.lilac[0]}"/><rect x="13" y="5.6" width="24" height="2.8" rx="1.4" fill="#8c8491"/>`,
+      `<rect x="3" y="13" width="60" height="46" rx="2" fill="${C.pink[0]}"/>`,
+      `<circle cx="44" cy="26" r="8" fill="${C.yellow[0]}"/>`,
+      `<path d="M3 59 L21 38 L33 50 L42 42 L63 59 Z" fill="${C.pink[2]}"/>`,
+      HEART(4, 63, 0.9, C.pink[0]),
+      `<circle cx="20" cy="67.4" r="3.6" fill="none" stroke="${INK}" stroke-width="1.2"/>`,
+      `<rect x="4" y="74" width="50" height="2.4" rx="1.2" fill="#8c8491"/><rect x="4" y="79" width="30" height="2.4" rx="1.2" fill="#b5adb9"/>`,
+    ].join('')),
+  ));
+  // The phone, lying on its back, showing a profile: avatar, name, stats,
+  // and a 3×3 grid of posts in the brand colours.
+  const pc = [-44, 4], pdeg = -8, W = 78, D = 146, PL = local(pc[0], pc[1], W, D, pdeg);
+  const quad = (u0, v0, u1, v1) => [PL(u0, v0), PL(u1, v0), PL(u1, v1), PL(u0, v1)];
+  const z = 7.05;
+  const tiles = [C.pink, C.yellow, C.lilac, C.cyan, C.lilac, C.pink, C.yellow, C.cyan, C.pink];
+  out.push(part('phone',
+    `<path class="iso-halo" d="${slab(box(pc[0], pc[1], W, D, 13, pdeg), -2, 2).fill}"/>`,
+    solid(C.ink, slab(box(pc[0], pc[1], W, D, 13, pdeg), 0, 7, 1.4)),
+    flat(k.roundedPlan({ x: 0, y: 0, w: 70, d: 138, r: 9 }, 6).map(([u, v]) => PL(u + 4, v + 4)), z, '#141117'),
+    flat(quad(30, 8, 48, 12), z + 0.02, '#000'),
+    circle(...PL(18, 30), 9, z + 0.03, C.lilac[0]),
+    txt(PL(18, 30), z + 0.05, pdeg, 'CD', { size: 6, fill: INK, spacing: -0.3 }),
+    txt(PL(32, 26), z + 0.05, pdeg, 'creativedesign', { size: 4.2, fill: '#efe9f1', anchor: 'start', weight: 600 }),
+    txt(PL(32, 33), z + 0.05, pdeg, '248 · 12,4k · 310', { size: 3.4, fill: '#8c8491', anchor: 'start', weight: 500 }),
+    flat(quad(8, 44, 62, 51), z + 0.03, C.lilac[0]),
+    txt(PL(35, 47.5), z + 0.06, pdeg, 'Seguir', { size: 3.6, fill: INK, weight: 600 }),
+    tiles.map((c, i) => {
+      const u = 8 + (i % 3) * 18.5, v = 58 + Math.floor(i / 3) * 18.5;
+      return flat(quad(u, v, u + 17, v + 17), z + 0.03, c[0]) + (i % 4 === 0 ? circle(...PL(u + 11, v + 6), 3.4, z + 0.05, '#fff7') : '');
+    }).join(''),
+    [14, 30, 46, 62].map((u, i) => circle(...PL(u, 126), 2.6, z + 0.04, i === 3 ? C.lilac[0] : '#6e6475')).join(''),
+  ));
+  out.push(part('like',
+    tether(-8, 30, 44, 7.05),
+    plate(-30, 30, 64, 44, 20, 10, C.pink, HEART(8, 5.5, 1, '#fff')
+      + `<text x="21" y="10.6" font-size="9" fill="#fff" font-family="'Parkinsans', sans-serif" font-weight="700" dominant-baseline="middle">1,2k</text>`),
+  ));
+  out.push(part('comment',
+    tether(75, 50, 18, 0),
+    plate(38, 50, 40, 74, 22, 11, C.cyan, `<circle cx="11" cy="11" r="6" fill="${C.lilac[0]}"/>`
+      + `<text x="21" y="11.6" font-size="7" fill="${INK}" font-family="'Parkinsans', sans-serif" font-weight="600" dominant-baseline="middle">¡Me encanta!</text>`),
+  ));
+  return out;
+}
+
+// A ceramic mug drawn as a real cylinder: a left-lit gradient body, a thick
+// D handle on the silhouette's right edge, a lip, coffee inside, steam, and
+// a printed band whose logo sits on the side facing the viewer.
+function mugSvg(mx, my, r, h) {
+  const at = (p) => k.iso(p, P);
+  const [vx, vy] = k.towardViewer(P);
+  // Plan direction of the silhouette's right edge (perpendicular to the view).
+  const side = [vy, -vx];
+  const sx = at([mx + side[0] * r, my + side[1] * r, 0])[0] > at([mx, my, 0])[0] ? side : [-side[0], -side[1]];
+  const xs = k.circleRing(mx, my, r, 64).map(([x, y]) => at([x, y, 0])[0]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const grad = (id, stops) => `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x0}" y1="0" x2="${x1}" y2="0">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
+  const fillOf = (z0, z1, rr = r) => k.cylinder(mx, my, rr, z0, z1 - z0, P, 64).fill;
+  const ellipse = (z, rr) => k.onTop(k.circleRing(mx, my, rr, 64), z, P, true);
+  const b0 = h * 0.22, b1 = h * 0.74, lip = 2.6;
+
+  const defs = `<defs>${grad('mug-ceramic', [[0, '#d3ccd6'], [0.16, '#fbf8fc'], [0.34, '#ece6ee'], [0.78, '#b7afbc'], [1, '#8f8794']])}`
+    + grad('mug-band', [[0, '#d7578f'], [0.16, '#f48ab5'], [0.34, '#e86a9f'], [0.78, '#b44a78'], [1, '#8c385e']])
+    + `<linearGradient id="mug-inside" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d6572"/><stop offset="1" stop-color="#d7d0da"/></linearGradient>`
+    + `<clipPath id="mug-mouth"><path d="${ellipse(h, r - lip)}"/></clipPath></defs>`;
+
+  // Handle: a D in the plane through the axis and the right edge, so it
+  // reads full-face; three strokes make it a glazed tube.
+  const hc = h * 0.52, hr = h * 0.27, out = 15;
+  const handlePts = [];
+  for (let i = 0; i <= 32; i++) {
+    const a = -Math.PI / 2 + (i / 32) * Math.PI;
+    const d = r - 3 + out * Math.cos(a);
+    handlePts.push(at([mx + sx[0] * d, my + sx[1] * d, hc - hr * Math.sin(a)]));
+  }
+  const hd = k.pathOf(handlePts);
+  const handle = `<path d="${hd}" fill="none" stroke="#8a8290" stroke-width="12.5" stroke-linecap="round"/>`
+    + `<path d="${hd}" fill="none" stroke="#e4dee7" stroke-width="9.5" stroke-linecap="round"/>`
+    + `<path d="${hd}" fill="none" stroke="#fbf8fc" stroke-width="2.6" stroke-linecap="round" transform="translate(-1.6 -1.2)"/>`;
+
+  // Lip, the inside wall, and coffee a little below the rim.
+  const top = `<path d="${ellipse(h, r)}" fill="#f4f0f5" stroke="#8a8290" stroke-width="0.8"/>`
+    + `<path d="${ellipse(h, r - lip)}" fill="url(#mug-inside)"/>`
+    + `<g clip-path="url(#mug-mouth)"><path d="${ellipse(h - 7, r - lip)}" fill="#4a2c22"/><path d="${ellipse(h - 7, r - lip - 5)}" fill="#5c382b" opacity="0.6"/></g>`
+    + `<path d="${ellipse(h, r - lip)}" fill="none" stroke="#b9b1bd" stroke-width="0.8"/>`;
+  const ceramic = (z0, z1) => `<path d="${fillOf(z0, z1)}" fill="url(#mug-ceramic)"/>`;
+  const edge = `<path d="${fillOf(0, h)}" fill="none" stroke="#8a8290" stroke-width="0.8"/>`;
+  // The handle hangs off the right edge; the body's near half overlaps its roots.
+  const body = defs
+    + `<path class="iso-halo" d="${fillOf(-2, 0, r + 3)}"/>`
+    + handle + ceramic(0, h) + edge + `<path d="${k.sideArc(mx, my, r, 1.6, P, 32)}" fill="none" stroke="#a69eab" stroke-width="0.8"/>` + top;
+
+  // The print: the band, the body above it redrawn over the band's cap,
+  // and the logo on the tangent plane facing the viewer.
+  const front = [mx + vx * (r + 0.4), my + vy * (r + 0.4)];
+  const o = at([...front, b0 + (b1 - b0) * 0.5]);
+  const u = at([front[0] + vy, front[1] - vx, b0 + (b1 - b0) * 0.5]);
+  const dn = at([...front, b0 + (b1 - b0) * 0.5 - 1]);
+  const m = `matrix(${(u[0] - o[0]).toFixed(3)} ${(u[1] - o[1]).toFixed(3)} ${(dn[0] - o[0]).toFixed(3)} ${(dn[1] - o[1]).toFixed(3)} ${o[0].toFixed(2)} ${o[1].toFixed(2)})`;
+  const print = `<path d="${fillOf(b0, b1, r + 0.3)}" fill="url(#mug-band)"/>`
+    + `<path d="${k.sideArc(mx, my, r + 0.3, b0, P, 32)}" fill="none" stroke="#8c385e" stroke-width="0.8"/>`
+    + ceramic(b1, h) + `<path d="${k.sideArc(mx, my, r + 0.3, b1, P, 32)}" fill="none" stroke="#8c385e" stroke-width="0.8"/>` + edge + top
+    + `<g transform="${m}"><text x="0" y="0" font-size="15" fill="${INK}" font-family="'Parkinsans', sans-serif" font-weight="700" letter-spacing="-0.8" text-anchor="middle" dominant-baseline="middle">CD</text>`
+    + `<path d="M 10.5 -6 l 4 9.6 1.4 -4.2 4.2 -1.4 z" fill="${INK}"/></g>`;
+
+  // Steam: three soft wisps rising out of the coffee.
+  const c = at([mx, my, h]);
+  const steam = [-8, 0, 8].map((dx, i) => {
+    const x = c[0] + dx, y = c[1] - 6;
+    return `<path d="M ${x} ${y} c -5 -8 5 -12 0 -20 s 5 -12 0 -20" fill="none" stroke="#f3dcf4" stroke-width="2.2" stroke-linecap="round" opacity="${[0.35, 0.5, 0.3][i]}"/>`;
+  }).join('');
+  return { body, print, steam };
+}
+
 const scenes = {
   identidad: ['Identidad visual: un logo construido sobre su retícula, con su guía de color, su tipografía y un lápiz.', identidad()],
+  redes: ['Redes sociales: un teléfono con un perfil y su cuadrícula de publicaciones, una publicación flotando y notificaciones de me gusta y comentarios.', redes()],
   flyers: ['Flyers: un tiraje impreso y tres diseños abiertos en abanico.', flyers()],
   papeleria: ['Papelería: hoja membretada, sobre con sello de cera, tarjetas de presentación y un bolígrafo.', papeleria()],
   personalizacion: ['Personalización: una camiseta, una funda de teléfono, una taza con su diseño impreso y un llavero.', personalizacion()],
