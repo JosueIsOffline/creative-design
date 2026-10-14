@@ -19,25 +19,21 @@ const MAT = k.insetPlan(BASE, 18);
 const MAT_H = 3;
 const MAT_TOP = BASE_TOP + MAT_H;
 
-const POST_X = 96;
-const POST_Y = -58;
-const POST_R = 7;
-const POST_TOP = 150;
-
-const BRACE = { x: -POST_X - 8, y: POST_Y - 8, w: 2 * POST_X + 16, d: 16, r: 4 };
-const BRACE_Z = POST_TOP - 14;
-
-const RAIL_Y = POST_Y + 2;
-const RAIL_BOTTOM = 46;
-const RAIL_TOP = BRACE_Z - 2;
+// A swing-arm press: one column at the back, an arm reaching forward over
+// the platen, and the head hanging from a shaft under the arm's tip.
+const COLUMN = { x: -20, y: -72, w: 40, d: 30, r: 8 };
+const ARM_Z = 146;
+const ARM_H = 18;
+const ARM = { x: -22, y: -74, w: 44, d: 92, r: 10 };
+const CTRL = { x: -27, y: -10, w: 54, d: 32, r: 6 };
+const CTRL_Z = ARM_Z + ARM_H;
+const CTRL_H = 12;
+const SHAFT_R = 6;
 
 const HEAD = { x: -74, y: -50, w: 148, d: 100, r: 10 };
 const HEAD_H = 24;
 const OPEN_Z = 96;
 
-const PANEL = { x: POST_X - 10, y: POST_Y - 34, w: 44, d: 30, r: 4 };
-const PANEL_Z = 86;
-const PANEL_H = 10;
 
 const SUB = { x: -48, y: -30, w: 96, d: 60, r: 3 };
 const SUB_H = 2;
@@ -52,10 +48,10 @@ const CLOSED_Z = PAPER_TOP;
 const P = k.fitProjection(
   [
     ...k.boxCorners(BASE, -BASE_H - FOOT_H, 0),
-    [POST_X, POST_Y, POST_TOP + 4],
-    [-POST_X, POST_Y, POST_TOP + 4],
+    ...k.boxCorners(CTRL, CTRL_Z, CTRL_Z + CTRL_H),
     [HEAD.x, HEAD.y, OPEN_Z + HEAD_H],
     [HEAD.x + HEAD.w, HEAD.y + HEAD.d, OPEN_Z + HEAD_H],
+    [0, HEAD.y + HEAD.d + 44, OPEN_Z + HEAD_H + 6],
   ],
   WIDTH,
   HEIGHT,
@@ -97,61 +93,45 @@ function base() {
 
 function posts() {
   const out = [];
-  for (const sx of [-1, 1]) {
-    const x = sx * POST_X;
-    out.push(S(k.cylinder(x, POST_Y, POST_R, BASE_TOP, 10, P, 28), { tone: 'mid' }));
-    out.push(S(k.cylinder(x, POST_Y, POST_R - 1.4, BASE_TOP + 10, POST_TOP - BASE_TOP - 10, P, 24, 0.8), { tone: 'mid', crease: 'none' }));
-    out.push(L(k.sideArc(x, POST_Y, POST_R - 1.4, 60, P, 14), { tone: 'faint' }));
-    out.push(L(k.sideArc(x, POST_Y, POST_R - 1.4, 100, P, 14), { tone: 'faint' }));
-
-    const railX = x - sx * (POST_R - 2);
-    out.push(S(k.slabOf({ x: railX - sx * 3 - (sx < 0 ? 3 : 0), y: RAIL_Y - 1.6, w: 3, d: 3.2, r: 0.8 }, RAIL_BOTTOM, RAIL_TOP - RAIL_BOTTOM, P, 2, 0.5), { tone: 'mid' }));
-    out.push(D([RAIL_BOTTOM + 8, RAIL_TOP - 8].map((z) => at([railX, RAIL_Y, z])), { size: 0.4, tone: 'lo' }));
-  }
-
-  out.push(S(k.slabOf(BRACE, BRACE_Z, 14, P, 4, 1), { tone: 'mid' }));
-  out.push(L(k.planOutline(k.insetPlan(BRACE, 3), BRACE_Z + 14, P, 4), { tone: 'faint' }));
-
-  const knob = [0, BRACE.y - 5];
-  out.push(S(k.cylinder(knob[0], knob[1], 6.5, BRACE_Z, 6, P, 28), { tone: 'mid' }));
-  out.push(L(k.knurl(knob[0], knob[1], 6.5, BRACE_Z, BRACE_Z + 6, 32, P), { tone: 'lo' }));
-  out.push(L(k.lineOnTop([knob[0], knob[1]], [knob[0], knob[1] - 6.5], BRACE_Z + 6, P), { tone: 'hi' }));
-  out.push(D([at([knob[0], knob[1], BRACE_Z + 6])], { size: 0.5, tone: 'hi' }));
+  // Column: a rounded box rising from the back of the base, with a seam
+  // where its foot casting meets it.
+  out.push(S(k.slabOf(k.insetPlan(COLUMN, -4), BASE_TOP, 8, P, 6, 1), { tone: 'mid' }));
+  out.push(S(k.slabOf(COLUMN, BASE_TOP + 8, ARM_Z - BASE_TOP - 8, P, 8, 1.4), { tone: 'mid' }));
+  out.push(L(k.sideSeam(COLUMN, 60, P, 8), { tone: 'faint' }));
+  // Shaft down from the arm's tip; the head slides on it (hidden inside the
+  // head while it's up, exposed as it comes down).
+  out.push(S(k.cylinder(0, 0, SHAFT_R, CLOSED_Z + HEAD_H, ARM_Z - CLOSED_Z - HEAD_H, P, 24, 0.6), { tone: 'hi', crease: 'none' }));
+  out.push(S(k.cylinder(0, 0, SHAFT_R + 4, ARM_Z - 6, 6, P, 24, 0.8), { tone: 'mid' }));
   return out.join('');
 }
 
 function panel() {
+  // The arm over the platen (drawn after the head, which it overhangs) and
+  // the control box on it: display (temperature + time) and two dials.
   const out = [];
-  const bracket = { x: PANEL.x - 4, y: PANEL.y + PANEL.d / 2 - 2, w: 10, d: 4, r: 1 };
-  out.push(S(k.slabOf(bracket, PANEL_Z - 4, 6, P, 2), { tone: 'mid', crease: 'none' }));
-  out.push(S(k.slabOf(PANEL, PANEL_Z, PANEL_H, P, 4, 0.8), { tone: 'mid' }));
-
-  const screen = k.insetPlan(PANEL, 5);
-  out.push(S(k.slabOf(screen, PANEL_Z + PANEL_H - 0.6, 0.6, P, 2), { tone: 'lo', crease: 'none' }));
+  out.push(S(k.slabOf(ARM, ARM_Z, ARM_H, P, 10, 1.6), { tone: 'mid' }));
+  out.push(L(k.planOutline(k.insetPlan(ARM, 5), ARM_Z + ARM_H, P, 8), { tone: 'faint' }));
+  out.push(S(k.slabOf(CTRL, CTRL_Z, CTRL_H, P, 6, 1), { tone: 'mid' }));
+  const screen = { x: CTRL.x + 6, y: CTRL.y + 6, w: 26, d: CTRL.d - 12, r: 2 };
+  const top = CTRL_Z + CTRL_H;
+  out.push(S(k.slabOf(screen, top - 0.6, 0.6, P, 2), { tone: 'lo', crease: 'none' }));
   out.push(
     k
-      .faceTextSvg(k.topMatrix([screen.x + screen.w / 2, screen.y + screen.d * 0.32], PANEL_Z + PANEL_H, P, 'x'), '20°C', {
-        size: 4.6,
-        tone: 'lit',
-        anchor: 'middle',
-      })
+      .faceTextSvg(k.topMatrix([screen.x + screen.w / 2, screen.y + screen.d * 0.38], top, P, 'x'), '20°C', { size: 5, tone: 'lit', anchor: 'middle' })
       .replace('<text ', '<text data-part="temp-text" ')
   );
   out.push(
     k
-      .faceTextSvg(k.topMatrix([screen.x + screen.w / 2, screen.y + screen.d * 0.74], PANEL_Z + PANEL_H, P, 'x'), '0s', {
-        size: 3.2,
-        tone: 'hi',
-        anchor: 'middle',
-      })
+      .faceTextSvg(k.topMatrix([screen.x + screen.w / 2, screen.y + screen.d * 0.78], top, P, 'x'), '0s', { size: 3.4, tone: 'hi', anchor: 'middle' })
       .replace('<text ', '<text data-part="time-text" ')
   );
-
-  const btnY = PANEL.y + PANEL.d + 4.5;
-  [PANEL.x + 8, PANEL.x + PANEL.w / 2, PANEL.x + PANEL.w - 8].forEach((bx) => {
-    out.push(S(k.cylinder(bx, btnY, 2.6, PANEL_Z, 2, P, 16), { tone: 'mid' }));
-    out.push(L(k.ring(bx, btnY, 2.6, PANEL_Z + 2, P, 16), { tone: 'lo' }));
-  });
+  for (const dy of [CTRL.y + 10, CTRL.y + CTRL.d - 10]) {
+    const dx = CTRL.x + CTRL.w - 10;
+    out.push(S(k.cylinder(dx, dy, 4.2, top, 3, P, 24, 0.4), { tone: 'mid' }));
+    out.push(L(k.knurl(dx, dy, 4.2, top, top + 3, 18, P), { tone: 'lo' }));
+    out.push(L(k.lineOnTop([dx, dy], [dx, dy + 3.6], top + 3, P), { tone: 'hi' }));
+  }
+  out.push(D([at([CTRL.x + 6, CTRL.y + CTRL.d + 0.2, CTRL_Z + CTRL_H / 2])], { size: 0.6, tone: 'hi' }));
   return out.join('');
 }
 
@@ -180,17 +160,15 @@ function head() {
   out.push(L(headScrews.map(([x, y]) => k.ring(x, y, 1.8, HEAD_H, P, 14)).join(''), { tone: 'lo' }));
   out.push(D(headScrews.map(([x, y]) => at([x, y, HEAD_H])), { size: 0.4 }));
 
-  // Carriage bushings riding the two rails.
-  for (const sx of [-1, 1]) {
-    out.push(S(k.cylinder(sx * (HEAD.w / 2 - 6), HEAD.y - 2, 4.5, 6, 10, P, 18), { tone: 'mid' }));
-  }
-
-  // Handle bar across the back-top edge.
-  const handle = { x: -34, y: HEAD.y - 10, w: 68, d: 7, r: 3 };
-  out.push(S(k.slabOf({ x: handle.x - 6, y: HEAD.y + 2, w: 8, d: 6, r: 1.5 }, HEAD_H, 4, P, 2), { tone: 'mid', crease: 'none' }));
-  out.push(S(k.slabOf({ x: handle.x + handle.w - 2, y: HEAD.y + 2, w: 8, d: 6, r: 1.5 }, HEAD_H, 4, P, 2), { tone: 'mid', crease: 'none' }));
-  out.push(S(k.slabOf(handle, HEAD_H + 4, 5, P, 3, 0.8), { tone: 'mid' }));
-  out.push(L(k.knurl(0, handle.y + handle.d / 2, handle.w / 2 - 4, HEAD_H + 4, HEAD_H + 9, 10, P, 6), { tone: 'lo' }));
+  // Collar where the head rides the shaft.
+  out.push(S(k.cylinder(0, 0, 11, HEAD_H, 7, P, 28, 0.8), { tone: 'mid' }));
+  // Handle: a lever out of the head's front and a fat grip across it — the
+  // part you pull down to press.
+  const front = HEAD.y + HEAD.d;
+  out.push(S(k.slabOf({ x: -6, y: front - 12, w: 12, d: 46, r: 3 }, HEAD_H - 6, 6, P, 3, 0.6), { tone: 'mid' }));
+  const grip = { x: -36, y: front + 30, w: 72, d: 11, r: 5.5 };
+  out.push(S(k.slabOf(grip, HEAD_H - 9, 11, P, 6, 1.2), { tone: 'hi' }));
+  out.push(L(k.knurl(0, grip.y + grip.d / 2, grip.w / 2 - 8, HEAD_H - 9, HEAD_H + 2, 12, P, 6), { tone: 'lo' }));
 
   // Power indicator.
   out.push(D([at([HEAD.x + 8, HEAD.y + HEAD.d - 6, HEAD_H])], { size: 0.7, tone: 'hi' }));
@@ -236,11 +214,11 @@ const svg = k.figureSvg({
     // apart and put it back together on scroll (PressStory.astro).
     `<g data-part="base">${base()}</g>`,
     `<g data-part="posts">${posts()}</g>`,
-    `<g data-part="panel">${panel()}</g>`,
     `<g data-part="product">${product()}`,
     `<g data-part="design-sub" style="opacity:0">${designOnSubstrate()}</g></g>`,
     `<g data-part="paper" transform="${k.translateAlong(P, [0, 0, 0])}">${paper()}</g>`,
     `<g data-part="head" transform="${k.translateAlong(P, [0, 0, OPEN_Z])}">${head()}</g>`,
+    `<g data-part="panel">${panel()}</g>`,
   ],
 });
 

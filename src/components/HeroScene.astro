@@ -2,8 +2,21 @@
 // Creative Design's hero: the brand name (with the cursor standing in for
 // the "a" of "Creative"), the signature, lead copy and CTAs. The headline
 // rises into focus on load (blurred -> sharp), inspired by hipuku.dev's
-// wordmark reveal. The scroll story lives right after it (PressStory.astro).
+// wordmark reveal.
+//
+// Then the hero *is* the story (after Halo's deck): it stays pinned, its
+// surface crops down into a card while the headline dissolves, and that
+// card is the first of five — one per service tag. Each next card rises
+// over the last, which sinks back into the stack; inside each, the
+// service's iso scene assembles part by part (Sublimación last, with the
+// heat press). On desktop the tags slide into a column as the chapter
+// index. Without JS or with reduced motion: just the hero.
 import { Icon } from 'astro-icon/components';
+import pressSvg from '../../tools/heat-press-figure/figure.svg?raw';
+import identidadSvg from '../../tools/services-figure/identidad.svg?raw';
+import flyersSvg from '../../tools/services-figure/flyers.svg?raw';
+import papeleriaSvg from '../../tools/services-figure/papeleria.svg?raw';
+import personalizacionSvg from '../../tools/services-figure/personalizacion.svg?raw';
 
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 const waMessage = encodeURIComponent('Hola! Quiero más información sobre Creative Design.');
@@ -22,21 +35,32 @@ const h = {
 // as a fraction of the headline width; y: tag centre in em of the
 // headline font size (negative = above it).
 // The tags are the services — each links into the catalog.
+// Each tag is also a chapter of the scroll story: its scene and one line.
 const callouts = [
-  { label: 'Identidad visual', href: '/catalogo/servicios-de-diseno', ch: 0, x: 0.08, y: -0.6 },
-  { label: 'Flyers', href: '/catalogo/servicios-de-diseno', ch: 5, x: 0.3, y: -1.12 },
-  { label: 'Papelería', href: '/catalogo/servicios-de-diseno/papeleria-personalizada', ch: 7, x: 0.49, y: -0.72 },
-  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.7, y: -1.12 },
-  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.92, y: -0.58 },
+  { label: 'Identidad visual', href: '/catalogo/servicios-de-diseno', ch: 0, x: 0.08, y: -0.6, svg: identidadSvg, line: 'Logo, paleta y tipografía: la cara de tu marca.' },
+  { label: 'Flyers', href: '/catalogo/servicios-de-diseno', ch: 5, x: 0.3, y: -1.12, svg: flyersSvg, line: 'Piezas que se ven, se leen y venden.' },
+  { label: 'Papelería', href: '/catalogo/servicios-de-diseno/papeleria-personalizada', ch: 7, x: 0.49, y: -0.72, svg: papeleriaSvg, line: 'Hojas, sobres y tarjetas con tu sello.' },
+  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.7, y: -1.12, svg: personalizacionSvg, line: 'Tu diseño en tazas, fundas, llaveros y más.' },
+  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.92, y: -0.58, svg: pressSvg, line: 'Calor y presión: la tinta pasa a la pieza.' },
 ];
 
 ---
 <section class="hero" data-hero>
   <div class="hero__pin">
-  <div class="hero__panel" data-panel>
-  <div class="hero__copy" data-copy>
+  <div class="hero__skin" data-skin></div>
+  <div class="hero__deck" data-deck aria-hidden="true">
+    {callouts.map((c, i) => (
+      <article class="hero__card" data-card>
+        <header class="hero__card-head"><span class="hero__card-n">0{i + 1}</span>{c.label}</header>
+        <div class="hero__scene anatomy-figure iso" data-theme="dark" data-scene style={i < 4 ? '--zoom: 1.3' : undefined}><Fragment set:html={c.svg} /></div>
+        <p class="hero__card-line">{c.line}</p>
+      </article>
+    ))}
+  </div>
+  <div class="hero__panel">
+  <div class="hero__copy">
   <div class="hero__head">
-    <h1 class="hero__title display">
+    <h1 class="hero__title display" data-out>
       <span class="sr-only">Creative Design</span>
       <span aria-hidden="true">
         {'Cre'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}<span class="hero__ch" data-ch><svg viewBox="-8 0 32 32" class="hero__cursor" fill="none">
@@ -56,12 +80,15 @@ const callouts = [
         <a class="hero__tag" href={c.href} data-callout data-ch-index={c.ch} data-x={c.x} data-y={c.y}>{c.label}</a>
       ))}
     </nav>
+    <div data-out>
     <div class="hero__signature" data-sig>
       <span class="hero__signature-rule" aria-hidden="true"></span>
       <span class="hero__signature-text">By Ailyn Japa</span>
       <span class="hero__signature-rule hero__signature-rule--end" aria-hidden="true"></span>
     </div>
+    </div>
   </div>
+  <div data-out>
   <div class="hero__foot" data-in>
     <p class="hero__lead">{h.lead}</p>
     <div class="hero__cta">
@@ -71,14 +98,64 @@ const callouts = [
   </div>
   </div>
   </div>
+  </div>
 
   </div>
 </section>
 
 <script>
-  import { animate, stagger } from 'motion';
+  import { animate, stagger, scroll } from 'motion';
+  import press from '../../tools/heat-press-figure/figure-data.json';
 
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
+
+  // --- Scroll story helpers ---------------------------------------------
+  const clamp = (x: number) => Math.min(1, Math.max(0, x));
+  const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
+  const inOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+  const out = (x: number) => 1 - (1 - x) ** 3;
+  const mix = (a: number, b: number, k: number) => a + (b - a) * k;
+  type V = [number, number, number];
+  const lerp3 = (a: V, b: V, k: number): V => [mix(a[0], b[0], k), mix(a[1], b[1], k), mix(a[2], b[2], k)];
+
+  // World offsets (≈ mm) → screen px. All five scenes share the press's
+  // projection (services-figure/build.mjs fits them the same way).
+  const { x: AX, y: AY, z: AZ } = press.AXES;
+  const toScreen = ([x, y, z]: V) => [x * AX[0] + y * AY[0] + z * AZ[0], x * AX[1] + y * AY[1] + z * AZ[1]];
+  const move = (el: Element | null, w: V, s = 1, c: [number, number] = [0, 0]) => {
+    if (!el) return;
+    const [dx, dy] = toScreen(w);
+    const grow = s === 1 ? '' : ` translate(${c[0].toFixed(1)} ${c[1].toFixed(1)}) scale(${s.toFixed(3)}) translate(${(-c[0]).toFixed(1)} ${(-c[1]).toFixed(1)})`;
+    el.setAttribute('transform', `translate(${dx.toFixed(2)} ${dy.toFixed(2)})${grow}`);
+  };
+
+  // Where each part of the four design scenes floats before it lands. The
+  // flyers start as one stack in the middle and fan out.
+  const FLOAT: Record<string, V> = {
+    board: [0, 0, -60], grid: [0, 0, 70], mark: [-20, 30, 120], palette: [60, -40, 90], type: [40, 50, 70],
+    flyer0: [100, 6, 40], flyer1: [36, 18, 70], flyer2: [-28, 10, 100], flyer3: [-92, 2, 130],
+    letter: [-40, -30, 90], envelope: [50, -50, 60], cards: [30, 60, 120],
+    mug: [0, 0, -50], print: [0, 0, 110], case: [70, -40, 90], keychain: [40, 60, 130],
+  };
+
+  // The press (chapter 5): same beats as before, as shares of its chapter.
+  const { OPEN_Z, CLOSED_Z } = press;
+  const PEEL = press.PAPER_PEEL as V;
+  const PRESS_FLOAT: Record<string, V> = {
+    base: [0, 0, -70], posts: [-30, -60, 50], panel: [80, -40, 90], product: [0, 30, 70], paper: [0, 40, 150], head: [0, 0, OPEN_Z + 140],
+  };
+  const PRESS_REST: Record<string, V> = { base: [0, 0, 0], posts: [0, 0, 0], panel: [0, 0, 0], product: [0, 0, 0], paper: [0, 0, 0], head: [0, 0, OPEN_Z] };
+  const PT = { assemble: [0.04, 0.34], close: [0.4, 0.48], open: [0.54, 0.62], peel: [0.6, 0.68], fade: [0.7, 0.8], rise: [0.72, 0.95] };
+
+  // Shares of the pinned scroll: the hero dissolves, then one chapter per
+  // tag (the press gets the longest).
+  const INTRO = 0.1;
+  const WEIGHTS = [1, 1, 1, 1, 1.7];
+  const SPANS = (() => {
+    const total = WEIGHTS.reduce((a, b) => a + b, 0);
+    let at = INTRO;
+    return WEIGHTS.map((w) => { const a = at; at += ((1 - INTRO) * w) / total; return [a, at] as const; });
+  })();
 
   // Astro's ClientRouter swaps pages without re-running module scripts, so
   // mount on every astro:page-load (each visit to the home brings a fresh
@@ -133,9 +210,26 @@ const callouts = [
         return { path, dot, tag };
       });
     };
+    // Story mode: each tag's offset from its callout spot to its slot in a
+    // left-hand column, measured at rest (pin and head move together, so
+    // the offset holds while pinned).
+    const pin = root.querySelector<HTMLElement>('.hero__pin')!;
+    let slots: [number, number][] = [];
+    const measure = () => {
+      if (!head) return;
+      const hr = head.getBoundingClientRect(), pr = pin.getBoundingClientRect();
+      const gutter = Math.max(20, innerWidth * 0.04), gap = 46;
+      slots = tags.map((tag, i) => {
+        const cx = hr.left + parseFloat(tag.style.left || '0'), cy = hr.top + parseFloat(tag.style.top || '0');
+        const x = pr.left + gutter + tag.offsetWidth / 2, y = pr.top + pr.height / 2 + (i - (tags.length - 1) / 2) * gap;
+        return [x - cx, y - cy];
+      });
+    };
     let parts = draw();
-    addEventListener('resize', () => { parts = draw(); }, { signal: ac.signal });
-    document.fonts?.ready.then(() => { parts = draw(); });
+    measure();
+    let rerender = () => {};
+    addEventListener('resize', () => { parts = draw(); measure(); rerender(); }, { signal: ac.signal });
+    document.fonts?.ready.then(() => { parts = draw(); measure(); rerender(); });
 
     if (reduce) continue;
 
@@ -168,6 +262,116 @@ const callouts = [
       });
     }, (after + 0.4) * 1000);
 
+    // --- The scroll story ---------------------------------------------
+    const outs = root.querySelectorAll<HTMLElement>('[data-out]');
+    const skin = root.querySelector<HTMLElement>('[data-skin]')!;
+    const deck = root.querySelector<HTMLElement>('[data-deck]')!;
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+    const scenes = [...root.querySelectorAll<HTMLElement>('[data-scene]')];
+    const sceneParts = scenes.map((sc) => [...sc.querySelectorAll<SVGGElement>('svg > [data-part]')]);
+    const pressEl = scenes[scenes.length - 1];
+    const pp = (n: string) => pressEl.querySelector<SVGGElement>(`[data-part="${n}"]`);
+    const pressParts = Object.fromEntries(Object.keys(PRESS_REST).map((n) => [n, pp(n)]));
+    const designSub = pp('design-sub');
+    const pb = pressParts.product?.getBBox();
+    const pc: [number, number] = pb ? [pb.x + pb.width / 2, pb.y + pb.height / 2] : [0, 0];
+
+    const renderPress = (q: number) => {
+      ['base', 'posts', 'panel', 'product', 'paper', 'head'].forEach((n, i) => {
+        const a = PT.assemble[0] + i * 0.035;
+        const k = inOut(seg(q, a, a + 0.14));
+        let w = lerp3(PRESS_FLOAT[n], PRESS_REST[n], k);
+        if (n === 'head' && k >= 1) {
+          w = [0, 0, OPEN_Z - (OPEN_Z - CLOSED_Z) * inOut(seg(q, PT.close[0], PT.close[1])) + (OPEN_Z - CLOSED_Z) * inOut(seg(q, PT.open[0], PT.open[1]))];
+        }
+        if (n === 'paper') w = lerp3(w, PEEL, out(seg(q, PT.peel[0], PT.peel[1])));
+        const rise = n === 'product' ? inOut(seg(q, PT.rise[0], PT.rise[1])) : 0;
+        if (n === 'product') w = lerp3(w, [0, 0, 120], rise);
+        move(pressParts[n], w, 1 + rise * 1.1, pc);
+        const el = pressParts[n];
+        if (!el) return;
+        const fade = n === 'product' ? 0 : seg(q, PT.fade[0], PT.fade[1]);
+        const gone = n === 'paper' ? seg(q, PT.peel[0] + 0.03, PT.peel[1]) : 0;
+        el.style.opacity = String(seg(q, a - 0.02, a + 0.06) * (1 - fade) * (1 - gone));
+      });
+      const shut = seg(q, PT.close[1] - 0.02, PT.close[1]) * (1 - seg(q, PT.open[0], PT.open[0] + 0.02));
+      const hd = pressParts.head;
+      if (hd) hd.style.filter = shut > 0 ? `drop-shadow(0 0 ${(22 * shut).toFixed(1)}px color-mix(in oklab, var(--accent) ${Math.round(70 * shut)}%, transparent))` : '';
+      if (designSub) designSub.style.opacity = String(seg(q, PT.open[0] + 0.02, PT.peel[1]));
+    };
+
+    // A design scene: parts land one after another in the first half of the
+    // chapter, then the scene holds until it hands over.
+    const renderScene = (i: number, q: number) => {
+      const list = sceneParts[i], n = list.length;
+      list.forEach((el, j) => {
+        const a = 0.04 + j * (0.36 / n);
+        const k = inOut(seg(q, a, a + 0.22));
+        move(el, lerp3(FLOAT[el.dataset.part!] ?? [0, 0, 80], [0, 0, 0], k));
+        el.style.opacity = String(seg(q, a - 0.02, a + 0.08));
+      });
+    };
+
+    // The skin crops from the full viewport down to the deck's rect.
+    let inset = [0, 0, 0, 0], rise = 0;
+    const frame = () => {
+      const pr = pin.getBoundingClientRect(), dr = deck.getBoundingClientRect();
+      inset = [dr.top - pr.top, pr.right - dr.right, pr.bottom - dr.bottom, dr.left - pr.left];
+      rise = pr.bottom - dr.top + 40;
+    };
+    frame();
+    const render = (p: number) => {
+      // The hero dissolves where it stands while its surface becomes a card.
+      const gone = seg(p, 0.015, INTRO * 0.7);
+      outs.forEach((el) => {
+        el.style.opacity = String(1 - gone);
+        el.style.filter = gone > 0 ? `blur(${(gone * 18).toFixed(1)}px)` : '';
+        el.style.scale = gone > 0 ? String(1 - gone * 0.06) : '';
+        el.style.visibility = gone >= 1 ? 'hidden' : '';
+      });
+      if (wires) wires.style.opacity = String(1 - seg(p, 0.01, INTRO * 0.5));
+      const crop = inOut(seg(p, 0.01, INTRO));
+      skin.style.clipPath = crop > 0 ? `inset(${inset.map((v) => (v * crop).toFixed(1) + 'px').join(' ')} round ${(28 * crop).toFixed(1)}px)` : '';
+      skin.style.opacity = String(1 - seg(p, INTRO * 0.96, INTRO));
+
+      const slide = inOut(seg(p, INTRO * 0.35, INTRO));
+      const chapter = SPANS.findIndex(([a, b], i) => p >= a && (p < b || i === SPANS.length - 1));
+      tags.forEach((tag, i) => {
+        const [dx, dy] = slots[i] ?? [0, 0];
+        tag.style.transform = slide > 0 ? `translate(${(dx * slide).toFixed(1)}px, ${(dy * slide).toFixed(1)}px)` : '';
+        tag.classList.toggle('is-on', i === chapter);
+        tag.classList.toggle('is-story', slide > 0.5);
+      });
+
+      // The deck: card 0 takes over from the cropped skin; every next card
+      // rises from below over the last, which sinks back into the stack.
+      const arrived = cards.map((_, i) => (i === 0 ? seg(p, INTRO * 0.9, INTRO) : out(seg(p, SPANS[i][0] - 0.03, SPANS[i][0] + 0.05))));
+      cards.forEach((card, i) => {
+        const k = arrived[i];
+        const depth = arrived.slice(i + 1).reduce((a, b) => a + b, 0);
+        const y = i === 0 ? 0 : (1 - k) * rise;
+        card.style.visibility = k > 0 && depth < 3 ? 'visible' : 'hidden';
+        card.style.opacity = i === 0 ? String(k) : '1';
+        card.style.transform = `translateY(${(y - depth * 22).toFixed(1)}px) rotate(${(i === 0 ? 0 : (1 - k) * (i % 2 ? 4 : -4)).toFixed(2)}deg) scale(${(1 - depth * 0.05).toFixed(4)})`;
+        card.style.setProperty('--dim', Math.min(0.75, depth * 0.4).toFixed(3));
+        if (k <= 0 || depth >= 1.5) return;
+        const [a, b] = SPANS[i];
+        const q = seg(p, a, b);
+        i === cards.length - 1 ? renderPress(q) : renderScene(i, q);
+      });
+    };
+    // Scroll sets the target; eased per frame on top of the smooth scroll.
+    let now = 0, target = 0, raf = 0;
+    const tick = () => {
+      now += (target - now) * 0.16;
+      if (Math.abs(target - now) < 0.0004) now = target;
+      render(now);
+      raf = now === target ? 0 : requestAnimationFrame(tick);
+    };
+    rerender = () => { frame(); render(now); };
+    render(0);
+    const stop = scroll((p: number) => { target = p; if (!raf) raf = requestAnimationFrame(tick); }, { target: root, offset: ['start start', 'end end'] });
+    ac.signal.addEventListener('abort', () => { stop(); cancelAnimationFrame(raf); });
   }
   }
   document.addEventListener('astro:page-load', mount);
@@ -233,6 +437,9 @@ const callouts = [
     transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
   }
   .hero__tag:hover, .hero__tag:focus-visible { border-color: var(--accent); color: var(--accent); }
+  .hero__tag { transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out); }
+  .hero__tag.is-story { color: color-mix(in oklab, var(--fg) 55%, transparent); border-color: color-mix(in oklab, var(--fg) 18%, transparent); }
+  .hero__tag.is-story.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .hero__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); }
 
   /* By Ailyn Japa */
@@ -244,6 +451,51 @@ const callouts = [
   .hero__foot { display: grid; justify-items: center; gap: 22px; max-width: 34rem; }
   .hero__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 40ch; }
   .hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+  /* The hero's surface: a faint lilac glow that, on scroll, crops down into
+     the first card — so it shares the cards' skin. */
+  .hero__skin, .hero__card {
+    background:
+      radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 60%),
+      color-mix(in oklab, var(--accent) 4%, var(--bg));
+  }
+  .hero__skin { position: absolute; inset: 0; will-change: clip-path; }
+  .hero__pin { position: relative; overflow: hidden; }
+  .hero__deck { display: none; }
+
+  /* The deck: only with JS and motion allowed. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.js) .hero { height: 680svh; }
+    :global(.js) .hero__pin { position: sticky; top: 0; height: 100svh; }
+    :global(.js) .hero__deck {
+      display: block; position: absolute; z-index: 1; left: 57%; top: 53%; translate: -50% -50%;
+      width: min(62vw, 920px); height: min(74svh, 640px); pointer-events: none;
+    }
+    :global(.js) .hero__card {
+      position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 8px;
+      padding: clamp(18px, 2.2vw, 28px) clamp(20px, 2.6vw, 34px); border-radius: 28px; overflow: clip;
+      border: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+      box-shadow: 0 -10px 60px -20px rgb(0 0 0 / 0.7);
+      visibility: hidden; transform-origin: 50% 0; will-change: transform;
+    }
+    /* Sinks into the stack: dimmed as later cards cover it. */
+    :global(.js) .hero__card::after { content: ''; position: absolute; inset: 0; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
+    :global(.js) .hero__card-head { display: flex; align-items: center; gap: 12px; font: 600 12px/1 'Parkinsans', var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: color-mix(in oklab, var(--fg) 75%, transparent); }
+    :global(.js) .hero__card-n { color: var(--accent); }
+    :global(.js) .hero__card-line { font: 500 clamp(15px, 1.3vw, 19px)/1.4 var(--text); color: color-mix(in oklab, var(--fg) 82%, transparent); max-width: 36ch; }
+    :global(.js) .hero__scene { position: relative; min-height: 0; }
+    :global(.js) .hero__scene :global(svg) { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; scale: var(--zoom, 1); }
+    :global(.js) .hero__scene :global([data-part]) { will-change: transform, opacity; }
+    :global(.js) .hero__panel { position: relative; z-index: 2; }
+  }
+  /* A step lighter than the site's default anatomy palette — the scenes are
+     the protagonists on a near-black page, not small insets. */
+  .hero__scene.anatomy-figure.iso {
+    --anatomy-face: #2a2430; --anatomy-top: #312a38; --anatomy-paper: #241f28;
+    --anatomy-shade-0: #1d1922; --anatomy-shade-1: #221d27; --anatomy-shade-2: #28222e; --anatomy-shade-3: #2e2834;
+    --anatomy-lit-top: #3d3346; --anatomy-lit-shade: #342c3c;
+    --anatomy-mid: #8a8292; --anatomy-lo: #5a5462; --anatomy-faint: #3c3642;
+  }
 
   /* Hidden before the entrance runs — only with JS on and motion allowed,
      so no-JS / reduced-motion visitors just see everything. */
@@ -257,5 +509,7 @@ const callouts = [
     /* Too cramped for wires at phone width — the header nav covers these links. */
     .hero__callouts { display: none; }
     .hero__head { margin-top: 0; }
+    :global(.js) .hero__deck { left: 50%; top: 54%; width: calc(100vw - 32px); height: min(72svh, 620px); }
+    :global(.js) .hero__card { border-radius: 22px; }
   }
 </style>
