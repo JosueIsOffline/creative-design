@@ -42,23 +42,37 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
 <section class="show" data-show>
   <div class="show__pin">
     <div class="panel" data-panel>
-      <h1 class="panel__title display">
-        <span class="panel__line">
-          <span data-line>
-            <span class="sr-only">Creative Design</span>
-            <!-- "Cre"/"tive Design" fade on scroll (data-copy), same as the rest of
-                 the panel's text. The cursor itself isn't here: this gap is just a
-                 same-sized placeholder reserving its spot in the text — the real
-                 cursor (data-cursor, further down) sits outside .panel entirely, so
-                 it can paint above the card/tiles once it drags them in, instead of
-                 being trapped behind them by .panel's own stacking context. measure()
-                 reads THIS placeholder's position as the cursor's starting point. -->
-            <span aria-hidden="true">
-              <span data-copy>Cre</span><span class="panel__cursor-space" data-cursor-space></span><span data-copy>tive Design</span>
+      <!-- Wrapped together (not two siblings in .panel's own grid) so the
+           signature sits directly under the headline instead of being
+           auto-placed into .panel's big flexible middle row and centred
+           there. -->
+      <div class="panel__head">
+        <h1 class="panel__title display">
+          <span class="panel__line">
+            <span data-line>
+              <span class="sr-only">Creative Design</span>
+              <!-- "Cre"/"tive Design" fade on scroll (data-copy), same as the rest of
+                   the panel's text. The cursor itself isn't here: this gap is just a
+                   same-sized placeholder reserving its spot in the text — the real
+                   cursor (data-cursor, further down) sits outside .panel entirely, so
+                   it can paint above the card/tiles once it drags them in, instead of
+                   being trapped behind them by .panel's own stacking context. measure()
+                   reads THIS placeholder's position as the cursor's starting point. -->
+              <span aria-hidden="true">
+                <span data-copy>Cre</span><span class="panel__cursor-space" data-cursor-space></span><span data-copy>tive Design</span>
+              </span>
             </span>
           </span>
-        </span>
-      </h1>
+        </h1>
+        <!-- The signature from the original Hero.astro, brought back — same
+             data-copy fade on scroll, and its own data-line so it rises into
+             focus right after the headline, same stagger, same entrance. -->
+        <div class="panel__signature" data-copy>
+          <span class="panel__signature-rule" aria-hidden="true"></span>
+          <span class="panel__signature-clip"><span data-line>By Ailyn Japa</span></span>
+          <span class="panel__signature-rule panel__signature-rule--end" aria-hidden="true"></span>
+        </div>
+      </div>
       <div class="panel__foot" data-copy data-in>
         <p class="panel__lead">{h.lead}</p>
         <div class="panel__cta">
@@ -199,9 +213,9 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       big = bigW / cw;
       home = { x: W / 2 - (card.offsetLeft + cw / 2), y: H / 2 - (card.offsetTop + ch / 2) };
       rest = { x: W * 0.1, y: H * 0.03, s: 0.84 };
-      if (phone) { // on phones the card rests in the gap between the headline and the lead, as big as the gap allows
-        const title = panel.querySelector<HTMLElement>('.panel__title')!, foot = panel.querySelector<HTMLElement>('.panel__foot')!;
-        const top = title.offsetTop + title.offsetHeight, gap = foot.offsetTop - top;
+      if (phone) { // on phones the card rests in the gap between the headline block (title + signature) and the lead, as big as the gap allows
+        const head = panel.querySelector<HTMLElement>('.panel__head')!, foot = panel.querySelector<HTMLElement>('.panel__foot')!;
+        const top = head.offsetTop + head.offsetHeight, gap = foot.offsetTop - top;
         rest = { x: W * 0.2, y: panel.offsetTop + top + gap / 2 - H / 2, s: Math.max(0.3, Math.min(0.56, (gap - 24) / (ch * big))) };
       }
       crop = { x: (panel.offsetWidth - bigW) / 2, y: (panel.offsetHeight - ch * big) / 2 };
@@ -384,7 +398,8 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     padding: calc(var(--head) + 20px) clamp(20px, 3vw, 44px) clamp(24px, 3vw, 44px);
     border-radius: var(--r-lg); background: var(--stage-bg); color: var(--fg);
   }
-  .panel__title { position: relative; z-index: 2; --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
+  .panel__head { position: relative; z-index: 2; }
+  .panel__title { position: relative; --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
   .panel__title em { font-style: normal; color: color-mix(in oklab, var(--glow-2) 70%, var(--fg)); }
   /* The cursor icon standing in for the "a" of "Creative" — Hero.astro's own trick, ported as-is. */
   /* The one cursor, for its whole life: starts as the "a" of "Creative",
@@ -402,6 +417,12 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   .panel__cursor { position: fixed; top: 0; left: 0; z-index: 10; color: var(--fg); transform-origin: 50% 50%; will-change: transform; pointer-events: none; }
   .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
   .panel__line > span { display: inline-block; }
+  /* By Ailyn Japa — brought back from the original Hero.astro. */
+  .panel__signature { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
+  .panel__signature-rule { height: 1px; width: clamp(28px, 3.5vw, 52px); background: linear-gradient(90deg, transparent, var(--fg)); }
+  .panel__signature-rule--end { background: linear-gradient(270deg, transparent, var(--fg)); }
+  .panel__signature-clip { display: inline-block; overflow: clip; padding-bottom: 0.12em; }
+  .panel__signature-clip [data-line] { display: inline-block; font-family: var(--font-script); font-size: clamp(1.3rem, 2.4vw, 1.9rem); color: var(--fg); }
   .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }
   .panel__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 36ch; }
   .panel__cta { display: flex; flex-wrap: wrap; gap: 10px; }

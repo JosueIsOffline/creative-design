@@ -10,6 +10,28 @@ describe("HeroScene (Creative Design's own scroll-storytelling hero — started 
     expect(src).toContain("{ y: ['105%', '0%'], filter: ['blur(14px)', 'blur(0px)'] }");
   });
 
+  it("restores the \"By Ailyn Japa\" signature from the original Hero.astro under the headline, with its own data-line so it rises into focus right after it", async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src).toContain('<span class="panel__signature-clip"><span data-line>By Ailyn Japa</span></span>');
+    expect(src).toContain("font-family: var(--font-script)");
+  });
+
+  it(
+    "wraps the headline and signature in .panel__head instead of leaving them as separate .panel grid children — a bug " +
+      "found in review: .panel's grid-template-rows is [auto 1fr auto] with .panel__foot pinned to row 3; a sibling " +
+      "signature with no explicit grid-row would auto-place into the big flexible row 2 and, since grid items stretch " +
+      "by default, centre vertically in all that empty space instead of sitting right under the headline",
+    async () => {
+      const src = await read('src/components/HeroScene.astro');
+      expect(src).toContain('<div class="panel__head">');
+      expect(src).toContain('.panel__head { position: relative; z-index: 2; }');
+      expect(
+        src,
+        "measure()'s phone gap calculation must read the whole head block's bottom edge, not just the title's, now that the signature sits below it"
+      ).toContain("const head = panel.querySelector<HTMLElement>('.panel__head')!, foot = panel.querySelector<HTMLElement>('.panel__foot')!");
+    }
+  );
+
   it('arranges the board as an overlapping workbench, not a case-study grid — each tile spans into the key\'s area and sits above it', async () => {
     const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(10, 1fr)');
