@@ -2,10 +2,16 @@
 // Creative Design's hero: the brand name (with the cursor standing in for
 // the "a" of "Creative"), the signature, lead copy and CTAs. The headline
 // rises into focus on load (blurred -> sharp), inspired by hipuku.dev's
-// wordmark reveal. No scroll-pinned board/cards any more — removed per
-// request; HeroStory.astro (an earlier scroll-storytelling attempt) stays
-// in the codebase, on hold.
+// wordmark reveal. On scroll (desktop, motion allowed) the hero panel
+// itself crops down into the first card of the process, which settles to
+// its spot while the rest of the process lands beside it, one per step —
+// the idea of Halo's hero-into-board, in our own visual language (tags
+// wired to the pieces, our figures, flat surfaces). Without the pin the
+// cards simply follow the hero.
 import { Icon } from 'astro-icon/components';
+import designSvg from '../../tools/design-figure/figure.svg?raw';
+import sublimationSvg from '../../tools/heat-press-figure/figure.svg?raw';
+import packagingSvg from '../../tools/packaging-figure/figure.svg?raw';
 
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 const waMessage = encodeURIComponent('Hola! Quiero más información sobre Creative Design.');
@@ -31,8 +37,19 @@ const callouts = [
   { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.7, y: -1.12 },
   { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.92, y: -0.58 },
 ];
+
+// The process, card by card. The panel becomes the first one.
+const cards = [
+  { tag: 'Diseño', line: 'Bocetamos tu idea y la convertimos en diseño.', svg: designSvg, tilt: -3 },
+  { tag: 'Sublimación', line: 'Calor y presión: el diseño pasa a la pieza.', svg: sublimationSvg, tilt: 2 },
+  { tag: 'Empaquetado', line: 'Empacado a mano, listo para sorprender.', svg: packagingSvg, tilt: -2 },
+  { tag: 'Entrega', line: 'Y llega a tus manos.', svg: null, tilt: 3 },
+];
 ---
 <section class="hero" data-hero>
+  <div class="hero__pin">
+  <div class="hero__panel" data-panel>
+  <div class="hero__copy" data-copy>
   <div class="hero__head">
     <h1 class="hero__title display">
       <span class="sr-only">Creative Design</span>
@@ -67,10 +84,34 @@ const callouts = [
       <a class="btn" href={h.href2} target="_blank" rel="noopener">{h.button2}</a>
     </div>
   </div>
+  </div>
+  </div>
+
+  <h2 class="sr">Cómo trabajamos</h2>
+  <div class="hero__board" data-board>
+    {cards.map((c) => (
+      <article class="hero__card" data-card style={`--tilt:${c.tilt}deg`}>
+        <p class="hero__card-tag">{c.tag}</p>
+        <span class="hero__card-wire" aria-hidden="true"></span>
+        <span class="hero__card-dot" aria-hidden="true"></span>
+        <div class="hero__card-fig">
+          {c.svg
+            ? <div class="anatomy-figure iso" data-theme="dark"><Fragment set:html={c.svg} /></div>
+            : <span class="hero__card-check"><Icon name="lucide:check" width="44" height="44" /></span>}
+        </div>
+        <p class="hero__card-line">{c.line}</p>
+      </article>
+    ))}
+  </div>
+
+  <div class="hero__end" data-end>
+    <a class="btn btn--solid" href={h.href}>{h.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
+  </div>
+  </div>
 </section>
 
 <script>
-  import { animate, stagger } from 'motion';
+  import { animate, scroll, stagger } from 'motion';
 
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
 
@@ -153,6 +194,80 @@ const callouts = [
         animate(tag, { opacity: [0, 1], filter: ['blur(8px)', 'blur(0px)'] }, { duration: 0.6, ease: ease.outExpo, delay: t + 0.55 });
       });
     }, (after + 0.4) * 1000);
+
+    // ---- The scroll story (desktop only; the pinned layout is CSS-gated
+    // to the same query). The panel crops down around the first card's
+    // spot at the centre and hands over to it; that card settles into the
+    // board; the others land one per step. Each card's tag, wire, dot and
+    // line come on (--on) once it has landed.
+    if (!matchMedia('(min-width: 810px)').matches) continue;
+    const pin = root.querySelector<HTMLElement>('.hero__pin')!;
+    const panel = root.querySelector<HTMLElement>('[data-panel]')!;
+    const copy = root.querySelector<HTMLElement>('[data-copy]')!;
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+    const end = root.querySelector<HTMLElement>('[data-end]')!;
+    const clamp = (x: number) => Math.min(1, Math.max(0, x));
+    const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
+    const inOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+    const out = (x: number) => 1 - (1 - x) ** 4;
+    const mix = (a: number, b: number, k: number) => a + (b - a) * k;
+    const MORPH = [0, 0.22], SETTLE = [0.25, 0.38], FIRST = 0.38, EVERY = 0.16, LAND = 0.14;
+
+    let big = 1, home = { x: 0, y: 0 }, crop = { x: 0, y: 0 }, drop = 0;
+    const tilts = cards.map((c) => parseFloat(getComputedStyle(c).getPropertyValue('--tilt')) || 0);
+    const measure = () => {
+      const W = pin.offsetWidth, H = pin.offsetHeight, c = cards[0];
+      const cw = c.offsetWidth, ch = c.offsetHeight;
+      const bigW = Math.min(0.34 * W, 0.62 * H * (cw / ch));
+      big = bigW / cw;
+      home = { x: W / 2 - (c.offsetLeft + cw / 2), y: H / 2 - (c.offsetTop + ch / 2) };
+      crop = { x: (panel.offsetWidth - bigW) / 2, y: (panel.offsetHeight - ch * big) / 2 };
+      drop = H * 0.75;
+    };
+
+    let now = 0;
+    const render = () => {
+      const p = now;
+      const m = seg(p, MORPH[0], MORPH[1]), k = inOut(seg(m, 0.05, 0.9));
+      const B = inOut(seg(p, SETTLE[0], SETTLE[1]));
+      panel.style.clipPath = `inset(${crop.y * k}px ${crop.x * k}px round ${mix(28, 22 * big, k)}px)`;
+      panel.style.opacity = String(1 - seg(m, 0.9, 1));
+      panel.style.visibility = m >= 1 ? 'hidden' : 'visible';
+      const co = 1 - seg(m, 0, 0.3);
+      copy.style.opacity = String(co);
+      copy.style.visibility = co > 0 ? 'visible' : 'hidden';
+
+      cards.forEach((c, i) => {
+        let on: number;
+        if (i === 0) {
+          c.style.opacity = String(seg(m, 0.55, 0.9));
+          c.style.transform = `translate(${home.x * (1 - B)}px, ${home.y * (1 - B)}px) rotate(${tilts[0] * B}deg) scale(${mix(big, 1, B)})`;
+          on = seg(p, SETTLE[1] - 0.02, SETTLE[1] + 0.05);
+        } else {
+          const a = FIRST + (i - 1) * EVERY, T = out(seg(p, a, a + LAND));
+          c.style.opacity = String(seg(T, 0, 0.3));
+          c.style.transform = `translate(0px, ${drop * (1 - T)}px) rotate(${mix(tilts[i] * 5, tilts[i], T)}deg) scale(${mix(0.8, 1, T)})`;
+          on = seg(p, a + LAND * 0.6, a + LAND + 0.05);
+        }
+        c.style.setProperty('--on', String(on));
+      });
+      const e = seg(p, 0.88, 0.95);
+      end.style.opacity = String(e);
+      end.style.visibility = e > 0 ? 'visible' : 'hidden';
+    };
+
+    // Scroll sets the target; the scene eases toward it each frame so wheel
+    // steps glide instead of jumping.
+    let target = 0, raf = 0;
+    const tick = () => {
+      now += (target - now) * 0.16;
+      if (Math.abs(target - now) < 0.0005) now = target;
+      render();
+      raf = now === target ? 0 : requestAnimationFrame(tick);
+    };
+    measure(); render();
+    addEventListener('resize', () => { measure(); render(); });
+    scroll((p: number) => { target = p; if (!raf) raf = requestAnimationFrame(tick); }, { target: root, offset: ['start start', 'end end'] });
   }
 </script>
 
@@ -192,11 +307,12 @@ const callouts = [
   /* Our header floats fixed (a pill, out of document flow) — no header-
      height offset needed here, just centre the content in the viewport
      like the original Hero.astro did. */
-  .hero {
-    position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(28px, 4vw, 44px);
+  .hero { position: relative; background: var(--bg); color: var(--fg); }
+  .hero__panel {
+    position: relative; min-height: 100svh; display: flex; align-items: center; justify-content: center;
     padding: clamp(20px, 3vw, 44px); text-align: center;
-    background: var(--bg); color: var(--fg);
   }
+  .hero__copy { display: flex; flex-direction: column; align-items: center; gap: clamp(28px, 4vw, 44px); }
   .hero__title { --size: var(--fs-hero); font-family: 'Parkinsans', var(--display); font-weight: 700; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
   .hero__ch { display: inline-block; white-space: pre; transform-origin: 50% 60%; }
 
@@ -227,6 +343,46 @@ const callouts = [
   .hero__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 40ch; }
   .hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 
+  /* The process cards. Without the pin (phones, reduced motion, no JS)
+     they simply follow the hero in a grid, everything shown. */
+  .hero__board { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px 24px; padding: 40px clamp(20px, 4vw, 48px) 80px; max-width: 1100px; margin-inline: auto; }
+  .hero__card {
+    --on: 1; --card: color-mix(in oklab, var(--fg) 5%, var(--bg));
+    position: relative; display: grid; grid-template-rows: 1fr auto; gap: 10px; aspect-ratio: 3 / 4;
+    padding: 30px 18px 18px; border: 1px solid var(--line); border-radius: 22px; background: var(--card);
+  }
+  .hero__card-tag {
+    position: absolute; left: 50%; top: 0; translate: -50% -50%; z-index: 2; white-space: nowrap;
+    padding: 6px 14px; border: 1px solid color-mix(in oklab, var(--fg) 40%, transparent); border-radius: 999px; background: var(--bg);
+    font: 600 11px/1 'Parkinsans', var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in oklab, var(--fg) 85%, transparent);
+    opacity: var(--on);
+  }
+  .hero__card-wire { position: absolute; left: 50%; top: 12px; width: 1px; height: calc(40% - 12px); background: color-mix(in oklab, var(--fg) 45%, transparent); transform-origin: top; scale: 1 var(--on); }
+  .hero__card-dot { position: absolute; left: 50%; top: 40%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--fg); z-index: 2; scale: var(--on); }
+  .hero__card-fig { display: grid; place-items: center; min-height: 0; }
+  .hero__card-fig .anatomy-figure { width: 100%; }
+  .hero__card-check { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); }
+  .hero__card-line { font: 500 14px/1.35 var(--display); color: color-mix(in oklab, var(--fg) 80%, transparent); text-align: center; opacity: var(--on); }
+  .hero__end { display: none; }
+
+  /* Pinned story (desktop, JS on, motion allowed): the panel is a flat
+     surface a shade off the page (so its crop reads), inset like a card;
+     the board sits over it in a row, each card at its own small tilt. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 810px) {
+    :global(.js) .hero { height: 540svh; }
+    :global(.js) .hero__pin { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+    :global(.js) .hero__panel {
+      position: absolute; inset: 12px; min-height: 0; z-index: 1; will-change: clip-path;
+      border: 1px solid var(--line); border-radius: 28px; background: color-mix(in oklab, var(--fg) 5%, var(--bg));
+    }
+    :global(.js) .hero__board {
+      position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; gap: clamp(20px, 2.4vw, 36px);
+      max-width: none; padding: 0 0 6svh; pointer-events: none;
+    }
+    :global(.js) .hero__card { width: min(19vw, 250px); opacity: 0; will-change: transform, opacity; --on: 0; rotate: none; }
+    :global(.js) .hero__end { display: block; position: absolute; left: 0; right: 0; bottom: 7svh; z-index: 3; text-align: center; opacity: 0; visibility: hidden; }
+  }
+
   /* Hidden before the entrance runs — only with JS on and motion allowed,
      so no-JS / reduced-motion visitors just see everything. */
   @media (prefers-reduced-motion: no-preference) {
@@ -234,7 +390,7 @@ const callouts = [
   }
 
   @media (max-width: 809px) {
-    .hero { min-height: 100svh; padding: 18px 18px 48px; }
+    .hero__panel { padding: 18px 18px 48px; }
     .hero__title { --size: clamp(2.6rem, 12.5vw, 4rem); }
     /* Too cramped for wires at phone width — the header nav covers these links. */
     .hero__callouts { display: none; }
