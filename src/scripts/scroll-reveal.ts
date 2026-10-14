@@ -19,7 +19,9 @@ function setup() {
   mm.add('(prefers-reduced-motion: no-preference)', () => {
     // Services and About rows are editorial lists (hairline dividers, no card
     // box) revealed only through their kinetic-heading titles, not this fade.
-    document.querySelectorAll('.product-card').forEach((card) => {
+    // Destacados (home) has its own staggered entrance (index.astro).
+    document.querySelectorAll<HTMLElement>('.product-card').forEach((card) => {
+      if (card.closest('[data-featured]')) return;
       gsap.from(card, {
         opacity: 0,
         y: 30,

@@ -30,28 +30,17 @@ const galeria = products.slice(0, 8);
 
   {destacados.length > 0 && (
     <section id="destacados" class="relative py-16">
-      <div class="max-w-5xl mx-auto px-6">
+      <div class="max-w-6xl mx-auto px-6">
         <div class="flex items-end justify-between gap-4 mb-8">
           <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Destacados</h2>
-          <div class="flex items-center gap-4">
-            <a href="/catalogo" class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
-              Ver catálogo completo
-              <Icon name="line-md:arrow-right" class="w-3.5 h-3.5" />
-            </a>
-            <div class="hidden lg:flex gap-2">
-              <button type="button" class="rail-arrow" data-rail-prev aria-label="Productos anteriores"><Icon name="lucide:chevron-left" class="w-4 h-4" /></button>
-              <button type="button" class="rail-arrow" data-rail-next aria-label="Más productos"><Icon name="lucide:chevron-right" class="w-4 h-4" /></button>
-            </div>
-          </div>
+          <a href="/catalogo" class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
+            Ver catálogo completo
+            <Icon name="line-md:arrow-right" class="w-3.5 h-3.5" />
+          </a>
         </div>
-      </div>
-      <div data-rail>
-        <div
-          class="rail-track flex gap-6 pb-6 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          data-rail-track
-        >
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-featured>
           {destacados.map((product) => (
-            <div class="w-[75vw] sm:w-[320px] shrink-0 snap-start">
+            <div data-featured-item>
               <ProductCard product={product} />
             </div>
           ))}
@@ -72,72 +61,40 @@ const galeria = products.slice(0, 8);
 <script>
   import '../scripts/scroll-reveal';
   import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-  // Destacados rail: a free row, never driven by the page scroll. Phones
-  // swipe it natively (with snap); on desktop it also takes a mouse drag
-  // that keeps its momentum on release, the trackpad's sideways scroll, and
-  // the ‹ › arrows.
-  function mountRail() {
-    document.querySelectorAll<HTMLElement>('[data-rail]').forEach((root) => {
-      if (root.dataset.railMounted) return;
-      root.dataset.railMounted = 'true';
-      const track = root.querySelector<HTMLElement>('[data-rail-track]');
-      const section = root.closest('section');
-      const prev = section?.querySelector<HTMLButtonElement>('[data-rail-prev]');
-      const next = section?.querySelector<HTMLButtonElement>('[data-rail-next]');
-      if (!track) return;
+  gsap.registerPlugin(ScrollTrigger);
 
-      const step = () => (track.firstElementChild as HTMLElement | null)?.offsetWidth ?? 320;
-      const ends = () => {
-        if (prev) prev.disabled = track.scrollLeft < 4;
-        if (next) next.disabled = track.scrollLeft > track.scrollWidth - track.clientWidth - 4;
-      };
-      prev?.addEventListener('click', () => track.scrollBy({ left: -(step() + 24), behavior: 'smooth' }));
-      next?.addEventListener('click', () => track.scrollBy({ left: step() + 24, behavior: 'smooth' }));
-      track.addEventListener('scroll', ends, { passive: true });
-      ends();
-
-      // Mouse drag with momentum (touch and pen keep the native swipe).
-      let down = false, moved = 0, lastX = 0, lastT = 0, v = 0, raf = 0;
-      track.addEventListener('pointerdown', (e) => {
-        if (e.pointerType !== 'mouse' || e.button !== 0) return;
-        cancelAnimationFrame(raf);
-        down = true; moved = 0; lastX = e.clientX; lastT = e.timeStamp; v = 0;
-        track.style.scrollSnapType = 'none';
-        track.setPointerCapture(e.pointerId);
+  // Destacados: a fixed grid; each card makes its entrance as its row
+  // scrolls in — rising out of a soft blur, staggered across the row, its
+  // photo opening from a cropped frame (the same gesture as Ailyn's photo).
+  function mountFeatured() {
+    const grid = document.querySelector<HTMLElement>('[data-featured]');
+    if (!grid || grid.dataset.featuredMounted) return;
+    grid.dataset.featuredMounted = 'true';
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      const items = gsap.utils.toArray<HTMLElement>('[data-featured-item]', grid);
+      gsap.set(items, { opacity: 0, y: 70, scale: 0.94, filter: 'blur(10px)' });
+      items.forEach((el) => {
+        const img = el.querySelector<HTMLElement>('[data-tilt]');
+        if (img) gsap.set(img, { clipPath: 'inset(14% 10% 14% 10% round 16px)' });
       });
-      track.addEventListener('pointermove', (e) => {
-        if (!down) return;
-        const dx = e.clientX - lastX, dt = Math.max(1, e.timeStamp - lastT);
-        track.scrollLeft -= dx;
-        moved += Math.abs(dx);
-        v = 0.8 * (-dx / dt) + 0.2 * v; // px/ms, smoothed
-        lastX = e.clientX; lastT = e.timeStamp;
-        if (moved > 6) track.classList.add('is-dragging');
+      ScrollTrigger.batch(items, {
+        start: 'top 88%',
+        once: true,
+        onEnter: (batch) => {
+          gsap.to(batch, { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 1.1, ease: 'expo.out', stagger: 0.12, clearProps: 'filter,transform' });
+          batch.forEach((el, i) => {
+            const img = el.querySelector<HTMLElement>('[data-tilt]');
+            if (img) gsap.to(img, { clipPath: 'inset(0% 0% 0% 0% round 16px)', duration: 1.3, ease: 'expo.out', delay: 0.08 + i * 0.12, clearProps: 'clipPath' });
+          });
+        },
       });
-      const release = () => {
-        if (!down) return;
-        down = false;
-        // Coast on the release velocity, decaying like a scroll fling.
-        let last = performance.now();
-        const coast = (now: number) => {
-          const dt = now - last; last = now;
-          track.scrollLeft += v * dt;
-          v *= Math.pow(0.995, dt);
-          if (Math.abs(v) > 0.02) raf = requestAnimationFrame(coast);
-          else { track.style.scrollSnapType = ''; track.classList.remove('is-dragging'); }
-        };
-        raf = requestAnimationFrame(coast);
-      };
-      track.addEventListener('pointerup', release);
-      track.addEventListener('pointercancel', release);
-      // A drag isn't a click on the card under the pointer.
-      track.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
-      track.addEventListener('dragstart', (e) => e.preventDefault());
     });
   }
 
-  document.addEventListener('astro:page-load', mountRail);
+  document.addEventListener('astro:page-load', mountFeatured);
 
   // First-visit intro (adapted from the Halo reference's Intro): a brief
   // flourish shown once per session, skipped on repeat visits within the
@@ -186,25 +143,3 @@ const galeria = products.slice(0, 8);
   document.addEventListener('astro:page-load', mountIntro);
 </script>
 
-<style>
-  /* The row lines up with the content column (max-w-5xl + px-6) yet scrolls
-     edge to edge. */
-  .rail-track {
-    --edge: max(24px, calc((100vw - 64rem) / 2 + 24px));
-    padding-inline: var(--edge);
-    scroll-padding-inline: var(--edge);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .rail-track { cursor: grab; }
-    .rail-track.is-dragging { cursor: grabbing; user-select: none; }
-    .rail-track.is-dragging :global(a) { pointer-events: none; }
-  }
-  .rail-arrow {
-    display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px;
-    border: 1px solid var(--color-border); color: var(--color-foreground);
-    transition: background-color 200ms, opacity 200ms, scale 160ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .rail-arrow:hover:not(:disabled) { background: color-mix(in oklab, var(--color-foreground) 8%, transparent); }
-  .rail-arrow:active:not(:disabled) { scale: 0.94; }
-  .rail-arrow:disabled { opacity: 0.3; cursor: default; }
-</style>
