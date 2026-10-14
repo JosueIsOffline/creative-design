@@ -61,7 +61,11 @@
       lag: Math.random() ** 1.6 * LAG,
       spread: gauss(),
       star: star[i],
-      size: Math.random() < 0.14 ? rand(3.2, 5.5) : rand(1.5, 3),
+      size: rand(1.3, 3.2) * (Math.random() < 0.12 ? 1.5 : 1),
+      // Only a few big glints get a halo; the rest are crisp dots.
+      glint: Math.random() < 0.08,
+      // Each floats on its own slow loop, scroll or not.
+      fl: [rand(0.35, 0.9), rand(0.3, 0.8), rand(0, Math.PI * 2)] as [number, number, number],
       tw: rand(1.5, 4.5), ph: rand(0, Math.PI * 2),
       // Mostly warm white; a sprinkle of the cursor's confetti colours.
       hue: Math.random() < 0.8 ? 0 : 1 + Math.floor(Math.random() * 4),
@@ -121,10 +125,10 @@
       const s = 0.1 + p * 1.25; // the head travels along the path with scroll
       const head = path(s);
       // Star: on the photo's top-right corner, sized to the photo.
-      const R = Math.min(ar.width, 420) * 0.3;
-      const cx = ar.right - R * 0.35, cy = ar.bottom - R * 1.35; // the photo's lower right corner, over the background, clear of her face
+      const R = Math.min(ar.width, 420) * 0.26;
+      const cx = ar.right - R * 0.7, cy = ar.bottom - R * 1.45; // the photo's lower right corner, over the background, clear of her face
       const pal = dark() ? COLORS.dark : COLORS.light;
-      ctx.globalCompositeOperation = dark() ? 'lighter' : 'source-over';
+      ctx.globalCompositeOperation = 'source-over';
 
       for (const q of P) {
         // Dust → comet: the head's neighbours join first.
@@ -135,19 +139,29 @@
         const [px, py] = path(s - q.lag);
         const [nx, ny] = path(s - q.lag + 0.002);
         const len = Math.hypot(nx - px, ny - py) || 1;
-        const width = 6 + (q.lag / LAG) ** 1.3 * 56; // tight at the head, fanning out toward the tail
+        const width = 10 + (q.lag / LAG) ** 1.2 * 70; // tight at the head, fanning out toward the tail
         const cxp = px + (-(ny - py) / len) * q.spread * width + q.jit[0] * 2;
         const cyp = py + ((nx - px) / len) * q.spread * width + q.jit[1] * 2;
         const sx = cx + q.star[0] * R + q.jit[0] * 1.2, sy = cy + q.star[1] * R + q.jit[1] * 1.2;
         let x = dx + (cxp - dx) * kc, y = dy + (cyp - dy) * kc;
         x += (sx - x) * ks; y += (sy - y) * ks;
+        // Idle float: wide in the loose dust, a gentle bob in the comet and ✨.
+        const amp = 3 + (1 - kc) * 7 + (q.lag / LAG) * 5 * (1 - ks);
+        x += Math.sin(t * q.fl[0] + q.fl[2]) * amp;
+        y += Math.cos(t * q.fl[1] + q.fl[2] * 1.3) * amp;
 
-        const tw = 0.55 + 0.45 * Math.sin(t * q.tw + q.ph);
-        const a = appear * (0.55 + 0.45 * Math.max(kc, ks)) * (0.6 + 0.4 * tw);
+        const tw = 0.75 + 0.25 * Math.sin(t * q.tw + q.ph);
+        const a = appear * (0.6 + 0.4 * Math.max(kc, ks)) * tw;
         if (a < 0.02) continue;
-        ctx.globalAlpha = Math.min(1, a) * (1 - ks * 0.25);
-        const r = q.size * (2.6 - ks * 1.4); // tighter once they form the ✨, so its shape reads
-        ctx.drawImage(sprite(pal[q.hue]), x - r, y - r, r * 2, r * 2);
+        const r = q.size * (1 - ks * 0.2);
+        ctx.globalAlpha = Math.min(1, a);
+        ctx.fillStyle = pal[q.hue];
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        if (q.glint) {
+          const g = r * 5;
+          ctx.globalAlpha = Math.min(1, a) * 0.55 * tw;
+          ctx.drawImage(sprite(pal[q.hue]), x - g, y - g, g * 2, g * 2);
+        }
       }
 
       // The cursor leads the comet, then lets the ✨ have the stage.
