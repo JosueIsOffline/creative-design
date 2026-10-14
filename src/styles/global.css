@@ -365,3 +365,19 @@ html.is-theme-transition::view-transition-group(theme-icon) {
 .anatomy-figure [data-part='heat-face'] {
   transition: opacity 0.15s linear;
 }
+
+/* The home's content after the hero rises over the still-pinned hero deck
+   (HeroScene.astro keeps its pin for this last 100svh) instead of the deck
+   scrolling away — only where the hero is pinned. */
+@media (prefers-reduced-motion: no-preference) {
+  .js .after-hero {
+    position: relative;
+    z-index: 5;
+    margin-top: -100svh;
+    background: var(--background);
+    border-radius: 32px 32px 0 0;
+    overflow: clip;
+    padding-top: 12px;
+    box-shadow: 0 -40px 80px -30px rgb(0 0 0 / 0.85);
+  }
+}

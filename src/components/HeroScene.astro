@@ -132,10 +132,10 @@ const callouts = [
   // Where each part of the four design scenes floats before it lands. The
   // flyers start as one stack in the middle and fan out.
   const FLOAT: Record<string, V> = {
-    board: [0, 0, -60], grid: [0, 0, 70], mark: [-20, 30, 120], palette: [60, -40, 90], type: [40, 50, 70],
-    flyer0: [100, 6, 40], flyer1: [36, 18, 70], flyer2: [-28, 10, 100], flyer3: [-92, 2, 130],
-    letter: [-40, -30, 90], envelope: [50, -50, 60], cards: [30, 60, 120],
-    mug: [0, 0, -50], print: [0, 0, 110], case: [70, -40, 90], keychain: [40, 60, 130],
+    board: [0, 0, -60], guides: [0, 0, 60], mark: [-20, 30, 130], swatches: [60, -30, 90], type: [40, 50, 80], pencil: [-40, 60, 110],
+    stack: [0, 0, -50], flyer0: [142, -20, 46], flyer1: [80, -48, 36], flyer2: [16, -74, 26],
+    letter: [-40, -30, 90], envelope: [50, -50, 70], cards: [30, 60, 120], pen: [-50, 50, 100],
+    tee: [0, 0, -50], case: [70, -40, 90], mug: [0, 0, 120], print: [0, 0, 70], keychain: [-30, 60, 110],
   };
 
   // The press (chapter 5): same beats as before, as shares of its chapter.
@@ -148,13 +148,15 @@ const callouts = [
   const PT = { assemble: [0.04, 0.34], close: [0.4, 0.48], open: [0.54, 0.62], peel: [0.6, 0.68], fade: [0.7, 0.8], rise: [0.72, 0.95] };
 
   // Shares of the pinned scroll: the hero dissolves, then one chapter per
-  // tag (the press gets the longest).
-  const INTRO = 0.1;
+  // tag (the press gets the longest), then the next section rises over the
+  // still-pinned deck (its last 100svh: see .after-hero in global.css).
+  const INTRO = 0.09;
+  const END = 1 - 100 / (780 - 100);
   const WEIGHTS = [1, 1, 1, 1, 1.7];
   const SPANS = (() => {
     const total = WEIGHTS.reduce((a, b) => a + b, 0);
     let at = INTRO;
-    return WEIGHTS.map((w) => { const a = at; at += ((1 - INTRO) * w) / total; return [a, at] as const; });
+    return WEIGHTS.map((w) => { const a = at; at += ((END - INTRO) * w) / total; return [a, at] as const; });
   })();
 
   // Astro's ClientRouter swaps pages without re-running module scripts, so
@@ -313,8 +315,9 @@ const callouts = [
     };
 
     // The skin crops from the full viewport down to the deck's rect.
-    let inset = [0, 0, 0, 0], rise = 0;
+    let inset = [0, 0, 0, 0], rise = 0, radius = 28;
     const frame = () => {
+      radius = parseFloat(getComputedStyle(cards[0]).borderTopLeftRadius) || 28;
       const pr = pin.getBoundingClientRect(), dr = deck.getBoundingClientRect();
       inset = [dr.top - pr.top, pr.right - dr.right, pr.bottom - dr.bottom, dr.left - pr.left];
       rise = pr.bottom - dr.top + 40;
@@ -330,11 +333,20 @@ const callouts = [
         el.style.visibility = gone >= 1 ? 'hidden' : '';
       });
       if (wires) wires.style.opacity = String(1 - seg(p, 0.01, INTRO * 0.5));
+      // The skin's box itself shrinks (not a clip), so its light travels
+      // with it and lands exactly where the first card's is.
       const crop = inOut(seg(p, 0.01, INTRO));
-      skin.style.clipPath = crop > 0 ? `inset(${inset.map((v) => (v * crop).toFixed(1) + 'px').join(' ')} round ${(28 * crop).toFixed(1)}px)` : '';
+      const [t, r, b, l] = inset.map((v) => (v * crop).toFixed(1) + 'px');
+      Object.assign(skin.style, { top: t, right: r, bottom: b, left: l, borderRadius: `${(radius * crop).toFixed(1)}px` });
+      skin.style.setProperty('--edge', crop.toFixed(3));
       skin.style.opacity = String(1 - seg(p, INTRO * 0.96, INTRO));
 
       const slide = inOut(seg(p, INTRO * 0.35, INTRO));
+      // The next section covering the pinned deck: it sinks back and dims.
+      const cover = seg(p, END, 1);
+      deck.style.transform = cover > 0 ? `scale(${(1 - cover * 0.08).toFixed(4)})` : '';
+      deck.style.opacity = String(1 - cover * 0.5);
+      root.querySelector<HTMLElement>('.hero__callouts')!.style.opacity = String(1 - seg(p, END, END + 0.06));
       const chapter = SPANS.findIndex(([a, b], i) => p >= a && (p < b || i === SPANS.length - 1));
       tags.forEach((tag, i) => {
         const [dx, dy] = slots[i] ?? [0, 0];
@@ -459,13 +471,13 @@ const callouts = [
       radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 60%),
       color-mix(in oklab, var(--accent) 4%, var(--bg));
   }
-  .hero__skin { position: absolute; inset: 0; will-change: clip-path; }
+  .hero__skin { position: absolute; inset: 0; border: 1px solid color-mix(in oklab, var(--accent) calc(20% * var(--edge, 0)), transparent); }
   .hero__pin { position: relative; overflow: hidden; }
   .hero__deck { display: none; }
 
   /* The deck: only with JS and motion allowed. */
   @media (prefers-reduced-motion: no-preference) {
-    :global(.js) .hero { height: 680svh; }
+    :global(.js) .hero { height: 780svh; } /* keep in sync with END in the script */
     :global(.js) .hero__pin { position: sticky; top: 0; height: 100svh; }
     :global(.js) .hero__deck {
       display: block; position: absolute; z-index: 1; left: 57%; top: 53%; translate: -50% -50%;
