@@ -143,10 +143,17 @@
       H * (0.14 + 0.7 * s) + Math.sin(Math.PI * 2 * s * 3) * H * 0.03,
     ];
 
+    // The click is timed, not scrubbed: a wheel notch can jump past any
+    // narrow stretch of scroll, so crossing CLICK starts it and it plays out
+    // at its own pace (B eases 0 → 1 over ~1.1s; back to 0 if you scroll up
+    // past it). The cursor waits on the word until the burst is under way.
+    let B = 0, clickedAt = -1, lastT = 0;
+
     let raf = 0;
     const frame = (now: number) => {
       raf = 0;
       const t = now / 1000;
+      const dtB = Math.min(0.05, lastT ? t - lastT : 0); lastT = t;
       const fr = from.getBoundingClientRect(), tr = to.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
       // 0 when the gallery's top reaches the bottom of the screen, 1 when
       // Ailyn's photo is centred.
@@ -157,6 +164,11 @@
       if (!live) { schedule(); return; }
 
       const hr = heading ? heading.getBoundingClientRect() : fr;
+      const armed = p >= CLICK;
+      if (armed && clickedAt < 0) clickedAt = t;
+      if (!armed && B <= 0) clickedAt = -1;
+      B = clamp(B + (armed ? 1 : -1) * dtB / 1.1);
+      const since = clickedAt < 0 ? 99 : t - clickedAt;
       const s = (p - 0.3) / 0.5; // the head falls along the path as you scroll (0 → 1 while the comet runs)
       // Star: on the photo's top-right corner, sized to the photo.
       const R = Math.min(ar.width, 420) * 0.26;
@@ -168,7 +180,7 @@
         // Word → dust: the cursor's click bursts them off the heading — fast
         // out of the letters, slowing as they spread (expo-out), each on its
         // own beat.
-        const kd = burst(clamp((p - CLICK - q.shake * 0.25) / 0.12));
+        const kd = burst(clamp((B - 0.12 - q.shake * 1.5) / 0.75)); // just after the press
         // Dust → comet: the head's neighbours join first.
         const kc = smooth((p - 0.36 - q.lag * 0.6) / 0.2);
         // Comet → ✨: the tail's end lands last.
@@ -214,17 +226,17 @@
       // ✨ have the stage.
       const clickAt: [number, number] = [hr.left + hr.width * 0.62, hr.top + hr.height * 0.58];
       const fly = 1 - (1 - smooth((p - 0.11) / (CLICK - 0.12))) ** 3;
-      const onward = smooth((p - 0.3) / 0.1);
+      const onward = smooth((p - 0.3) / 0.1) * smooth((B - 0.4) / 0.4);
       const [hx0, hy0] = path(s + 0.012);
       const ex = W * 1.08 + (clickAt[0] - W * 1.08) * fly, ey = clickAt[1] + H * 0.3 * (1 - fly);
       const hx = ex + (hx0 - ex) * onward, hy = ey + (hy0 - ey) * onward;
       const lead = smooth((p - 0.11) / 0.03) * (1 - smooth((p - 0.78) / 0.12));
-      const press = Math.sin(Math.PI * clamp((p - CLICK + 0.012) / 0.02));
-      const ring = clamp((p - CLICK) / 0.08);
+      const press = armed ? Math.sin(Math.PI * clamp(since / 0.28)) : 0;
+      const ring = armed ? clamp((since - 0.1) / 0.9) : 1;
       if (ring > 0 && ring < 1) {
         ctx.globalAlpha = (1 - ring) * 0.9;
         ctx.strokeStyle = pal[1]; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(clickAt[0], clickAt[1], 6 + burst(ring) * 70, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(clickAt[0], clickAt[1], 6 + burst(ring) * (small ? 70 : 110), 0, Math.PI * 2); ctx.stroke();
         ctx.globalAlpha = (1 - ring) * 0.5;
         ctx.beginPath(); ctx.arc(clickAt[0], clickAt[1], 4 + burst(clamp(ring * 1.4 - 0.2)) * 40, 0, Math.PI * 2); ctx.stroke();
       }
@@ -232,7 +244,7 @@
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = lead;
         ctx.save();
-        const k = 1.3 * (1 - press * 0.18);
+        const k = (small ? 1.3 : 1.7) * (1 - press * 0.2);
         ctx.translate(hx - 4 * k, hy - 12 * k);
         ctx.scale(k, k);
         ctx.fillStyle = dark() ? '#ffffff' : '#0d0d0c';

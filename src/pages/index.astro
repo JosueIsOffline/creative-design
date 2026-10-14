@@ -31,21 +31,27 @@ const galeria = products.slice(0, 8);
   {destacados.length > 0 && (
     <section id="destacados" class="relative py-16">
       <div class="max-w-5xl mx-auto px-6">
-        <div class="flex items-end justify-between mb-8">
+        <div class="flex items-end justify-between gap-4 mb-8">
           <h2 data-gsap="kinetic-heading" class="font-display text-2xl font-semibold text-accent">Destacados</h2>
-          <a href="/catalogo" class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
-            Ver catálogo completo
-            <Icon name="line-md:arrow-right" class="w-3.5 h-3.5" />
-          </a>
+          <div class="flex items-center gap-4">
+            <a href="/catalogo" class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
+              Ver catálogo completo
+              <Icon name="line-md:arrow-right" class="w-3.5 h-3.5" />
+            </a>
+            <div class="hidden lg:flex gap-2">
+              <button type="button" class="rail-arrow" data-rail-prev aria-label="Productos anteriores"><Icon name="lucide:chevron-left" class="w-4 h-4" /></button>
+              <button type="button" class="rail-arrow" data-rail-next aria-label="Más productos"><Icon name="lucide:chevron-right" class="w-4 h-4" /></button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="lg:overflow-hidden" data-rail>
+      <div data-rail>
         <div
-          class="flex gap-6 px-6 pb-6 lg:pb-0 overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          class="rail-track flex gap-6 pb-6 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           data-rail-track
         >
           {destacados.map((product) => (
-            <div class="w-[75vw] sm:w-[320px] lg:w-[320px] shrink-0 snap-start">
+            <div class="w-[75vw] sm:w-[320px] shrink-0 snap-start">
               <ProductCard product={product} />
             </div>
           ))}
@@ -66,40 +72,68 @@ const galeria = products.slice(0, 8);
 <script>
   import '../scripts/scroll-reveal';
   import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-  gsap.registerPlugin(ScrollTrigger);
-
-  // Destacados rail: on desktop the section pins and vertical scroll drives
-  // the row horizontally (adapted from the Halo reference's WorkRail); on
-  // phones/tablets it's left as a plain swipeable row (data-rail-track's
-  // own overflow-x-auto), which is simpler and feels more native to touch.
+  // Destacados rail: a free row, never driven by the page scroll. Phones
+  // swipe it natively (with snap); on desktop it also takes a mouse drag
+  // that keeps its momentum on release, the trackpad's sideways scroll, and
+  // the ‹ › arrows.
   function mountRail() {
     document.querySelectorAll<HTMLElement>('[data-rail]').forEach((root) => {
       if (root.dataset.railMounted) return;
       root.dataset.railMounted = 'true';
-
       const track = root.querySelector<HTMLElement>('[data-rail-track]');
+      const section = root.closest('section');
+      const prev = section?.querySelector<HTMLButtonElement>('[data-rail-prev]');
+      const next = section?.querySelector<HTMLButtonElement>('[data-rail-next]');
       if (!track) return;
 
-      const mm = gsap.matchMedia();
-      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-        const distance = track.scrollWidth - track.clientWidth;
-        if (distance <= 0) return;
+      const step = () => (track.firstElementChild as HTMLElement | null)?.offsetWidth ?? 320;
+      const ends = () => {
+        if (prev) prev.disabled = track.scrollLeft < 4;
+        if (next) next.disabled = track.scrollLeft > track.scrollWidth - track.clientWidth - 4;
+      };
+      prev?.addEventListener('click', () => track.scrollBy({ left: -(step() + 24), behavior: 'smooth' }));
+      next?.addEventListener('click', () => track.scrollBy({ left: step() + 24, behavior: 'smooth' }));
+      track.addEventListener('scroll', ends, { passive: true });
+      ends();
 
-        gsap.to(track, {
-          x: -distance,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: root,
-            start: 'top top',
-            end: `+=${distance}`,
-            pin: true,
-            scrub: 0.6,
-            invalidateOnRefresh: true,
-          },
-        });
+      // Mouse drag with momentum (touch and pen keep the native swipe).
+      let down = false, moved = 0, lastX = 0, lastT = 0, v = 0, raf = 0;
+      track.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        cancelAnimationFrame(raf);
+        down = true; moved = 0; lastX = e.clientX; lastT = e.timeStamp; v = 0;
+        track.style.scrollSnapType = 'none';
+        track.setPointerCapture(e.pointerId);
       });
+      track.addEventListener('pointermove', (e) => {
+        if (!down) return;
+        const dx = e.clientX - lastX, dt = Math.max(1, e.timeStamp - lastT);
+        track.scrollLeft -= dx;
+        moved += Math.abs(dx);
+        v = 0.8 * (-dx / dt) + 0.2 * v; // px/ms, smoothed
+        lastX = e.clientX; lastT = e.timeStamp;
+        if (moved > 6) track.classList.add('is-dragging');
+      });
+      const release = () => {
+        if (!down) return;
+        down = false;
+        // Coast on the release velocity, decaying like a scroll fling.
+        let last = performance.now();
+        const coast = (now: number) => {
+          const dt = now - last; last = now;
+          track.scrollLeft += v * dt;
+          v *= Math.pow(0.995, dt);
+          if (Math.abs(v) > 0.02) raf = requestAnimationFrame(coast);
+          else { track.style.scrollSnapType = ''; track.classList.remove('is-dragging'); }
+        };
+        raf = requestAnimationFrame(coast);
+      };
+      track.addEventListener('pointerup', release);
+      track.addEventListener('pointercancel', release);
+      // A drag isn't a click on the card under the pointer.
+      track.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
+      track.addEventListener('dragstart', (e) => e.preventDefault());
     });
   }
 
@@ -151,3 +185,26 @@ const galeria = products.slice(0, 8);
 
   document.addEventListener('astro:page-load', mountIntro);
 </script>
+
+<style>
+  /* The row lines up with the content column (max-w-5xl + px-6) yet scrolls
+     edge to edge. */
+  .rail-track {
+    --edge: max(24px, calc((100vw - 64rem) / 2 + 24px));
+    padding-inline: var(--edge);
+    scroll-padding-inline: var(--edge);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .rail-track { cursor: grab; }
+    .rail-track.is-dragging { cursor: grabbing; user-select: none; }
+    .rail-track.is-dragging :global(a) { pointer-events: none; }
+  }
+  .rail-arrow {
+    display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px;
+    border: 1px solid var(--color-border); color: var(--color-foreground);
+    transition: background-color 200ms, opacity 200ms, scale 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rail-arrow:hover:not(:disabled) { background: color-mix(in oklab, var(--color-foreground) 8%, transparent); }
+  .rail-arrow:active:not(:disabled) { scale: 0.94; }
+  .rail-arrow:disabled { opacity: 0.3; cursor: default; }
+</style>
