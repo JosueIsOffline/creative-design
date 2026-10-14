@@ -1,174 +1,242 @@
 ---
+// The cart: items on the left, the order summary on the right (sticky on
+// desktop, below on phones) with the optional note and the WhatsApp send —
+// one step, no list → checkout detour. Empty and sent states get their own
+// moment. Motion: rows rise in staggered, a removed row collapses, quantity
+// and total tick to their new values. Reduced motion: no animation.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Icon } from 'astro-icon/components';
+import emptySvg from '../../tools/services-figure/personalizacion.svg?raw';
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 ---
 <BaseLayout title="Tu carrito" hideFooter>
-  <div class="max-w-2xl mx-auto px-6 py-10" data-phone={whatsapp}>
-    <h1 class="font-display text-2xl font-semibold text-foreground mb-6">Tu carrito</h1>
-    <div id="cart-list-view"></div>
-    <div id="cart-checkout-view" class="hidden flex flex-col">
-      <button type="button" id="cart-back" class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent mb-4">
-        <Icon name="line-md:arrow-left" class="w-3.5 h-3.5" />
-        Volver
-      </button>
-      <div id="cart-checkout-summary" class="text-sm text-muted mb-4"></div>
-      <label for="cart-note" class="text-sm text-foreground font-medium mb-2 block">
-        Cuéntanos qué colores, estilo o detalles te gustaría (opcional)
-      </label>
-      <textarea id="cart-note" rows="4" class="w-full rounded-xl border border-border bg-background text-foreground p-3 text-sm mb-4"></textarea>
-      <button type="button" id="cart-send" class="bg-brand-lilac border border-accent text-brand-black font-medium rounded-full py-3 hover:opacity-90">
-        Enviar por WhatsApp
-      </button>
+  <div class="cart" data-phone={whatsapp}>
+    <header class="cart__head">
+      <span class="cart__eyebrow">Tu pedido</span>
+      <h1 class="cart__title">Tu carrito <span class="cart__count" data-cart-count></span></h1>
+    </header>
+
+    <div class="cart__layout" data-cart-filled hidden>
+      <ul class="cart__list" data-cart-list aria-label="Productos en tu carrito"></ul>
+
+      <aside class="cart__summary" aria-label="Resumen del pedido">
+        <h2 class="cart__summary-title">Resumen</h2>
+        <dl class="cart__rows">
+          <div><dt>Piezas</dt><dd data-cart-pieces>0</dd></div>
+          <div class="cart__total"><dt>Total</dt><dd data-cart-total>RD$ 0</dd></div>
+        </dl>
+        <label for="cart-note" class="cart__label">¿Algún detalle? <span>(opcional)</span></label>
+        <textarea id="cart-note" rows="3" class="cart__note" placeholder="Colores, nombres, fechas, estilo…"></textarea>
+        <button type="button" class="cart__send" data-cart-send>
+          <Icon name="simple-icons:whatsapp" class="w-4 h-4" />
+          Enviar pedido por WhatsApp
+        </button>
+        <p class="cart__fine">Confirmamos los detalles contigo por WhatsApp antes de producir.</p>
+        <a href="/catalogo" class="cart__more"><Icon name="lucide:arrow-left" class="w-3.5 h-3.5" /> Seguir comprando</a>
+      </aside>
+    </div>
+
+    <div class="cart__state" data-cart-empty hidden>
+      <div class="cart__art anatomy-figure iso" data-theme="dark" aria-hidden="true"><Fragment set:html={emptySvg} /></div>
+      <p class="cart__state-title">Tu carrito está vacío</p>
+      <p class="cart__state-text">Elige una pieza del catálogo y la personalizamos para ti.</p>
+      <a href="/catalogo" class="cart__cta">Ver catálogo <Icon name="lucide:arrow-right" class="w-4 h-4" /></a>
+    </div>
+
+    <div class="cart__state" data-cart-sent hidden>
+      <span class="cart__sent-mark" aria-hidden="true"><Icon name="lucide:check" class="w-7 h-7" /></span>
+      <p class="cart__state-title">¡Listo! Te abrimos WhatsApp con tu pedido</p>
+      <p class="cart__state-text">Envía el mensaje y te escribimos para confirmar los detalles. ¿No se abrió? <a href="#" data-cart-reopen target="_blank" rel="noopener">Ábrelo aquí</a>.</p>
+      <a href="/catalogo" class="cart__cta">Volver al catálogo <Icon name="lucide:arrow-right" class="w-4 h-4" /></a>
     </div>
   </div>
 </BaseLayout>
 
 <script>
-  import gsap from 'gsap';
-  import { getCart, removeItem, setQuantity, getTotal, clearCart, buildWhatsAppMessage, esc } from '../scripts/cart';
+  import { animate, stagger } from 'motion';
+  import { getCart, removeItem, setQuantity, getTotal, clearCart, buildWhatsAppMessage, esc, type CartItem } from '../scripts/cart';
 
-  const page = document.querySelector<HTMLElement>('[data-phone]');
-  const listView = document.getElementById('cart-list-view');
-  const checkoutView = document.getElementById('cart-checkout-view');
-  const checkoutSummary = document.getElementById('cart-checkout-summary');
-  const noteInput = document.getElementById('cart-note') as HTMLTextAreaElement | null;
-  const phone = page?.dataset.phone ?? '';
+  const root = document.querySelector<HTMLElement>('[data-phone]')!;
+  const phone = root.dataset.phone ?? '';
+  const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+  const filled = $('[data-cart-filled]'), empty = $('[data-cart-empty]'), sent = $('[data-cart-sent]');
+  const list = $<HTMLUListElement>('[data-cart-list]');
+  const note = $<HTMLTextAreaElement>('#cart-note');
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const money = (n: number) => `RD$ ${Math.round(n).toLocaleString('es-DO')}`;
+  const key = (i: { slug: string; productoSlug: string }) => `${i.slug}/${i.productoSlug}`;
 
-  const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let shownTotal = 0;
+  let local = false; // our own edits update rows in place; cart:change from elsewhere re-renders
 
-  function renderList() {
-    if (!listView) return;
-    const cart = getCart();
-
-    if (cart.length === 0) {
-      listView.innerHTML = `
-        <div class="flex flex-col items-center gap-4 py-12 text-center">
-          <p class="text-muted">Tu carrito está vacío</p>
-          <a href="/catalogo" class="text-accent hover:opacity-80 text-sm font-medium">Ver catálogo</a>
+  const row = (item: CartItem) => `
+    <li class="cart__item" data-key="${esc(key(item))}" data-slug="${esc(item.slug)}" data-producto-slug="${esc(item.productoSlug)}">
+      <img src="${esc(item.foto)}" alt="" class="cart__img" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
+      <div class="cart__info">
+        <p class="cart__name">${esc(item.nombre)}</p>
+        <p class="cart__unit">${money(item.precio)} c/u</p>
+        <div class="cart__qty" role="group" aria-label="Cantidad">
+          <button type="button" data-qty="-1" aria-label="Quitar una unidad">−</button>
+          <span data-qty-value aria-live="polite">${item.cantidad}</span>
+          <button type="button" data-qty="1" aria-label="Agregar una unidad">+</button>
         </div>
-      `;
-      return;
-    }
-
-    const rows = cart
-      .map(
-        (item) => `
-          <div class="cart-item flex gap-3 py-3 border-b border-border" data-slug="${esc(item.slug)}" data-producto-slug="${esc(item.productoSlug)}">
-            <img src="${esc(item.foto)}" alt="${esc(item.nombre)}" class="w-16 h-16 rounded-lg object-cover shrink-0" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-foreground font-medium truncate">${esc(item.nombre)}</p>
-              <p class="text-xs text-muted">RD$ ${item.precio.toLocaleString('es-DO')} c/u</p>
-              <div class="flex items-center gap-2 mt-1">
-                <button type="button" class="cart-qty-decrease w-6 h-6 rounded-full border border-border-strong text-muted hover:text-accent" aria-label="Quitar una unidad">−</button>
-                <span class="text-sm text-foreground w-4 text-center">${item.cantidad}</span>
-                <button type="button" class="cart-qty-increase w-6 h-6 rounded-full border border-border-strong text-muted hover:text-accent" aria-label="Agregar una unidad">+</button>
-                <button type="button" class="cart-item-remove ml-auto text-xs text-muted hover:text-accent">Quitar</button>
-              </div>
-            </div>
-            <p class="text-sm font-bold text-accent shrink-0">RD$ ${(item.precio * item.cantidad).toLocaleString('es-DO')}</p>
-          </div>
-        `
-      )
-      .join('');
-
-    listView.innerHTML = `
-      ${rows}
-      <div class="flex items-center justify-between pt-4 font-bold text-foreground">
-        <span>Total</span>
-        <span>RD$ ${getTotal(cart).toLocaleString('es-DO')}</span>
       </div>
-      <button type="button" id="cart-checkout-start" class="w-full mt-4 bg-brand-lilac border border-accent text-brand-black font-medium rounded-full py-3 hover:opacity-90">
-        Finalizar pedido
-      </button>
-    `;
-  }
+      <div class="cart__side">
+        <p class="cart__line" data-line>${money(item.precio * item.cantidad)}</p>
+        <button type="button" class="cart__remove" data-remove aria-label="Quitar ${esc(item.nombre)} del carrito">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+        </button>
+      </div>
+    </li>`;
 
-  // Crossfades between the two views instead of an instant hidden-class
-  // swap — this is a visible, user-triggered switch (Finalizar pedido /
-  // Volver), so a hard cut would read as a jarring teleport.
-  function switchView(hide: HTMLElement | null, show: HTMLElement | null) {
-    if (!hide || !show) return;
-    if (prefersReducedMotion()) {
-      hide.classList.add('hidden');
-      show.classList.remove('hidden');
-      return;
-    }
-    gsap.to(hide, {
-      opacity: 0,
-      duration: 0.15,
-      ease: 'power2.in',
-      overwrite: 'auto',
-      onComplete: () => {
-        hide.classList.add('hidden');
-        show.classList.remove('hidden');
-        gsap.fromTo(show, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
-      },
-    });
-  }
-
-  function showListView() {
-    switchView(checkoutView, listView);
-  }
-
-  function showCheckoutView() {
+  function summary(animateTotal = true) {
     const cart = getCart();
-    if (checkoutSummary) {
-      const rows = cart
-        .map(
-          (item) =>
-            `<div class="flex justify-between py-1"><span>${esc(item.nombre)} x${item.cantidad}</span><span>RD$ ${(item.precio * item.cantidad).toLocaleString('es-DO')}</span></div>`
-        )
-        .join('');
-      checkoutSummary.innerHTML = `
-        ${rows}
-        <div class="flex justify-between pt-2 mt-2 font-bold text-foreground border-t border-border">
-          <span>Total</span>
-          <span>RD$ ${getTotal(cart).toLocaleString('es-DO')}</span>
-        </div>
-      `;
-    }
-    switchView(listView, checkoutView);
+    const pieces = cart.reduce((n, i) => n + i.cantidad, 0);
+    $('[data-cart-count]').textContent = pieces ? `${pieces} ${pieces === 1 ? 'pieza' : 'piezas'}` : '';
+    $('[data-cart-pieces]').textContent = String(pieces);
+    const total = getTotal(cart), el = $('[data-cart-total]');
+    if (animateTotal && !reduce() && total !== shownTotal) {
+      const from = shownTotal;
+      animate(from, total, { duration: 0.5, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => (el.textContent = money(v)) });
+    } else el.textContent = money(total);
+    shownTotal = total;
   }
 
-  listView?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
+  function render(first = false) {
+    const cart = getCart();
+    if (!sent.hidden) return;
+    filled.hidden = cart.length === 0;
+    empty.hidden = cart.length > 0;
+    list.innerHTML = cart.map(row).join('');
+    summary(!first);
+    if (first && !reduce()) {
+      const items = list.querySelectorAll('.cart__item');
+      if (items.length) animate(items, { opacity: [0, 1], y: [24, 0] }, { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: stagger(0.07) });
+      animate($('.cart__summary'), { opacity: [0, 1], y: [24, 0] }, { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 });
+      if (!empty.hidden) animate(empty, { opacity: [0, 1], y: [20, 0] }, { duration: 0.7, ease: [0.16, 1, 0.3, 1] });
+    }
+  }
 
-    if (target.closest('#cart-checkout-start')) {
-      showCheckoutView();
+  list.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const li = t.closest<HTMLElement>('.cart__item');
+    if (!li) return;
+    const slug = li.dataset.slug!, productoSlug = li.dataset.productoSlug!;
+    const item = getCart().find((i) => key(i) === li.dataset.key);
+    if (!item) return;
+
+    const qtyBtn = t.closest<HTMLElement>('[data-qty]');
+    const removing = t.closest('[data-remove]') || (qtyBtn && item.cantidad + Number(qtyBtn.dataset.qty) <= 0);
+    if (removing) {
+      const go = () => { local = true; removeItem(slug, productoSlug); local = false; li.remove(); summary(); if (!getCart().length) render(); };
+      if (reduce()) return go();
+      li.style.overflow = 'hidden';
+      animate(li, { opacity: 0, x: 40, height: [li.offsetHeight, 0], paddingTop: 0, paddingBottom: 0 }, { duration: 0.4, ease: [0.4, 0, 0.2, 1] }).then(go);
       return;
     }
-
-    const row = target.closest<HTMLElement>('.cart-item');
-    if (!row) return;
-    const slug = row.dataset.slug!;
-    const productoSlug = row.dataset.productoSlug!;
-
-    if (target.closest('.cart-qty-increase')) {
-      const item = getCart().find((i) => i.slug === slug && i.productoSlug === productoSlug);
-      if (item) setQuantity(slug, productoSlug, item.cantidad + 1);
-    } else if (target.closest('.cart-qty-decrease')) {
-      const item = getCart().find((i) => i.slug === slug && i.productoSlug === productoSlug);
-      if (item) setQuantity(slug, productoSlug, item.cantidad - 1);
-    } else if (target.closest('.cart-item-remove')) {
-      removeItem(slug, productoSlug);
+    if (qtyBtn) {
+      const next = item.cantidad + Number(qtyBtn.dataset.qty);
+      local = true; setQuantity(slug, productoSlug, next); local = false;
+      const v = li.querySelector<HTMLElement>('[data-qty-value]')!;
+      v.textContent = String(next);
+      li.querySelector<HTMLElement>('[data-line]')!.textContent = money(item.precio * next);
+      if (!reduce()) animate(v, { scale: [1.4, 1], y: [Number(qtyBtn.dataset.qty) > 0 ? -6 : 6, 0] }, { type: 'spring', bounce: 0.5, duration: 0.4 });
+      summary();
     }
   });
 
-  document.getElementById('cart-back')?.addEventListener('click', showListView);
-
-  document.getElementById('cart-send')?.addEventListener('click', () => {
-    // Defensive guard: the button that reaches this view only renders when
-    // the cart has items, but this stays safe if that ever changes.
+  $('[data-cart-send]').addEventListener('click', () => {
     const cart = getCart();
-    if (cart.length === 0) return;
-    const mensaje = buildWhatsAppMessage(cart, noteInput?.value ?? '');
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`, '_blank', 'noopener');
-    clearCart();
-    if (noteInput) noteInput.value = '';
-    showListView();
+    if (!cart.length) return;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildWhatsAppMessage(cart, note.value))}`;
+    window.open(url, '_blank', 'noopener');
+    $<HTMLAnchorElement>('[data-cart-reopen]').href = url;
+    local = true; clearCart(); local = false;
+    note.value = '';
+    filled.hidden = true; empty.hidden = true; sent.hidden = false;
+    $('[data-cart-count]').textContent = '';
+    if (!reduce()) {
+      animate(sent, { opacity: [0, 1], y: [20, 0] }, { duration: 0.6, ease: [0.16, 1, 0.3, 1] });
+      animate($('.cart__sent-mark'), { scale: [0.3, 1], rotate: [-30, 0] }, { type: 'spring', bounce: 0.5, duration: 0.6, delay: 0.1 });
+    }
   });
 
-  window.addEventListener('cart:change', renderList);
-  renderList();
+  window.addEventListener('cart:change', () => { if (!local) render(); });
+  render(true);
 </script>
+
+<style is:global>
+  /* Global (cart__-prefixed) because the rows are rendered from script —
+     scoped styles would not reach them. */
+  .cart { --accent: var(--color-brand-lilac); max-width: 68rem; margin: 0 auto; padding: 112px 24px 128px; }
+  .cart__head { display: grid; gap: 12px; margin-bottom: clamp(28px, 4vw, 48px); }
+  .cart__eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+  .cart__title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14px; font: 700 clamp(2.4rem, 6vw, 4.2rem)/0.95 var(--font-display); letter-spacing: -0.04em; }
+  .cart__count { font: 500 14px/1 var(--font-mono); letter-spacing: 0.06em; color: var(--color-muted); }
+
+  .cart__layout { display: grid; grid-template-columns: 1fr 360px; gap: clamp(28px, 4vw, 56px); align-items: start; }
+  .cart__layout[hidden], .cart__state[hidden] { display: none; }
+
+  .cart__list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--color-border); }
+  .cart__item { display: grid; grid-template-columns: 96px 1fr auto; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--color-border); }
+  .cart__img { width: 96px; height: 96px; border-radius: 18px; object-fit: cover; background: var(--color-surface); }
+  .cart__info { min-width: 0; display: grid; gap: 4px; }
+  .cart__name { font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cart__unit { font-size: 13px; color: var(--color-muted); }
+  .cart__qty { display: inline-flex; align-items: center; gap: 4px; justify-self: start; margin-top: 6px; padding: 3px; border: 1px solid var(--color-border); border-radius: 999px; }
+  .cart__qty button { width: 28px; height: 28px; border-radius: 999px; color: var(--color-muted); transition: background-color 160ms, color 160ms, scale 140ms; }
+  .cart__qty button:hover { background: color-mix(in oklab, var(--color-foreground) 8%, transparent); color: var(--color-foreground); }
+  .cart__qty button:active { scale: 0.9; }
+  .cart__qty span { min-width: 22px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; display: inline-block; }
+  .cart__side { display: grid; justify-items: end; gap: 10px; }
+  .cart__line { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .cart__remove { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--color-muted); transition: background-color 160ms, color 160ms; }
+  .cart__remove:hover { color: #ff7a9c; background: color-mix(in oklab, #ff7a9c 12%, transparent); }
+
+  .cart__summary {
+    position: sticky; top: 96px; display: grid; gap: 14px; padding: 24px; border-radius: 24px;
+    border: 1px solid color-mix(in oklab, var(--accent) 22%, transparent);
+    background:
+      radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 60%),
+      color-mix(in oklab, var(--accent) 4%, var(--color-background));
+  }
+  .cart__summary-title { font: 600 12px/1 var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-muted); }
+  .cart__rows { display: grid; gap: 8px; margin: 0; }
+  .cart__rows div { display: flex; justify-content: space-between; align-items: baseline; }
+  .cart__rows dt { color: var(--color-muted); font-size: 14px; }
+  .cart__rows dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .cart__total { padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--color-border); }
+  .cart__total dt { color: var(--color-foreground); font-weight: 600; }
+  .cart__total dd { font: 700 1.6rem/1 var(--font-display); letter-spacing: -0.02em; }
+  .cart__label { font-size: 14px; font-weight: 600; margin-top: 6px; }
+  .cart__label span { font-weight: 400; color: var(--color-muted); }
+  .cart__note { width: 100%; resize: vertical; border-radius: 14px; border: 1px solid var(--color-border); background: var(--color-background); color: var(--color-foreground); padding: 12px; font-size: 14px; }
+  .cart__note:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent); }
+  .cart__send {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border-radius: 999px;
+    background: var(--accent); color: var(--color-brand-black); font-weight: 600; transition: filter 200ms, scale 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cart__send:hover { filter: brightness(1.06); }
+  .cart__send:active { scale: 0.97; }
+  .cart__fine { font-size: 12px; color: var(--color-muted); text-align: center; }
+  .cart__more { justify-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-muted); transition: color 160ms; }
+  .cart__more:hover { color: var(--accent); }
+
+  .cart__state { display: grid; justify-items: center; text-align: center; gap: 12px; padding: 24px 0 40px; }
+  .cart__art { width: min(420px, 90vw); margin-bottom: 4px; }
+  .cart__state-title { font: 700 clamp(1.5rem, 3vw, 2rem)/1.1 var(--font-display); letter-spacing: -0.03em; max-width: 22ch; }
+  .cart__state-text { color: var(--color-muted); max-width: 40ch; }
+  .cart__state-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .cart__cta { margin-top: 10px; display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 999px; background: var(--accent); color: var(--color-brand-black); font-weight: 600; }
+  .cart__sent-mark { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 999px; background: var(--accent); color: var(--color-brand-black); margin-bottom: 8px; box-shadow: 0 0 40px -6px color-mix(in oklab, var(--accent) 70%, transparent); }
+
+  @media (max-width: 900px) {
+    .cart__layout { grid-template-columns: 1fr; }
+    .cart__summary { position: static; }
+  }
+  @media (max-width: 520px) {
+    .cart__item { grid-template-columns: 72px 1fr; }
+    .cart__img { width: 72px; height: 72px; border-radius: 14px; }
+    .cart__side { grid-column: 2; grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: start; }
+  }
+</style>
