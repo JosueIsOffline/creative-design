@@ -15,6 +15,8 @@
 <canvas class="glitter glitter--front" data-glitter="front" aria-hidden="true"></canvas>
 
 <script>
+  import { animate } from 'motion';
+
   const clamp = (x: number) => Math.min(1, Math.max(0, x));
   const smooth = (x: number) => { x = clamp(x); return x * x * (3 - 2 * x); };
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -89,6 +91,14 @@
     // Sample the gallery heading's glyphs: render its text offscreen in its
     // own font and keep points that land on ink, as fractions of its box.
     const heading = from.querySelector<HTMLElement>('h2');
+    // The heading's text box (tight around the letters).
+    const range = document.createRange();
+    const textBox = () => {
+      if (!heading) return from.getBoundingClientRect();
+      range.selectNodeContents(heading);
+      const r = range.getBoundingClientRect();
+      return r.width ? r : heading.getBoundingClientRect();
+    };
     const sampleWord = () => {
       if (!heading) return;
       const r = heading.getBoundingClientRect(), cs = getComputedStyle(heading);
@@ -165,7 +175,11 @@
 
       const hr = heading ? heading.getBoundingClientRect() : fr;
       const armed = p >= CLICK;
-      if (armed && clickedAt < 0) clickedAt = t;
+      if (armed && clickedAt < 0) {
+        clickedAt = t;
+        // The word takes the click: a quick press and rebound.
+        if (heading) animate(heading, { scale: [1, 0.9, 1.05, 1] }, { duration: 0.55, ease: 'easeOut' });
+      }
       if (!armed && B <= 0) clickedAt = -1;
       B = clamp(B + (armed ? 1 : -1) * dtB / 1.1);
       const since = clickedAt < 0 ? 99 : t - clickedAt;
@@ -224,7 +238,10 @@
       // The cursor: flies in, clicks "Galería" (a press and a ripple — the
       // burst above), then moves on to lead the comet, and finally lets the
       // ✨ have the stage.
-      const clickAt: [number, number] = [hr.left + hr.width * 0.62, hr.top + hr.height * 0.58];
+      // Aim at the word itself, not its block (the h2 spans the container,
+      // the text is centred in it).
+      const tb = textBox();
+      const clickAt: [number, number] = [tb.left + tb.width * 0.55, tb.top + tb.height * 0.62];
       const fly = 1 - (1 - smooth((p - 0.11) / (CLICK - 0.12))) ** 3;
       const onward = smooth((p - 0.3) / 0.1) * smooth((B - 0.4) / 0.4);
       const [hx0, hy0] = path(s + 0.012);
