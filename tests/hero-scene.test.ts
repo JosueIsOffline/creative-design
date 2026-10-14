@@ -142,15 +142,19 @@ describe("HeroScene (Creative Design's own scroll-storytelling hero — started 
     ).toContain('cursorIcon.style.transform = `translate(${px}px, ${py}px)');
   });
 
-  it('tones down the panel background from Halo\'s saturated violet wash to a mostly-dark gradient with a soft accent glow', async () => {
+  it("flattens the panel background instead of any lit radial/linear gradient — even toned down, the gradient panel treatment itself still read as Halo's signature look, not just its original colors", async () => {
     const src = await read('src/components/HeroScene.astro');
-    expect(
-      src,
-      "Halo's own 38%/62% glow mix read as a loud magenta panel against this brand's otherwise sparse accent use"
-    ).not.toContain('color-mix(in oklab, var(--glow) 38%, var(--bg))');
-    expect(src).not.toContain('color-mix(in oklab, var(--glow) 62%, var(--bg))');
-    expect(src).toContain('color-mix(in oklab, var(--glow) 12%, var(--bg))');
-    expect(src).toContain('color-mix(in oklab, var(--glow) 22%, var(--bg))');
+    expect(src).not.toContain('radial-gradient');
+    expect(src).not.toContain('linear-gradient(160deg');
+    expect(src).toContain('--stage-bg: var(--bg)');
+  });
+
+  it('drops the identity tile\'s swatches + type-sample row — that specific composition is Halo\'s own identity-tile pattern, not just its colors', async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src).not.toContain('tile__swatches');
+    expect(src).not.toContain('tile__aa');
+    expect(src).not.toContain('tile__row');
+    expect(src).toContain("identity: { label: 'Identidad', name: 'Creative Design', line: 'A tu medida'");
   });
 
   it('uses the same motion package and scroll-driven math as the reference, not GSAP', async () => {

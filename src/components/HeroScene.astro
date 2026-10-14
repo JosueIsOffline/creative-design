@@ -30,7 +30,7 @@ const h = {
 // shared numbered rail at the bottom — see .piece-tag.
 const b = {
   sublimation: { tag: 'Cada pieza nace del calor y la presión.' },
-  identity: { label: 'Identidad', name: 'Creative Design', type: 'Space Grotesk', tag: 'Tu marca, tu estilo, en cada detalle.' },
+  identity: { label: 'Identidad', name: 'Creative Design', line: 'A tu medida', tag: 'Tu marca, tu estilo, en cada detalle.' },
   packaging: { label: 'Empaquetado', line: 'Lista para entregar', tag: 'Lista para sorprender, lista para entregar.' },
   design: { label: 'Diseño', line: 'Antes de imprimir', tag: 'Ideas que cobran forma antes de imprimirse.' },
   web: { label: 'Catálogo', url: '/catalogo', line: 'Todo en un clic', tag: 'Todo tu catálogo, a un clic de distancia.' },
@@ -93,7 +93,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
         <article class="tile tile--id" data-tile>
           <p class="tile__label">{b.identity.label}</p>
           <p class="tile__mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={star} /></svg>{b.identity.name}</p>
-          <div class="tile__row" aria-hidden="true"><span class="tile__swatches"><i></i><i></i><i></i><i></i></span><span class="tile__aa">{b.identity.type}</span></div>
+          <p class="tile__line">{b.identity.line}</p>
           <p class="piece-tag" data-tag>{b.identity.tag}</p>
         </article>
         <article class="key" data-card>
@@ -350,12 +350,10 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     --scrim: color-mix(in oklab, var(--bg) 60%, transparent);
     --surface: color-mix(in oklab, var(--fg) 5%, transparent);
     --line: color-mix(in oklab, var(--fg) 14%, transparent);
-    /* Toned down from Halo's own mix (38%/62% glow) — full violet read as
-       too loud against a brand that otherwise keeps lilac as a sparse
-       accent, not a dominant wash. Mostly our near-black, with a soft
-       lilac glow low-right instead of a saturated purple panel. */
-    --stage-bg: radial-gradient(80% 70% at 60% 110%, color-mix(in oklab, var(--glow-2) 55%, transparent), color-mix(in oklab, var(--glow) 28%, transparent) 40%, transparent 85%),
-      linear-gradient(160deg, color-mix(in oklab, var(--glow) 12%, var(--bg)), color-mix(in oklab, var(--glow) 22%, var(--bg)));
+    /* Flat, not a lit gradient panel — the radial+linear glow (even toned
+       down) still read as Halo's own signature panel treatment. The rest
+       of the site is flat dark surfaces; this panel is now one too. */
+    --stage-bg: var(--bg);
     /* Space Grotesk is already loaded site-wide (global.css) and is the
        body's own font (BaseLayout's <body> carries font-display) — so
        --text uses it too, matching how the rest of the site reads. */
@@ -457,14 +455,8 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   .tile--ad::before, .tile--film::before, .tile__page::after { content: ""; position: absolute; z-index: 1; inset: 0; border-radius: inherit; background: linear-gradient(180deg, var(--scrim), transparent 45%, var(--scrim)); pointer-events: none; }
   /* Identity: the mark and name, the palette and a type sample */
   .tile--id { background: var(--bg-2); }
-  .tile__mark { display: flex; align-items: center; gap: 0.12em; margin-block: auto; font: 560 20cqi/1 var(--display); letter-spacing: -0.045em; }
+  .tile__mark { display: flex; align-items: center; gap: 0.12em; font: 560 20cqi/1 var(--display); letter-spacing: -0.045em; }
   .tile__mark svg { width: 0.62em; height: 0.62em; fill: currentColor; }
-  .tile__row { display: flex; justify-content: space-between; align-items: center; }
-  .tile__swatches { display: flex; }
-  .tile__swatches i { width: 9cqi; height: 9cqi; border-radius: 50%; border: 1px solid var(--bg-2); background: var(--glow); }
-  .tile__swatches i + i { margin-left: -2.4cqi; }
-  .tile__swatches i:nth-child(2) { background: var(--glow-2); } .tile__swatches i:nth-child(3) { background: var(--accent); } .tile__swatches i:nth-child(4) { background: var(--fg); }
-  .tile__aa { font: 560 9cqi/1 var(--display); letter-spacing: -0.04em; color: var(--muted); }
   /* Website: a browser bar over the page */
   .tile--web { padding: 0; }
   .tile__bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: clamp(8px, 1vw, 14px) clamp(10px, 1.5vw, 22px); }
