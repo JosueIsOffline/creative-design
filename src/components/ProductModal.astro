@@ -3,7 +3,7 @@
 <div id="card-expand-backdrop" class="fixed inset-0 z-40 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-300 ease-out"></div>
 
 <script>
-  import { addItem } from '../scripts/cart';
+  import { addToCartWithFx } from '../scripts/add-to-cart-fx';
 
   const backdrop = document.getElementById('card-expand-backdrop');
 
@@ -136,17 +136,7 @@
         e.preventDefault();
         e.stopImmediatePropagation();
         const raw = addBtn.dataset.product;
-        if (raw) {
-          addItem(JSON.parse(raw));
-          const label = addBtn.querySelector<HTMLElement>('.card-add-label');
-          const labelAdded = addBtn.querySelector<HTMLElement>('.card-add-label-added');
-          label?.classList.add('hidden');
-          labelAdded?.classList.remove('hidden');
-          window.setTimeout(() => {
-            label?.classList.remove('hidden');
-            labelAdded?.classList.add('hidden');
-          }, 1200);
-        }
+        if (raw) addToCartWithFx(addBtn, JSON.parse(raw));
         return;
       }
 

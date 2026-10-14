@@ -384,3 +384,40 @@ html.is-theme-transition::view-transition-group(theme-icon) {
     box-shadow: 0 -40px 80px -30px rgb(0 0 0 / 0.85);
   }
 }
+
+/* Add-to-cart effect (src/scripts/add-to-cart-fx.ts). */
+.card-add-to-cart.is-added {
+  position: relative;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-brand-lilac);
+  border-color: var(--color-brand-lilac);
+  color: var(--color-brand-black);
+}
+.cart-fx-check {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.cart-fx-fly {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  border-radius: 14px;
+  object-fit: cover;
+  pointer-events: none;
+  box-shadow: 0 12px 30px -8px rgb(0 0 0 / 0.55), 0 0 0 2px var(--color-brand-lilac);
+  will-change: transform, opacity;
+}
+.cart-fx-bit {
+  position: fixed;
+  z-index: 61;
+  width: 5px;
+  height: 9px;
+  margin: -4px 0 0 -2px;
+  border-radius: 2px;
+  pointer-events: none;
+}
