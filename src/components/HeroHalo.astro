@@ -43,20 +43,19 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
 <section class="show" data-show>
   <div class="show__pin">
     <div class="panel" data-panel>
-      <h1 class="panel__title display" data-copy>
+      <h1 class="panel__title display">
         <span class="panel__line">
           <span data-line>
             <span class="sr-only">Creative Design</span>
+            <!-- "Cre"/"tive Design" fade on scroll (data-copy), same as the rest of
+                 the panel's text. The cursor itself isn't here: this gap is just a
+                 same-sized placeholder reserving its spot in the text — the real
+                 cursor (data-cursor, further down) sits outside .panel entirely, so
+                 it can paint above the card/tiles once it drags them in, instead of
+                 being trapped behind them by .panel's own stacking context. measure()
+                 reads THIS placeholder's position as the cursor's starting point. -->
             <span aria-hidden="true">
-              Cre<svg viewBox="-8 0 32 32" class="panel__cursor" data-cursor fill="none">
-                <g transform="rotate(-1 12.5 20.5)">
-                  <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
-                  <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
-                  <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
-                  <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
-                  <path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
-                </g>
-              </svg>tive Design
+              <span data-copy>Cre</span><span class="panel__cursor-space" data-cursor-space></span><span data-copy>tive Design</span>
             </span>
           </span>
         </span>
@@ -101,6 +100,21 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       </div>
     </div>
 
+    <!-- The real cursor: the same one standing in for the "a" of "Creative"
+         (the text just reserves its spot — see .panel__cursor-space above).
+         Living here, after .stage in the DOM, lets it paint above the card
+         and tiles as it drags them in. render()'s cursor block positions it
+         with an absolute transform (viewport coordinates), every frame. -->
+    <svg class="panel__cursor" data-cursor viewBox="-8 0 32 32" fill="none" aria-hidden="true">
+      <g transform="rotate(-1 12.5 20.5)">
+        <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
+        <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
+        <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
+        <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
+        <path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      </g>
+    </svg>
+
     <div class="cap" data-cap>
       <ol class="cap__steps">
         {b.steps.map((s) => <li data-step><span class="cap__day label">{s.day}</span><span class="cap__text">{s.text}</span></li>)}
@@ -109,14 +123,6 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       <div class="cap__cta" data-late>
         <a class="btn" href={b.href}>{b.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
       </div>
-    </div>
-
-    <!-- The cursor from the headline reappears here and drags each board
-         piece into place — travelling from the centre to the card, then
-         from the card's spot to each tile's, in step with its own landing
-         progress. It's the one telling the story, not just reacting to it. -->
-    <div class="drag-cursor" data-drag-cursor aria-hidden="true">
-      <svg viewBox="-8 0 32 32"><path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" /></svg>
     </div>
   </div>
 </section>
@@ -146,7 +152,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
     const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), fill = $('[data-fill]'), stage = $('.stage');
     const cursorIcon = root.querySelector<SVGElement>('[data-cursor]');
-    const dragCursor = root.querySelector<HTMLElement>('[data-drag-cursor]');
+    const cursorSpace = root.querySelector<HTMLElement>('[data-cursor-space]');
     const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
     const late = root.querySelectorAll<HTMLElement>('[data-late]');
     const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
@@ -157,16 +163,27 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     // Sizes. The card's own box is its small place on the board; in the hero it is scaled up (big) and moved to the centre.
     let phone = false, big = 1, home = { x: 0, y: 0 }, rest = { x: 0, y: 0, s: 1 }, crop = { x: 0, y: 0 }, radius = 20;
     let from: { x: number; y: number }[] = [], peekScale = 1;
-    // Where the drag-cursor travels to: every piece starts from this shared
-    // centre point (that's what `home` / `from[]` already fly them in from)
-    // and ends at its own resting slot — the cursor rides the same path.
+    // Where the cursor travels to: every piece starts from this shared centre
+    // point (that's what `home` / `from[]` already fly them in from) and ends
+    // at its own resting slot — the SAME cursor from the headline rides that
+    // path, starting from its own natural spot in "Creative" (cursorRest).
     let center = { x: 0, y: 0 }, cardFinal = { x: 0, y: 0 }, tileFinals: { x: number; y: number }[] = [];
+    let cursorRest = { x: 0, y: 0 };
     const measure = () => {
       phone = innerWidth < 810;
       const W = stage.offsetWidth, H = stage.offsetHeight, cw = card.offsetWidth, ch = card.offsetHeight;
       center = { x: W / 2, y: H / 2 };
       cardFinal = { x: card.offsetLeft + cw / 2, y: card.offsetTop + ch / 2 };
       tileFinals = tiles.map((el) => ({ x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }));
+      if (cursorSpace) {
+        const r = cursorSpace.getBoundingClientRect();
+        cursorRest = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        // The cursor lives outside .panel now (see why above), so it can't
+        // inherit the headline's huge font-size to size itself via `0.8em`
+        // the way it used to — match the placeholder's own rendered size
+        // instead, which already tracks the responsive headline size.
+        if (cursorIcon) { cursorIcon.style.width = `${r.width}px`; cursorIcon.style.height = `${r.height}px`; }
+      }
       const bigW = phone ? Math.min(0.66 * W, 0.42 * H) : Math.min(0.36 * W, 0.51 * H);
       big = bigW / cw;
       home = { x: W / 2 - (card.offsetLeft + cw / 2), y: H / 2 - (card.offsetTop + ch / 2) };
@@ -216,13 +233,6 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       });
 
       copy.forEach((c) => { const o = 1 - seg(m, 0, 0.3); c.style.opacity = String(o); c.style.visibility = o > 0 ? '' : 'hidden'; }); // hidden = out of the Tab order too
-      // The cursor standing in for the "a" of "Creative" drags itself off as the
-      // headline fades — same 0 -> 0.3 window — as if it were the thing pulling
-      // the panel open to reveal the card underneath.
-      if (cursorIcon) {
-        const drag = out(seg(m, 0, 0.3));
-        cursorIcon.style.transform = `translate(${drag * 20}px, ${drag * 16}px) rotate(${-14 * drag}deg) scale(${mix(1, 0.75, drag)})`;
-      }
       const co = seg(m, 0.85, 1);
       cap.style.opacity = String(co); cap.style.translate = `0 ${16 * (1 - co)}px`;
       const lastLand = FIRST + 3 * EVERY + LAND;
@@ -236,24 +246,36 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
         lit.forEach((el, i) => el.classList.toggle('is-lit', i === s && settled));
       }
 
-      // The cursor drags each piece from the shared centre to its own slot:
-      // the card first (riding B, the settle progress), then each tile in
-      // turn (riding its own landing T) — it's what's moving them, not a
-      // marker reacting after the fact.
-      if (dragCursor) {
-        const atCard = s === 0;
-        const i = atCard ? -1 : s - 1;
-        const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND));
-        const to = atCard ? cardFinal : tileFinals[i];
-        const dx = mix(center.x, to.x, travelP), dy = mix(center.y, to.y, travelP);
-        const lean = to.x > center.x ? 1 : -1;
-        const squeeze = 1 + 0.18 * Math.sin(Math.PI * clamp(travelP));
-        const overall = seg(now, SETTLE[0], lastLand); // fades in once dragging starts, out once the last piece lands
-        const visible = seg(overall, 0, 0.05) * (1 - seg(overall, 0.95, 1));
-        dragCursor.style.left = `${dx}px`;
-        dragCursor.style.top = `${dy}px`;
-        dragCursor.style.opacity = String(visible);
-        dragCursor.style.transform = `rotate(${lean * 14 * (1 - travelP)}deg) scale(${squeeze})`;
+      // The SAME cursor that stands in for the "a" of "Creative" is what
+      // drags every piece into place — one element, one continuous trip:
+      // first from its own spot toward the centre (the whole morph, as the
+      // panel becomes the card), then from the centre to the card's slot
+      // (riding B), then back out to each tile's slot in turn (riding that
+      // tile's own landing T). It's what's moving the story, not a marker
+      // reacting to it after the fact — and it's never a second element.
+      if (cursorIcon) {
+        const toCenter = out(seg(now, MORPH[0], MORPH[1]));
+        let px: number, py: number, leg: number, fromX: number;
+        if (toCenter < 1) {
+          px = mix(cursorRest.x, center.x, toCenter);
+          py = mix(cursorRest.y, center.y, toCenter);
+          leg = toCenter;
+          fromX = cursorRest.x;
+        } else {
+          const atCard = s === 0;
+          const i = atCard ? -1 : s - 1;
+          const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND));
+          const to = atCard ? cardFinal : tileFinals[i];
+          px = mix(center.x, to.x, travelP);
+          py = mix(center.y, to.y, travelP);
+          leg = travelP;
+          fromX = center.x;
+        }
+        const lean = px > fromX ? 1 : -1;
+        const squeeze = 1 + 0.12 * Math.sin(Math.PI * clamp(leg));
+        // position:fixed with top:0;left:0 — this translate IS the viewport position.
+        cursorIcon.style.transform = `translate(${px}px, ${py}px) rotate(${lean * 12 * (1 - leg)}deg) scale(${squeeze})`;
+        cursorIcon.style.opacity = String(1 - seg(now, lastLand, lastLand + 0.05)); // fades only once the last piece has landed
       }
     };
     // Scroll sets the target; the scene eases toward it every frame, so wheel steps glide like a smooth scroll.
@@ -351,18 +373,19 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   .panel__title { position: relative; z-index: 2; --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
   .panel__title em { font-style: normal; color: color-mix(in oklab, var(--glow-2) 70%, var(--fg)); }
   /* The cursor icon standing in for the "a" of "Creative" — Hero.astro's own trick, ported as-is. */
-  .panel__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); transform-origin: 50% 50%; will-change: transform; }
-
-  /* The cursor's second life: it drags each piece from the centre to its
-     own slot (render()'s dragCursor block positions/rotates/scales it
-     every frame). `translate` handles the -50%/-50% centring on its own
-     left/top point, independently of the `transform` the script sets each
-     frame — the two compose rather than collide, unlike `scale` would. */
-  .drag-cursor {
-    position: fixed; top: 0; left: 0; z-index: 5; width: 28px; height: 28px;
-    translate: -50% -50%; opacity: 0; pointer-events: none; color: var(--accent);
-  }
-  .drag-cursor svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 2px 6px color-mix(in oklab, var(--bg) 60%, transparent)); }
+  /* The one cursor, for its whole life: starts as the "a" of "Creative",
+     then drags itself toward the centre and out to each piece's slot
+     (render()'s cursorIcon block translates/rotates/scales it every
+     frame, relative to this natural rest spot — see cursorRest). */
+  /* Reserves the cursor's spot inside "Creative" — sized like the old inline
+     icon was (0.8em square), margin pulled in the same way so "Cre"/"tive"
+     sit exactly as close as they used to with a real inline icon there. */
+  .panel__cursor-space { display: inline-block; height: 0.8em; width: 0.8em; vertical-align: baseline; margin-inline: -0.2em; }
+  /* The real cursor: fixed to the viewport, living outside .panel so it can
+     paint above .stage's card/tiles — top:0;left:0 plus the translate the
+     script sets every frame (an absolute viewport position, not an offset)
+     IS its position. Sized in JS (measure()) to match the placeholder. */
+  .panel__cursor { position: fixed; top: 0; left: 0; z-index: 10; color: var(--fg); transform-origin: 50% 50%; will-change: transform; pointer-events: none; }
   .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
   .panel__line > span { display: inline-block; }
   .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }

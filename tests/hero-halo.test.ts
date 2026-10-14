@@ -5,53 +5,78 @@ import path from 'node:path';
 const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 
 describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not an adaptation)', () => {
-  it("headlines with the brand name \"Creative Design\", with the cursor-icon standing in for the \"a\" of \"Creative\" (Hero.astro's own trick) — not a generic tagline", async () => {
+  it("headlines with the brand name \"Creative Design\" — the cursor-icon stands in for the \"a\" of \"Creative\" visually, even though the real element now lives outside the fading text (Hero.astro's own trick, adapted)", async () => {
     const src = await read('src/components/HeroHalo.astro');
     expect(src).toContain('<span class="sr-only">Creative Design</span>');
-    expect(src).toContain('Cre<svg viewBox="-8 0 32 32" class="panel__cursor"');
-    expect(src).toContain('tive Design');
+    expect(src).toContain('<span data-copy>Cre</span><span class="panel__cursor-space" data-cursor-space></span><span data-copy>tive Design</span>');
+    expect(src).toContain('<svg class="panel__cursor" data-cursor viewBox="-8 0 32 32"');
     expect(src).toContain('d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z"');
   });
 
-  it('drags the cursor icon off as the headline fades, on scroll — the cursor "does something" instead of just fading with the text', async () => {
+  it('is ONE cursor for its whole life — no second/cloned cursor element appears later in the scene', async () => {
     const src = await read('src/components/HeroHalo.astro');
-    expect(src).toContain('data-cursor');
-    expect(src).toContain("const cursorIcon = root.querySelector<SVGElement>('[data-cursor]')");
-    expect(src).toContain('const drag = out(seg(m, 0, 0.3))');
-    expect(src).toContain('cursorIcon.style.transform = `translate(${drag * 20}px, ${drag * 16}px) rotate(${-14 * drag}deg) scale(${mix(1, 0.75, drag)})`');
-  });
-
-  it('the cursor drags each board piece from the shared centre to its own slot, instead of just tapping it after the fact', async () => {
-    const src = await read('src/components/HeroHalo.astro');
-    expect(src).toContain('data-drag-cursor');
-    expect(src).toContain("const dragCursor = root.querySelector<HTMLElement>('[data-drag-cursor]')");
-    expect(src, 'the card rides B (settle progress); each tile rides its own landing T — both from the same shared centre point').toContain(
-      'const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND))'
-    );
-    expect(src).toContain('const dx = mix(center.x, to.x, travelP), dy = mix(center.y, to.y, travelP)');
-  });
-
-  it("computes every piece's resting centre once in measure(), not every frame, and shares the same centre point every piece already flies in from (home/from[])", async () => {
-    const src = await read('src/components/HeroHalo.astro');
-    expect(src).toContain('cardFinal = { x: card.offsetLeft + cw / 2, y: card.offsetTop + ch / 2 }');
-    expect(src).toContain('tileFinals = tiles.map((el) => ({ x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }))');
-    expect(src).toContain('center = { x: W / 2, y: H / 2 }');
+    expect(
+      src,
+      'a past version of this created a separate drag-cursor div that appeared out of nowhere once the headline cursor faded — this must not come back'
+    ).not.toContain('data-drag-cursor');
+    expect(src).not.toContain('dragCursor');
+    expect(src).not.toContain('class="drag-cursor"');
+    const markupMatches = src.match(/class="panel__cursor" data-cursor/g) ?? [];
+    expect(markupMatches, 'exactly one data-cursor element in the markup').toHaveLength(1);
   });
 
   it(
-    "keeps the drag-cursor's centring on the CSS `translate` property, separate from the `transform` the script " +
-      "sets every frame for rotate/scale (a bug found in review on the previous version of this element: motion's " +
-      "animate() wrote scale to `transform`, which composes with — doesn't override — a standalone `scale` CSS " +
-      "property, so a rest value there permanently zeroed the element regardless of what the animation did; keeping " +
-      "`transform` as the single owner of rotate/scale here, with centring on the separate `translate` property, " +
-      "avoids that class of bug entirely)",
+    "lives outside .panel in the DOM (a sibling of .stage, placed after it) instead of nested inside the fading " +
+      "headline — a bug found in review: .panel creates its own stacking context (position:absolute + z-index:2), " +
+      "which traps every descendant's paint order below .stage's z-index:3 no matter what z-index a descendant sets " +
+      "on itself, so the cursor was dragging correctly (confirmed via computed transforms) but invisibly, hidden " +
+      "behind the card/tiles for virtually its whole trip — it only reads as 'the cursor doing something' once it can " +
+      "actually paint above them",
     async () => {
       const src = await read('src/components/HeroHalo.astro');
-      expect(src).toContain('translate: -50% -50%; opacity: 0; pointer-events: none; color: var(--accent);');
-      expect(src).not.toContain('scale: 0;');
-      expect(src).toContain('dragCursor.style.transform = `rotate(${lean * 14 * (1 - travelP)}deg) scale(${squeeze})`');
+      expect(src).toContain('.panel__cursor-space above');
+      expect(src).toContain('position: fixed; top: 0; left: 0; z-index: 10;');
+      // The real cursor must come after .stage's closing tag and before .cap's opening tag in the markup.
+      const stageEnd = src.indexOf('</article>\n      </div>\n    </div>');
+      const cursorTag = src.indexOf('<svg class="panel__cursor" data-cursor');
+      const capStart = src.indexOf('<div class="cap" data-cap>');
+      expect(stageEnd).toBeGreaterThan(-1);
+      expect(cursorTag).toBeGreaterThan(stageEnd);
+      expect(capStart).toBeGreaterThan(cursorTag);
     }
   );
+
+  it("gives the cursor its own opacity, independent of the headline text's fade — it's not nested inside the fading spans at all any more", async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(
+      src,
+      "the headline h1 itself must not carry data-copy: opacity doesn't let a descendant override an ancestor's fade the way visibility does, so a cursor nested inside a fading h1 could never look fully opaque once the h1 faded"
+    ).not.toContain('class="panel__title display" data-copy');
+    expect(src).toContain('<span data-copy>Cre</span>');
+    expect(src).toContain('<span data-copy>tive Design</span>');
+  });
+
+  it('computes cursorRest from the placeholder it left behind in the text (not from itself, since it no longer sits there) once in measure(), and sizes itself to match since it can no longer inherit the huge headline font-size for an em-based size', async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src).toContain("const cursorSpace = root.querySelector<HTMLElement>('[data-cursor-space]')");
+    expect(src).toContain('const r = cursorSpace.getBoundingClientRect()');
+    expect(src).toContain('cursorRest = { x: r.left + r.width / 2, y: r.top + r.height / 2 }');
+    expect(src).toContain("cursorIcon.style.width = `${r.width}px`; cursorIcon.style.height = `${r.height}px`;");
+  });
+
+  it('drags itself from its own spot toward the centre across the whole morph, then from the centre to the card, then out to each tile in turn — one continuous trip, not a reaction after each piece already moved', async () => {
+    const src = await read('src/components/HeroHalo.astro');
+    expect(src).toContain('const toCenter = out(seg(now, MORPH[0], MORPH[1]))');
+    expect(src).toContain('px = mix(cursorRest.x, center.x, toCenter)');
+    expect(src, 'the card rides B (settle progress); each tile rides its own landing T — both from the same shared centre point').toContain(
+      'const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND))'
+    );
+    expect(src).toContain('px = mix(center.x, to.x, travelP)');
+    expect(
+      src,
+      'position:fixed with top:0;left:0 means the translate IS the viewport position — px/py go straight into the transform, not as an offset from cursorRest'
+    ).toContain('cursorIcon.style.transform = `translate(${px}px, ${py}px)');
+  });
 
   it('tones down the panel background from Halo\'s saturated violet wash to a mostly-dark gradient with a soft accent glow', async () => {
     const src = await read('src/components/HeroHalo.astro');
