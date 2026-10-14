@@ -115,6 +115,14 @@ const cards = [
 
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
 
+  // Astro's ClientRouter swaps pages without re-running module scripts, so
+  // mount on every astro:page-load (each visit to the home brings a fresh
+  // [data-hero]) and drop this page's window/scroll listeners before the
+  // next swap — otherwise coming back left the callouts unpositioned,
+  // piled up at the headline's corner.
+  function mount() {
+  const ac = new AbortController();
+  document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
   for (const root of document.querySelectorAll<HTMLElement>('[data-hero]')) {
     if (root.dataset.heroMounted) continue;
     root.dataset.heroMounted = 'true';
@@ -161,7 +169,7 @@ const cards = [
       });
     };
     let parts = draw();
-    addEventListener('resize', () => { parts = draw(); });
+    addEventListener('resize', () => { parts = draw(); }, { signal: ac.signal });
     document.fonts?.ready.then(() => { parts = draw(); });
 
     if (reduce) continue;
@@ -266,9 +274,12 @@ const cards = [
       raf = now === target ? 0 : requestAnimationFrame(tick);
     };
     measure(); render();
-    addEventListener('resize', () => { measure(); render(); });
-    scroll((p: number) => { target = p; if (!raf) raf = requestAnimationFrame(tick); }, { target: root, offset: ['start start', 'end end'] });
+    addEventListener('resize', () => { measure(); render(); }, { signal: ac.signal });
+    const stop = scroll((p: number) => { target = p; if (!raf) raf = requestAnimationFrame(tick); }, { target: root, offset: ['start start', 'end end'] });
+    ac.signal.addEventListener('abort', () => { stop(); cancelAnimationFrame(raf); });
   }
+  }
+  document.addEventListener('astro:page-load', mount);
 </script>
 
 <style>
