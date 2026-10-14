@@ -1,9 +1,11 @@
 ---
-// A faithful port of the Halo reference template's HeroDeck.astro: same
-// math, same CSS, same structure — only the content changed. Halo's own
-// tokens are scoped to .show below so the rest of the site keeps its own
-// brand tokens untouched; HeroStory.astro stays in the codebase, on hold,
-// in case we go back to it.
+// Creative Design's own scroll-storytelling hero: the headline becomes the
+// sublimation card, the other pieces (identity, empaquetado, diseño,
+// catálogo) land in turn, and the cursor from "Creative" drags each one
+// into place. Started as a close port of the Halo reference template's
+// HeroDeck.astro (credit where due for the scroll/morph technique); the
+// palette, fonts, content and the cursor-driven storytelling are ours.
+// HeroStory.astro stays in the codebase, on hold, in case we go back to it.
 import { Icon } from 'astro-icon/components';
 import { Image } from 'astro:assets';
 import catalogoPreview from '../assets/hero/catalogo-preview.jpg';
@@ -305,17 +307,16 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
 </script>
 
 <style>
-  /* Halo's own token NAMES (HeroDeck's CSS references these), but pointed
-     at our own brand colors (src/styles/global.css) instead of Halo's
-     violet/lime preset — structure and motion stay exactly Halo's, only
-     the palette is ours. These resolve through the theme toggle too,
-     since they reference our real :root custom properties. */
+  /* Short local token names (--bg, --fg, --accent, etc.) for the CSS below,
+     pointed at our own brand colors (src/styles/global.css) rather than
+     spelling out var(--background) etc. everywhere. These resolve through
+     the theme toggle too, since they reference our real :root properties. */
   .show {
     /* --color-surface / --color-muted (Tailwind's @theme inline aliases),
        not --surface / --muted directly: this rule redeclares those two
-       names below for Halo's own CSS, and a custom property that's
-       redeclared in the same rule always resolves to its last value —
-       referencing the bare name here would just point back at itself. */
+       names below, and a custom property that's redeclared in the same
+       rule always resolves to its last value — referencing the bare name
+       here would just point back at itself. */
     --bg: var(--background); --bg-2: var(--color-surface); --fg: var(--foreground); --muted: var(--color-muted);
     --accent: var(--color-brand-lilac); --accent-ink: var(--color-brand-black);
     --glow: var(--color-brand-lilac); --glow-2: color-mix(in oklab, var(--color-brand-lilac) 70%, white 30%);

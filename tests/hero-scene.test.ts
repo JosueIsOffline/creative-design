@@ -4,9 +4,9 @@ import path from 'node:path';
 
 const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 
-describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not an adaptation)', () => {
+describe("HeroScene (Creative Design's own scroll-storytelling hero — started as a Halo-reference port, now its own thing)", () => {
   it("headlines with the brand name \"Creative Design\" — the cursor-icon stands in for the \"a\" of \"Creative\" visually, even though the real element now lives outside the fading text (Hero.astro's own trick, adapted)", async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('<span class="sr-only">Creative Design</span>');
     expect(src).toContain('<span data-copy>Cre</span><span class="panel__cursor-space" data-cursor-space></span><span data-copy>tive Design</span>');
     expect(src).toContain('<svg class="panel__cursor" data-cursor viewBox="-8 0 32 32"');
@@ -14,7 +14,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('is ONE cursor for its whole life — no second/cloned cursor element appears later in the scene', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(
       src,
       'a past version of this created a separate drag-cursor div that appeared out of nowhere once the headline cursor faded — this must not come back'
@@ -33,7 +33,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
       "behind the card/tiles for virtually its whole trip — it only reads as 'the cursor doing something' once it can " +
       "actually paint above them",
     async () => {
-      const src = await read('src/components/HeroHalo.astro');
+      const src = await read('src/components/HeroScene.astro');
       expect(src).toContain('.panel__cursor-space above');
       expect(src).toContain('position: fixed; top: 0; left: 0; z-index: 10;');
       // The real cursor must come after .stage's closing tag and before .cap's opening tag in the markup.
@@ -47,7 +47,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   );
 
   it("gives the cursor its own opacity, independent of the headline text's fade — it's not nested inside the fading spans at all any more", async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(
       src,
       "the headline h1 itself must not carry data-copy: opacity doesn't let a descendant override an ancestor's fade the way visibility does, so a cursor nested inside a fading h1 could never look fully opaque once the h1 faded"
@@ -57,7 +57,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('computes cursorRest from the placeholder it left behind in the text (not from itself, since it no longer sits there) once in measure(), and sizes itself to match since it can no longer inherit the huge headline font-size for an em-based size', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain("const cursorSpace = root.querySelector<HTMLElement>('[data-cursor-space]')");
     expect(src).toContain('const r = cursorSpace.getBoundingClientRect()');
     expect(src).toContain('cursorRest = { x: r.left + r.width / 2, y: r.top + r.height / 2 }');
@@ -65,7 +65,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('drags itself from its own spot toward the centre across the whole morph, then from the centre to the card, then out to each tile in turn — one continuous trip, not a reaction after each piece already moved', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('const toCenter = out(seg(now, MORPH[0], MORPH[1]))');
     expect(src).toContain('px = mix(cursorRest.x, center.x, toCenter)');
     expect(src, 'the card rides B (settle progress); each tile rides its own landing T — both from the same shared centre point').toContain(
@@ -79,7 +79,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('tones down the panel background from Halo\'s saturated violet wash to a mostly-dark gradient with a soft accent glow', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(
       src,
       "Halo's own 38%/62% glow mix read as a loud magenta panel against this brand's otherwise sparse accent use"
@@ -90,7 +90,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('uses the same motion package and scroll-driven math as the reference, not GSAP', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain("import { animate, scroll, stagger } from 'motion'");
     expect(src).not.toContain('gsap');
     expect(src).toContain('const MORPH = [0.02, 0.24], SETTLE = [0.28, 0.42], FIRST = 0.4, EVERY = 0.12, LAND = 0.14');
@@ -98,7 +98,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('ports the panel/card morph, tick-based easing toward scroll target, and pointer depth verbatim', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain("panel.style.clipPath = `inset(");
     expect(src).toContain('now += (target - now) * 0.14');
     expect(src).toContain("scroll((p: number) => { target = p; wake(); }, { target: root, offset: ['start start', 'end end'] })");
@@ -106,7 +106,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it("points Halo's token names at this project's own brand colors instead of Halo's violet/lime preset", async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('.show {');
     expect(
       src,
@@ -122,7 +122,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it("uses this project's own fonts (Space Grotesk, already loaded site-wide) instead of Halo's Inter Tight / JetBrains Mono", async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src, "Inter Tight / JetBrains Mono were only needed for Halo's own fonts").not.toContain('Inter Tight');
     expect(src).not.toContain('JetBrains Mono');
     expect(src, 'a separate Google Fonts <link> is unneeded now — Space Grotesk is already loaded by global.css').not.toContain('fonts.googleapis.com');
@@ -136,7 +136,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
       "var() reference to the same name, so --bg-2: var(--surface) would silently resolve to Halo's own glass-surface " +
       "formula instead of our dark surface color — this is the bug that made the identity tile render white-on-white)",
     async () => {
-      const src = await read('src/components/HeroHalo.astro');
+      const src = await read('src/components/HeroScene.astro');
       expect(src).toContain('--bg-2: var(--color-surface)');
       expect(src).toContain('--muted: var(--color-muted)');
       expect(src).not.toContain('--bg-2: var(--surface)');
@@ -145,18 +145,18 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   );
 
   it('gates the pinned/absolute scene behind the .js marker and reduced motion, matching the reference exactly', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('@media (prefers-reduced-motion: no-preference) {');
     expect(src).toContain(':global(.js) .show { height: 460svh;');
     const layout = await read('src/layouts/BaseLayout.astro');
     expect(
       layout,
-      "HeroHalo's CSS is gated behind :global(.js) .show — without this marker, no-JS visitors would get the pinned/absolute layout with the key and tiles stuck at opacity:0 forever"
+      "HeroScene's CSS is gated behind :global(.js) .show — without this marker, no-JS visitors would get the pinned/absolute layout with the key and tiles stuck at opacity:0 forever"
     ).toContain("document.documentElement.classList.add('js')");
   });
 
   it('replaces Halo\'s own Button/Media/content-model components with this project\'s own Icon and a real screenshot, not invented stock photography', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).not.toContain("from '../ui/Button.astro'");
     expect(src).not.toContain("from '../ui/Media.astro'");
     expect(src).not.toContain("from '../../content/site'");
@@ -166,7 +166,7 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
   });
 
   it('fills the key and two on-photo tiles with this project\'s own anatomy figures, and reuses the real WhatsApp number', async () => {
-    const src = await read('src/components/HeroHalo.astro');
+    const src = await read('src/components/HeroScene.astro');
     expect(src).toContain("from '../../tools/heat-press-figure/figure.svg?raw'");
     expect(src).toContain("from '../../tools/design-figure/figure.svg?raw'");
     expect(src).toContain("from '../../tools/packaging-figure/figure.svg?raw'");
@@ -175,8 +175,8 @@ describe('HeroHalo (a faithful port of the Halo reference template HeroDeck, not
 
   it('is the one wired into the home page; HeroStory.astro stays in the codebase on hold', async () => {
     const indexSrc = await read('src/pages/index.astro');
-    expect(indexSrc).toContain("import HeroHalo from '../components/HeroHalo.astro'");
-    expect(indexSrc).toContain('<HeroHalo');
+    expect(indexSrc).toContain("import HeroScene from '../components/HeroScene.astro'");
+    expect(indexSrc).toContain('<HeroScene');
     await expect(fs.access(path.join(process.cwd(), 'src/components/HeroStory.astro'))).resolves.toBeUndefined();
   });
 });

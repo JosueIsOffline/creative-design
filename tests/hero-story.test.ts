@@ -98,11 +98,11 @@ describe('HeroStory (Hero as scroll storytelling, ported from the Halo reference
     expect(src).toContain("addEventListener('astro:page-load', mount)");
   });
 
-  it('is on hold — kept in the codebase but no longer wired into the home page (see HeroHalo instead)', async () => {
+  it('is on hold — kept in the codebase but no longer wired into the home page (see HeroScene instead)', async () => {
     const src = await read('src/pages/index.astro');
     expect(src).not.toContain("components/HeroStory.astro");
-    expect(src).toContain("import HeroHalo from '../components/HeroHalo.astro'");
-    expect(src).toContain('<HeroHalo');
+    expect(src).toContain("import HeroScene from '../components/HeroScene.astro'");
+    expect(src).toContain('<HeroScene');
   });
 
   it('Hero.astro keeps a stable id for HeroStory to target from outside', async () => {
