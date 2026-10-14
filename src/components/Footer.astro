@@ -28,7 +28,7 @@ const currentYear = new Date().getFullYear();
   </div>
 
   <div class="overflow-hidden px-6" data-footer-wordmark aria-hidden="true">
-    <span class="block font-display font-semibold leading-none tracking-tight text-foreground whitespace-nowrap text-[18vw] sm:text-[14vw] max-w-5xl mx-auto">
+    <span class="block font-display font-semibold leading-none tracking-tight text-foreground whitespace-nowrap text-[12vw] max-w-5xl mx-auto pb-[0.12em]" data-wordmark-text>
       {Array.from('Creative Design').map((letter) => (
         <span class="inline-block" style="display: inline-block">{letter === ' ' ? ' ' : letter}</span>
       ))}
@@ -49,6 +49,19 @@ const currentYear = new Date().getFullYear();
 
   gsap.registerPlugin(ScrollTrigger);
 
+  // Size the wordmark to fill the content column exactly, whatever the
+  // font's width: measure the text at its current size and scale to fit.
+  function fit(root: HTMLElement) {
+    const text = root.querySelector<HTMLElement>('[data-wordmark-text]');
+    if (!text) return;
+    const box = text.clientWidth;
+    const size = parseFloat(getComputedStyle(text).fontSize);
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const used = range.getBoundingClientRect().width;
+    if (box && used) text.style.fontSize = `${(size * box) / used * 0.995}px`;
+  }
+
   // Giant wordmark letter reveal, once (adapted from the Halo reference
   // footer). The footer is transition:persist, so the same node sticks
   // around across client-side navigations and astro:page-load can fire
@@ -56,8 +69,11 @@ const currentYear = new Date().getFullYear();
   // just at play time, or repeated mounts would stack duplicate tweens.
   function mount() {
     document.querySelectorAll<HTMLElement>('[data-footer-wordmark]').forEach((root) => {
+      fit(root);
+      document.fonts?.ready.then(() => fit(root));
       if (root.dataset.wordmarkMounted) return;
       root.dataset.wordmarkMounted = 'true';
+      addEventListener('resize', () => fit(root));
 
       const mm = gsap.matchMedia();
       mm.add('(prefers-reduced-motion: no-preference)', () => {
