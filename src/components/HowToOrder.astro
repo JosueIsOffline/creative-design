@@ -1,0 +1,123 @@
+---
+// "Cómo pedir": the four steps from idea to delivery. The hero tells what
+// we make; this tells how to get it. A line draws through the steps as you
+// scroll and each one lights up as it's reached; the step cards carry the
+// deck's colours and a slight tilt. Without JS or with reduced motion:
+// everything lit, no line animation.
+import { Icon } from 'astro-icon/components';
+
+const whatsapp = import.meta.env.WHATSAPP_NUMBER;
+const waMessage = encodeURIComponent('Hola! Quiero hacer un pedido.');
+
+const steps = [
+  { icon: 'lucide:mouse-pointer-click', color: '#d9a8d9', tilt: -1.5, title: 'Elegí', text: 'Escogé una pieza del catálogo o contanos tu idea.' },
+  { icon: 'lucide:pen-tool', color: '#e86a9f', tilt: 1.2, title: 'Diseñamos', text: 'Armamos tu diseño y te lo mostramos para que lo apruebes antes de producir.' },
+  { icon: 'lucide:flame', color: '#f2cf4a', tilt: -0.8, title: 'Producimos', text: 'Sublimamos o imprimimos tu pieza y la empacamos a mano.' },
+  { icon: 'lucide:package-check', color: '#5ec8e8', tilt: 1.6, title: 'Te llega', text: 'Coordinamos la entrega con vos por WhatsApp.' },
+];
+---
+<section id="como-pedir" class="order scroll-mt-24" data-order>
+  <div class="order__inner">
+    <header class="order__head">
+      <span class="order__eyebrow">Cómo pedir</span>
+      <h2 data-gsap="kinetic-heading" class="order__title">De tu idea a tus manos</h2>
+    </header>
+
+    <ol class="order__steps">
+      <div class="order__track" aria-hidden="true"><i data-order-line></i></div>
+      {steps.map((s, i) => (
+        <li class="order__step" data-order-step style={`--c: ${s.color}; --tilt: ${s.tilt}deg`}>
+          <span class="order__dot"><Icon name={s.icon} width="22" height="22" /></span>
+          <div class="order__card">
+            <span class="order__n">0{i + 1}</span>
+            <h3 class="order__step-title">{s.title}</h3>
+            <p class="order__text">{s.text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+
+    <div class="order__cta">
+      <a class="order__btn order__btn--solid" href="/catalogo">Ver catálogo <Icon name="lucide:arrow-right" width="16" height="16" /></a>
+      <a class="order__btn" href={`https://wa.me/${whatsapp}?text=${waMessage}`} target="_blank" rel="noopener">Escribinos</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { scroll } from 'motion';
+
+  function mount() {
+    const ac = new AbortController();
+    document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    for (const root of document.querySelectorAll<HTMLElement>('[data-order]')) {
+      const line = root.querySelector<HTMLElement>('[data-order-line]')!;
+      const steps = [...root.querySelectorAll<HTMLElement>('[data-order-step]')];
+      root.classList.add('is-live');
+      const stop = scroll(
+        (p: number) => {
+          line.style.setProperty('--p', p.toFixed(4));
+          steps.forEach((s, i) => s.classList.toggle('is-on', p >= (i / (steps.length - 1)) * 0.98));
+        },
+        { target: root.querySelector('.order__steps')!, offset: ['start 75%', 'end 55%'] }
+      );
+      ac.signal.addEventListener('abort', stop);
+    }
+  }
+  document.addEventListener('astro:page-load', mount);
+</script>
+
+<style>
+  .order { --accent: var(--color-brand-lilac); position: relative; padding: clamp(80px, 12vw, 160px) 0; }
+  .order__inner { max-width: 72rem; margin: 0 auto; padding: 0 24px; }
+  .order__head { display: grid; gap: 14px; margin-bottom: clamp(48px, 7vw, 88px); }
+  .order__eyebrow { font: 600 12px/1 'Parkinsans', var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+  .order__title { font: 700 clamp(2.4rem, 6vw, 5rem)/0.95 'Parkinsans', var(--font-display); letter-spacing: -0.04em; max-width: 14ch; }
+
+  .order__steps { --gap: clamp(16px, 2vw, 28px); position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); list-style: none; padding: 0; }
+  /* The track runs from the first dot's centre to the last one's. */
+  .order__track { position: absolute; left: 28px; right: calc((100% - 3 * var(--gap)) / 4 - 28px); top: 27px; height: 2px; background: color-mix(in oklab, var(--foreground) 12%, transparent); }
+  .order__track i { position: absolute; inset: 0; background: linear-gradient(90deg, #d9a8d9, #e86a9f, #f2cf4a, #5ec8e8); transform-origin: 0 50%; transform: scaleX(var(--p, 1)); }
+
+  .order__step { position: relative; display: grid; gap: 22px; align-content: start; }
+  .order__dot {
+    position: relative; z-index: 1; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--c); color: var(--color-brand-black);
+    transition: background-color 400ms cubic-bezier(0.16, 1, 0.3, 1), color 400ms, scale 500ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 500ms;
+    box-shadow: 0 0 0 6px var(--background), 0 0 30px -4px color-mix(in oklab, var(--c) 70%, transparent);
+  }
+  .order__card {
+    padding: 22px 22px 26px; border-radius: 22px; rotate: var(--tilt);
+    border: 1px solid color-mix(in oklab, var(--c) 22%, transparent);
+    background:
+      radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--c) 12%, transparent), transparent 60%),
+      color-mix(in oklab, var(--accent) 4%, var(--background));
+    transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1), translate 600ms cubic-bezier(0.16, 1, 0.3, 1), rotate 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .order__n { font: 600 12px/1 'Parkinsans', var(--font-display); letter-spacing: 0.14em; color: var(--c); }
+  .order__step-title { margin-top: 10px; font: 700 clamp(1.5rem, 2.2vw, 2rem)/1 'Parkinsans', var(--font-display); letter-spacing: -0.03em; }
+  .order__text { margin-top: 10px; color: color-mix(in oklab, var(--foreground) 75%, transparent); line-height: 1.5; font-size: 15px; }
+
+  /* Live (JS + motion): steps wait dimmed until the line reaches them. */
+  .order.is-live .order__step:not(.is-on) .order__dot { background: var(--background); color: color-mix(in oklab, var(--foreground) 40%, transparent); box-shadow: 0 0 0 6px var(--background), inset 0 0 0 1.5px color-mix(in oklab, var(--foreground) 18%, transparent); scale: 0.86; }
+  .order.is-live .order__step:not(.is-on) .order__card { opacity: 0.35; translate: 0 14px; rotate: 0deg; }
+
+  .order__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(48px, 6vw, 72px); }
+  .order__btn {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent); color: var(--foreground); font: 500 15px/1 var(--font-display); text-decoration: none;
+    transition: background-color 300ms, scale 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .order__btn--solid { background: var(--accent); border-color: var(--accent); color: var(--color-brand-black); }
+  .order__btn:active { scale: 0.97; }
+  @media (hover: hover) { .order__btn:not(.order__btn--solid):hover { background: color-mix(in oklab, var(--foreground) 8%, transparent); } }
+
+  /* Phones and small tablets: a vertical run, the line down the dots. */
+  @media (max-width: 860px) {
+    .order__steps { grid-template-columns: 1fr; gap: 28px; }
+    .order__step { grid-template-columns: 56px 1fr; gap: 18px; }
+    .order__track { left: 27px; right: auto; top: 28px; bottom: 28px; width: 2px; height: auto; }
+    .order__track i { background: linear-gradient(180deg, #d9a8d9, #e86a9f, #f2cf4a, #5ec8e8); transform-origin: 50% 0; transform: scaleY(var(--p, 1)); }
+  }
+</style>
