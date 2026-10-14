@@ -1,8 +1,8 @@
 ---
 // "Cómo pedir": the four steps from idea to delivery. The hero tells what
 // we make; this tells how to get it. A line draws through the steps as you
-// scroll and each one lights up as it's reached; the step cards carry the
-// deck's colours and a slight tilt. Without JS or with reduced motion:
+// scroll and each one lights up as it's reached, in the deck's colours —
+// but as plain type, not more cards. Without JS or with reduced motion:
 // everything lit, no line animation.
 import { Icon } from 'astro-icon/components';
 
@@ -10,10 +10,10 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 const waMessage = encodeURIComponent('Hola! Quiero hacer un pedido.');
 
 const steps = [
-  { icon: 'lucide:mouse-pointer-click', color: '#d9a8d9', tilt: -1.5, title: 'Elige', text: 'Escoge una pieza del catálogo o cuéntanos tu idea.' },
-  { icon: 'lucide:pen-tool', color: '#e86a9f', tilt: 1.2, title: 'Diseñamos', text: 'Armamos tu diseño y te lo mostramos para que lo apruebes antes de producir.' },
-  { icon: 'lucide:flame', color: '#f2cf4a', tilt: -0.8, title: 'Producimos', text: 'Sublimamos o imprimimos tu pieza y la empacamos a mano.' },
-  { icon: 'lucide:package-check', color: '#5ec8e8', tilt: 1.6, title: 'Te llega', text: 'Coordinamos la entrega contigo por WhatsApp.' },
+  { icon: 'lucide:mouse-pointer-click', color: '#d9a8d9', title: 'Elige', text: 'Escoge una pieza del catálogo o cuéntanos tu idea.' },
+  { icon: 'lucide:pen-tool', color: '#e86a9f', title: 'Diseñamos', text: 'Armamos tu diseño y te lo mostramos para que lo apruebes antes de producir.' },
+  { icon: 'lucide:flame', color: '#f2cf4a', title: 'Producimos', text: 'Sublimamos o imprimimos tu pieza y la empacamos a mano.' },
+  { icon: 'lucide:package-check', color: '#5ec8e8', title: 'Te llega', text: 'Coordinamos la entrega contigo por WhatsApp.' },
 ];
 ---
 <section id="como-pedir" class="order scroll-mt-24" data-order>
@@ -26,9 +26,9 @@ const steps = [
     <ol class="order__steps">
       <div class="order__track" aria-hidden="true"><i data-order-line></i></div>
       {steps.map((s, i) => (
-        <li class="order__step" data-order-step style={`--c: ${s.color}; --tilt: ${s.tilt}deg`}>
+        <li class="order__step" data-order-step style={`--c: ${s.color}`}>
           <span class="order__dot"><Icon name={s.icon} width="22" height="22" /></span>
-          <div class="order__card">
+          <div class="order__body">
             <span class="order__n">0{i + 1}</span>
             <h3 class="order__step-title">{s.title}</h3>
             <p class="order__text">{s.text}</p>
@@ -87,21 +87,16 @@ const steps = [
     transition: background-color 400ms cubic-bezier(0.16, 1, 0.3, 1), color 400ms, scale 500ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 500ms;
     box-shadow: 0 0 0 6px var(--background), 0 0 30px -4px color-mix(in oklab, var(--c) 70%, transparent);
   }
-  .order__card {
-    padding: 22px 22px 26px; border-radius: 22px; rotate: var(--tilt);
-    border: 1px solid color-mix(in oklab, var(--c) 22%, transparent);
-    background:
-      radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--c) 12%, transparent), transparent 60%),
-      color-mix(in oklab, var(--accent) 4%, var(--background));
-    transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1), translate 600ms cubic-bezier(0.16, 1, 0.3, 1), rotate 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
+  /* No boxes here — the deck above is all cards; the steps are just type
+     on the line. */
+  .order__body { padding-right: 12px; transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1), translate 600ms cubic-bezier(0.16, 1, 0.3, 1); }
   .order__n { font: 600 12px/1 'Parkinsans', var(--font-display); letter-spacing: 0.14em; color: var(--c); }
-  .order__step-title { margin-top: 10px; font: 700 clamp(1.5rem, 2.2vw, 2rem)/1 'Parkinsans', var(--font-display); letter-spacing: -0.03em; }
+  .order__step-title { margin-top: 12px; font: 700 clamp(1.8rem, 3vw, 2.8rem)/1 'Parkinsans', var(--font-display); letter-spacing: -0.04em; }
   .order__text { margin-top: 10px; color: color-mix(in oklab, var(--foreground) 75%, transparent); line-height: 1.5; font-size: 15px; }
 
   /* Live (JS + motion): steps wait dimmed until the line reaches them. */
   .order.is-live .order__step:not(.is-on) .order__dot { background: var(--background); color: color-mix(in oklab, var(--foreground) 40%, transparent); box-shadow: 0 0 0 6px var(--background), inset 0 0 0 1.5px color-mix(in oklab, var(--foreground) 18%, transparent); scale: 0.86; }
-  .order.is-live .order__step:not(.is-on) .order__card { opacity: 0.35; translate: 0 14px; rotate: 0deg; }
+  .order.is-live .order__step:not(.is-on) .order__body { opacity: 0.25; translate: 0 14px; }
 
   .order__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(48px, 6vw, 72px); }
   .order__btn {
