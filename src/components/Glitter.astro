@@ -63,7 +63,7 @@
 
     const small = innerWidth < 810;
     const N = small ? 450 : 900;
-    const LAG = 0.2; // how long the comet's tail is, in path units
+    const LAG = small ? 0.26 : 0.2; // how long the comet's tail is, in path units
     const star = sparklePoints(N);
     const P = Array.from({ length: N }, (_, i) => ({
       dust: [Math.random(), Math.random()] as [number, number],
@@ -135,10 +135,12 @@
     resize();
     addEventListener('resize', resize, { signal: ac.signal });
 
-    // The comet's path: a wandering Lissajous across the viewport.
+    // The comet's path: a zigzag falling down the screen as you scroll —
+    // more swings on phones, threading between the gallery's two columns.
+    const TURNS = small ? 2.3 : 1.4, SWING = small ? 0.36 : 0.38;
     const path = (s: number): [number, number] => [
-      W * (0.5 + 0.4 * Math.sin(Math.PI * 2 * s * 1.15 - 1.2)),
-      H * (0.5 + 0.34 * Math.sin(Math.PI * 2 * s * 0.8 + 0.4)),
+      W * (0.5 + SWING * Math.sin(Math.PI * 2 * s * TURNS - 0.9)),
+      H * (0.14 + 0.7 * s) + Math.sin(Math.PI * 2 * s * 3) * H * 0.03,
     ];
 
     let raf = 0;
@@ -155,7 +157,7 @@
       if (!live) { schedule(); return; }
 
       const hr = heading ? heading.getBoundingClientRect() : fr;
-      const s = 0.1 + p * 1.25; // the head travels along the path with scroll
+      const s = (p - 0.3) / 0.5; // the head falls along the path as you scroll (0 → 1 while the comet runs)
       // Star: on the photo's top-right corner, sized to the photo.
       const R = Math.min(ar.width, 420) * 0.26;
       const cx = ar.right - R * 0.7, cy = ar.bottom - R * 1.45; // the photo's lower right corner, over the background, clear of her face
@@ -175,7 +177,7 @@
         const [px, py] = path(s - q.lag);
         const [nx, ny] = path(s - q.lag + 0.002);
         const len = Math.hypot(nx - px, ny - py) || 1;
-        const width = 10 + (q.lag / LAG) ** 1.2 * 70; // tight at the head, fanning out toward the tail
+        const width = (10 + (q.lag / LAG) ** 1.2 * 70) * (small ? 0.6 : 1); // tight at the head, fanning out toward the tail
         const cxp = px + (-(ny - py) / len) * q.spread * width + q.jit[0] * 2;
         const cyp = py + ((nx - px) / len) * q.spread * width + q.jit[1] * 2;
         const sx = cx + q.star[0] * R + q.jit[0] * 1.2, sy = cy + q.star[1] * R + q.jit[1] * 1.2;
