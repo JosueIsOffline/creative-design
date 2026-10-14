@@ -5,6 +5,43 @@ import path from 'node:path';
 const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 
 describe("HeroScene (Creative Design's own scroll-storytelling hero — started as a Halo-reference port, now its own thing)", () => {
+  it('arranges the board as an overlapping workbench, not a case-study grid — each tile spans into the key\'s area and sits above it', async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src).toContain('grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(10, 1fr)');
+    expect(src).toContain(':global(.js) .show .key { grid-area: 2 / 4 / 10 / 10;');
+    expect(src).toContain(":global(.js) .show .tile--id { grid-area: 1 / 1 / 5 / 6; }");
+    expect(
+      src,
+      "tiles must paint above the key where they overlap it — z-index:2 on .tile vs z-index:1 on .key"
+    ).toMatch(/\.show \.key \{ grid-area: 2 \/ 4 \/ 10 \/ 10; aspect-ratio: auto; z-index: 1;/);
+  });
+
+  it('settles each piece at its own small permanent tilt instead of perfectly axis-aligned, so it reads as things left on a desk', async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src).toContain('const CARD_TILT = -2');
+    expect(src).toContain('const TILE_TILT = [4, -5, 6, -3]');
+    expect(src).toContain('rotateZ(${rz + CARD_TILT * B}deg)');
+    expect(src).toContain('rotate(${mix(i % 2 ? 7 : -7, TILE_TILT[i], T)}deg)');
+  });
+
+  it('narrates through a tag stuck on whichever piece is active (.piece-tag, shown via .is-lit), not a shared numbered rail at the bottom', async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src, 'the old shared caption rail must be gone').not.toContain('cap__steps');
+    expect(src).not.toContain('cap__rail');
+    expect(src).not.toContain('data-step');
+    expect(src).not.toContain('data-fill');
+    expect(src).toContain('<p class="piece-tag" data-tag>{b.identity.tag}</p>');
+    expect(src).toContain('<p class="piece-tag" data-tag>{b.sublimation.tag}</p>');
+    expect(src).toContain('.is-lit .piece-tag { opacity: 1;');
+  });
+
+  it("keeps the mobile layout plain (no overlap) by overriding the desktop workbench's grid-areas back to a simple 2-column stack for small screens", async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src).toContain('@media (max-width: 809px) and (prefers-reduced-motion: no-preference) {');
+    expect(src).toContain(':global(.js) .show .key { grid-area: 1 / 1 / 2 / 3;');
+    expect(src).toContain(':global(.js) .show .tile--id { grid-area: 2 / 1 / 3 / 2; }');
+  });
+
   it("headlines with the brand name \"Creative Design\" — the cursor-icon stands in for the \"a\" of \"Creative\" visually, even though the real element now lives outside the fading text (Hero.astro's own trick, adapted)", async () => {
     const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('<span class="sr-only">Creative Design</span>');

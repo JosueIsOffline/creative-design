@@ -25,18 +25,15 @@ const h = {
   art: 'Prensa de sublimación, ilustración isométrica',
 };
 
+// Each piece carries its own line of the story now (tag: a small label that
+// pops up attached to it once it's the one being talked about) instead of a
+// shared numbered rail at the bottom — see .piece-tag.
 const b = {
-  identity: { label: 'Identidad', name: 'Creative Design', type: 'Space Grotesk' },
-  packaging: { label: 'Empaquetado', line: 'Lista para entregar' },
-  design: { label: 'Diseño', line: 'Antes de imprimir' },
-  web: { label: 'Catálogo', url: '/catalogo', line: 'Todo en un clic' },
-  steps: [
-    { day: '01', text: 'Cada pieza nace del calor y la presión.' },
-    { day: '02', text: 'Tu marca, tu estilo, en cada detalle.' },
-    { day: '03', text: 'Lista para sorprender, lista para entregar.' },
-    { day: '04', text: 'Ideas que cobran forma antes de imprimirse.' },
-    { day: '05', text: 'Todo tu catálogo, a un clic de distancia.' },
-  ],
+  sublimation: { tag: 'Cada pieza nace del calor y la presión.' },
+  identity: { label: 'Identidad', name: 'Creative Design', type: 'Space Grotesk', tag: 'Tu marca, tu estilo, en cada detalle.' },
+  packaging: { label: 'Empaquetado', line: 'Lista para entregar', tag: 'Lista para sorprender, lista para entregar.' },
+  design: { label: 'Diseño', line: 'Antes de imprimir', tag: 'Ideas que cobran forma antes de imprimirse.' },
+  web: { label: 'Catálogo', url: '/catalogo', line: 'Todo en un clic', tag: 'Todo tu catálogo, a un clic de distancia.' },
   button: 'Ver catálogo completo',
   href: '/catalogo',
 };
@@ -73,24 +70,33 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
 
     <h2 class="sr">Cómo trabajamos</h2>
     <div class="stage">
+      <!-- A workbench, not a case-study grid: the pieces overlap and sit at
+           their own small angles (CSS below), like things left out on a
+           desk rather than cells in a template. Each carries its own tag
+           (data-tag), popped into view by .is-lit instead of a shared
+           bottom rail — see render()'s lit.forEach. -->
       <div class="board">
         <article class="tile tile--id" data-tile>
           <p class="tile__label">{b.identity.label}</p>
           <p class="tile__mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={star} /></svg>{b.identity.name}</p>
           <div class="tile__row" aria-hidden="true"><span class="tile__swatches"><i></i><i></i><i></i><i></i></span><span class="tile__aa">{b.identity.type}</span></div>
+          <p class="piece-tag" data-tag>{b.identity.tag}</p>
         </article>
         <article class="key" data-card>
           <div class="anatomy-figure iso key__figure" data-theme="dark" aria-label={h.art}><Fragment set:html={sublimationSvg} /></div>
+          <p class="piece-tag" data-tag>{b.sublimation.tag}</p>
         </article>
         <article class="tile tile--ad on-photo" data-tile>
           <div class="anatomy-figure iso tile__figure" data-theme="dark"><Fragment set:html={packagingSvg} /></div>
           <p class="tile__label">{b.packaging.label}</p>
           <p class="tile__line">{b.packaging.line}</p>
+          <p class="piece-tag" data-tag>{b.packaging.tag}</p>
         </article>
         <article class="tile tile--film on-photo" data-tile>
           <div class="anatomy-figure iso tile__figure" data-theme="dark"><Fragment set:html={designSvg} /></div>
           <p class="tile__label">{b.design.label}</p>
           <p class="tile__line">{b.design.line}</p>
+          <p class="piece-tag" data-tag>{b.design.tag}</p>
         </article>
         <article class="tile tile--web" data-tile>
           <p class="tile__bar"><span class="tile__label">{b.web.label}</span><span class="tile__url">{b.web.url}</span></p>
@@ -98,6 +104,7 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
             <Image src={catalogoPreview} alt="Vista previa del catálogo" fill sizes="(max-width: 809px) 60vw, 480px" />
             <p class="tile__line">{b.web.line}</p>
           </div>
+          <p class="piece-tag" data-tag>{b.web.tag}</p>
         </article>
       </div>
     </div>
@@ -117,11 +124,9 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       </g>
     </svg>
 
+    <!-- No shared caption rail any more — each piece narrates itself
+         (.piece-tag, above). This is just the CTA, once the story's told. -->
     <div class="cap" data-cap>
-      <ol class="cap__steps">
-        {b.steps.map((s) => <li data-step><span class="cap__day label">{s.day}</span><span class="cap__text">{s.text}</span></li>)}
-      </ol>
-      <div class="cap__rail" aria-hidden="true"><i data-fill></i></div>
       <div class="cap__cta" data-late>
         <a class="btn" href={b.href}>{b.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
       </div>
@@ -148,17 +153,21 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   const MORPH = [0.02, 0.24], SETTLE = [0.28, 0.42], FIRST = 0.4, EVERY = 0.12, LAND = 0.14;
   // Where the two front tiles peek out from behind the portrait in the hero (in card widths / heights) and how they lean.
   const PEEK = [{ x: -0.5, y: -0.2, r: -10 }, { x: 0.52, y: 0.16, r: 9 }];
+  // The small, permanent tilt each piece settles into — a workbench of
+  // things left at their own angle, not a grid of identical cells. Card
+  // first, then tiles in DOM order (identity, empaquetado, diseño, catálogo).
+  const CARD_TILT = -2;
+  const TILE_TILT = [4, -5, 6, -3];
 
   for (const root of document.querySelectorAll<HTMLElement>('[data-show]')) {
     if (reduced()) continue;
     const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
-    const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), fill = $('[data-fill]'), stage = $('.stage');
+    const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), stage = $('.stage');
     const cursorIcon = root.querySelector<SVGElement>('[data-cursor]');
     const cursorSpace = root.querySelector<HTMLElement>('[data-cursor-space]');
     const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
     const late = root.querySelectorAll<HTMLElement>('[data-late]');
     const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
-    const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
     const lit = [card, ...tiles];
     const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
 
@@ -219,13 +228,13 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       panel.style.opacity = String(1 - seg(m, 0.9, 1)); // hidden once the card fully covers it
 
       const cx = home.x * (1 - B) + rest.x * (1 - k) + ptr.x * 14 * calm, cy = home.y * (1 - B) + rest.y * (1 - k) + ptr.y * 10 * calm;
-      card.style.transform = `translate3d(${cx}px, ${cy}px, 0) rotateX(${rx - ptr.y * 5 * calm}deg) rotateY(${ptr.x * 7 * calm}deg) rotateZ(${rz}deg) scale(${grow * mix(big * mix(rest.s, 1, k), 1, B)})`;
+      card.style.transform = `translate3d(${cx}px, ${cy}px, 0) rotateX(${rx - ptr.y * 5 * calm}deg) rotateY(${ptr.x * 7 * calm}deg) rotateZ(${rz + CARD_TILT * B}deg) scale(${grow * mix(big * mix(rest.s, 1, k), 1, B)})`;
 
       tiles.forEach((el, i) => {
         const a = FIRST + i * EVERY, T = out(seg(now, a, a + LAND));
         const peek = PEEK[i], show = peek && !phone ? calm * open : 0;
         if (T > 0 || !show) { // on its way to (or at) its place on the board
-          el.style.transform = `translate3d(${from[i].x * (1 - T)}px, ${from[i].y * (1 - T)}px, 0) rotate(${(i % 2 ? 7 : -7) * (1 - T)}deg) scale(${mix(0.55, 1, T)})`;
+          el.style.transform = `translate3d(${from[i].x * (1 - T)}px, ${from[i].y * (1 - T)}px, 0) rotate(${mix(i % 2 ? 7 : -7, TILE_TILT[i], T)}deg) scale(${mix(0.55, 1, T)})`;
           el.style.opacity = String(seg(T, 0, 0.35));
         } else { // tucked behind the portrait in the hero, leaning out at the sides
           const bw = card.offsetWidth * big * rest.s, bh = card.offsetHeight * big * rest.s, d = i ? 1 : -1;
@@ -238,13 +247,11 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
       const co = seg(m, 0.85, 1);
       cap.style.opacity = String(co); cap.style.translate = `0 ${16 * (1 - co)}px`;
       const lastLand = FIRST + 3 * EVERY + LAND;
-      fill.style.transform = `scaleX(${seg(now, SETTLE[0], lastLand)})`;
       late.forEach((l) => { const o = seg(now, 0.9, 0.96); l.style.opacity = String(o); l.style.pointerEvents = o > 0.5 ? '' : 'none'; l.style.visibility = o > 0 ? '' : 'hidden'; });
       const s = now < FIRST + LAND / 2 ? 0 : Math.min(tiles.length, Math.floor((now - FIRST - LAND / 2) / EVERY) + 1);
       const settled = now > SETTLE[1] - 0.02;
       if (s !== step || lit[0].classList.contains('is-lit') !== (settled && s === 0)) {
         step = s;
-        steps.forEach((li, i) => li.classList.toggle('is-on', i === s));
         lit.forEach((el, i) => el.classList.toggle('is-lit', i === s && settled));
       }
 
@@ -404,6 +411,19 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   /* The ring round whichever piece the caption is talking about. */
   .key::after, .tile::after { content: ""; position: absolute; inset: -6px; border: 2px solid var(--glow); border-radius: calc(var(--r) + 6px); opacity: 0; transition: opacity var(--dur-1) var(--ease-out); pointer-events: none; }
   .is-lit::after { opacity: 1; }
+  /* The tag: pops up hand-stuck-on-the-piece style when it's the one being
+     talked about, instead of a shared bottom rail. Hangs off the bottom
+     corner so it reads over whatever the piece overlaps, not just itself. */
+  .piece-tag {
+    position: absolute; z-index: 5; left: 14px; bottom: -14px; max-width: calc(100% - 20px);
+    padding: 7px 11px; border-radius: 7px; background: var(--bg); border: 1px solid var(--accent);
+    box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--bg) 70%, transparent);
+    font: 500 clamp(11px, 1.3cqi, 13px)/1.3 var(--display); color: var(--fg);
+    transform: rotate(-4deg) translateY(8px); transform-origin: 0% 0%;
+    opacity: 0; transition: opacity var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+    pointer-events: none;
+  }
+  .is-lit .piece-tag { opacity: 1; transform: rotate(-4deg) translateY(0); }
 
   .tile__label { position: relative; z-index: 1; font: 500 max(10px, 4cqi)/1 var(--label); color: color-mix(in oklab, var(--fg) 72%, transparent); }
   .tile__line { position: relative; z-index: 1; margin-top: auto; font: 560 9.5cqi/1 var(--display); letter-spacing: -0.04em; }
@@ -426,13 +446,8 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   .tile__page :global(img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
   .tile__page .tile__line { z-index: 2; font-size: 8.4cqi; max-width: 12ch; }
 
-  /* The caption */
-  .cap { display: grid; justify-items: center; gap: 20px; width: min(100%, var(--w)); padding-inline: var(--gut); text-align: center; }
-  .cap__steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; text-align: left; }
-  .cap__steps li { display: grid; align-content: start; gap: 8px; }
-  .cap__day { color: color-mix(in oklab, var(--bg) 58%, transparent); }
-  .cap__text { font: 520 clamp(17px, 1.5vw, 21px)/1.2 var(--display); letter-spacing: -0.025em; }
-  .cap__rail { display: none; }
+  /* The caption: just the CTA now — each piece narrates itself (.piece-tag). */
+  .cap { display: grid; justify-items: center; width: min(100%, var(--w)); padding-inline: var(--gut); text-align: center; }
   .cap__cta :global(.btn) { background: var(--bg); color: var(--fg); border-color: var(--bg); }
 
   /* Scroll-driven version (JS on, motion allowed): one pinned scene. Set before paint through the .js class, so no jump. */
@@ -441,19 +456,19 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   :global(.js) .show .show__pin { position: sticky; top: 0; height: 100svh; padding: 0; display: block; perspective: 1400px; }
   :global(.js) .show .panel { position: absolute; inset: 12px; width: auto; min-height: 0; z-index: 2; clip-path: inset(30% 20% round var(--r-lg)); will-change: transform, clip-path; }
   :global(.js) .show .stage { position: absolute; inset: 0; z-index: 3; width: auto; padding: calc(var(--head) + 8px) 0 var(--caph); display: grid; place-items: center; perspective: 1400px; pointer-events: none; }
-  :global(.js) .show .board { grid-template-columns: var(--tw) var(--cw) var(--tw); grid-template-rows: var(--th) var(--th); }
-  :global(.js) .show .key { aspect-ratio: auto; z-index: 2; opacity: 0; will-change: transform; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
-  :global(.js) .show .tile { opacity: 0; will-change: transform, opacity; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
-  :global(.js) .show .cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; width: auto; height: var(--caph); align-content: center; gap: 16px; opacity: 0; }
-  :global(.js) .show .cap__steps { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; width: 100%; }
-  /* One caption at a time: the leaving one fades out fast (160ms), the next waits for it before it rises in, so two
-     captions are never readable on top of each other. */
-  :global(.js) .show .cap__steps li { grid-area: 1 / 1; justify-items: center; opacity: 0; translate: 0 12px; transition: opacity 160ms linear, translate 0s 160ms; }
-  :global(.js) .show .cap__steps li.is-on { opacity: 1; translate: 0 0; transition: opacity var(--dur-1) var(--ease-out) 160ms, translate var(--dur-1) var(--ease-out) 160ms; }
-  :global(.js) .show .cap__text { font-size: clamp(22px, 2.8vw, 42px); letter-spacing: -0.035em; }
-  :global(.js) .show .cap__rail { display: block; width: min(240px, 50%); height: 2px; border-radius: 2px; background: color-mix(in oklab, var(--bg) 14%, transparent); overflow: hidden; }
-  :global(.js) .show .cap__rail i { display: block; height: 100%; background: var(--bg); transform-origin: 0 50%; transform: scaleX(0); }
-  :global(.js) .show .cap__cta { position: absolute; right: var(--gut); bottom: max(20px, 3svh); opacity: 0; }
+  /* The workbench: a 12x10 grid where the card's area and each tile's area
+     overlap by a track or two at the corners, instead of neat non-touching
+     cells — tiles paint over the card there (z-index), like things left
+     out on a desk rather than a tidy case-study layout. */
+  :global(.js) .show .board { width: min(84vw, 980px); height: min(60svh, 640px); display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(10, 1fr); }
+  :global(.js) .show .key { grid-area: 2 / 4 / 10 / 10; aspect-ratio: auto; z-index: 1; opacity: 0; will-change: transform; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
+  :global(.js) .show .tile { z-index: 2; opacity: 0; will-change: transform, opacity; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
+  :global(.js) .show .tile--id { grid-area: 1 / 1 / 5 / 6; }
+  :global(.js) .show .tile--ad { grid-area: 1 / 8 / 5 / 13; }
+  :global(.js) .show .tile--film { grid-area: 7 / 1 / 11 / 6; }
+  :global(.js) .show .tile--web { grid-area: 7 / 8 / 11 / 13; }
+  :global(.js) .show .cap { position: absolute; left: 0; right: 0; bottom: max(20px, 3svh); z-index: 4; }
+  :global(.js) .show .cap__cta { opacity: 0; }
   :global(.js) .show [data-in] { opacity: 0; }
   }
 
@@ -465,16 +480,22 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto; }
     .key { grid-area: auto / 1 / auto / -1; order: -1; width: 62%; justify-self: center; }
     .tile { grid-area: auto; aspect-ratio: 3 / 2; }
-    .cap__steps { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   }
   @media (max-width: 809px) and (prefers-reduced-motion: no-preference) {
+    /* The workbench overlap is a desktop flourish — phones keep the plain
+       2-column layout, so these override the desktop block's grid-areas
+       (same selector specificity, later in the file: this wins). */
     :global(.js) .show { --ch: min(33svh, 64vw); --th: 14svh; --caph: 21svh; }
     :global(.js) .show .panel { inset: 8px; }
     :global(.js) .show .stage { padding-top: calc(var(--head) + 4px); }
-    :global(.js) .show .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: var(--ch) var(--th) var(--th); width: calc(100% - 32px); }
-    :global(.js) .show .key { width: var(--cw); }
+    :global(.js) .show .board { width: calc(100% - 32px); height: auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: var(--ch) var(--th) var(--th); }
+    :global(.js) .show .key { grid-area: 1 / 1 / 2 / 3; width: var(--cw); justify-self: center; }
+    :global(.js) .show .tile--id { grid-area: 2 / 1 / 3 / 2; }
+    :global(.js) .show .tile--ad { grid-area: 2 / 2 / 3 / 3; }
+    :global(.js) .show .tile--film { grid-area: 3 / 1 / 4 / 2; }
+    :global(.js) .show .tile--web { grid-area: 3 / 2 / 4 / 3; }
     :global(.js) .show .tile { aspect-ratio: auto; }
     :global(.js) .show .cap__cta { position: static; }
-    :global(.js) .show .cap { gap: 10px; align-content: start; }
+    :global(.js) .show .cap { align-content: start; }
   }
 </style>
