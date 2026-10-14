@@ -38,12 +38,12 @@ const h = {
 // The tags are the services — each links into the catalog.
 // Each tag is also a chapter of the scroll story: its scene and one line.
 const callouts = [
-  { label: 'Identidad visual', href: '/catalogo/servicios-de-diseno', ch: 0, x: 0.08, y: -0.6, svg: identidadSvg, line: 'Logo, paleta y tipografía: la cara de tu marca.' },
-  { label: 'Flyers', href: '/catalogo/servicios-de-diseno', ch: 5, x: 0.3, y: -1.12, svg: flyersSvg, line: 'Piezas que se ven, se leen y venden.' },
-  { label: 'Papelería', href: '/catalogo/servicios-de-diseno/papeleria-personalizada', ch: 7, x: 0.49, y: -0.72, svg: papeleriaSvg, line: 'Hojas, sobres y tarjetas con tu sello.' },
-  { label: 'Redes sociales', href: '/catalogo/servicios-de-diseno', ch: 12, x: 0.79, y: -0.62, svg: redesSvg, line: 'Contenido que frena el scroll: se mira, se comenta y se comparte.' },
-  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.62, y: -1.12, svg: personalizacionSvg, line: 'Tu diseño en tazas, fundas, llaveros y más.' },
-  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.95, y: -1.12, svg: pressSvg, line: 'Calor y presión: la tinta pasa a la pieza.' },
+  { label: 'Identidad visual', href: '/catalogo/servicios-de-diseno', ch: 0, x: 0.08, y: -0.6, svg: identidadSvg, glow: '#d9a8d9', line: 'Logo, paleta y tipografía: la cara de tu marca.' },
+  { label: 'Flyers', href: '/catalogo/servicios-de-diseno', ch: 5, x: 0.3, y: -1.12, svg: flyersSvg, glow: '#e86a9f', line: 'Piezas que se ven, se leen y venden.' },
+  { label: 'Papelería', href: '/catalogo/servicios-de-diseno/papeleria-personalizada', ch: 7, x: 0.49, y: -0.72, svg: papeleriaSvg, glow: '#f2cf4a', line: 'Hojas, sobres y tarjetas con tu sello.' },
+  { label: 'Redes sociales', href: '/catalogo/servicios-de-diseno', ch: 12, x: 0.79, y: -0.62, svg: redesSvg, glow: '#5ec8e8', line: 'Contenido que frena el scroll: se mira, se comenta y se comparte.' },
+  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.62, y: -1.12, svg: personalizacionSvg, glow: '#e86a9f', line: 'Tu diseño en tazas, fundas, llaveros y más.' },
+  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.95, y: -1.12, svg: pressSvg, glow: '#d9a8d9', line: 'Calor y presión: la tinta pasa a la pieza.' },
 ];
 
 ---
@@ -52,7 +52,7 @@ const callouts = [
   <div class="hero__skin" data-skin></div>
   <div class="hero__deck" data-deck aria-hidden="true">
     {callouts.map((c, i) => (
-      <article class="hero__card" data-card>
+      <article class="hero__card" data-card style={`--glow: ${c.glow}`}>
         <header class="hero__card-head"><span class="hero__card-n">0{i + 1}</span>{c.label}</header>
         <div class="hero__scene anatomy-figure iso" data-theme="dark" data-scene style={i < callouts.length - 1 ? '--zoom: 1.3' : undefined}><Fragment set:html={c.svg} /></div>
         <p class="hero__card-line">{c.line}</p>
@@ -117,6 +117,19 @@ const callouts = [
   const inOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
   const out = (x: number) => 1 - (1 - x) ** 3;
   const mix = (a: number, b: number, k: number) => a + (b - a) * k;
+  const backOut = (x: number) => 1 + 2.4 * (x - 1) ** 3 + 1.4 * (x - 1) ** 2;
+
+  // How each card of the deck is tossed in and where it lies once covered:
+  // [enter x px, enter tilt°, resting tilt°, stacked x px, stacked tilt°].
+  // Hand-set, not random, so it's the same messy pile every time.
+  const TOSS: [number, number, number, number, number][] = [
+    [0, 0, 0, -18, -3.2],
+    [140, 11, 1.4, 22, 2.6],
+    [-160, -13, -1.1, -10, -4.1],
+    [110, 9, 0.8, 26, 3.4],
+    [-130, -10, -1.6, -24, -2.2],
+    [90, 8, 0.6, 0, 0],
+  ];
   type V = [number, number, number];
   const lerp3 = (a: V, b: V, k: number): V => [mix(a[0], b[0], k), mix(a[1], b[1], k), mix(a[2], b[2], k)];
 
@@ -360,14 +373,21 @@ const callouts = [
 
       // The deck: card 0 takes over from the cropped skin; every next card
       // rises from below over the last, which sinks back into the stack.
-      const arrived = cards.map((_, i) => (i === 0 ? seg(p, INTRO * 0.9, INTRO) : out(seg(p, SPANS[i][0] - 0.03, SPANS[i][0] + 0.05))));
+      const arrived = cards.map((_, i) => (i === 0 ? seg(p, INTRO * 0.9, INTRO) : seg(p, SPANS[i][0] - 0.035, SPANS[i][0] + 0.055)));
       cards.forEach((card, i) => {
-        const k = arrived[i];
-        const depth = arrived.slice(i + 1).reduce((a, b) => a + b, 0);
-        const y = i === 0 ? 0 : (1 - k) * rise;
+        const k = arrived[i], [ex, er, rest, sx, sr] = TOSS[i];
+        // Sinking into the stack: each card drifts to its own angle and offset.
+        const depth = arrived.slice(i + 1).reduce((a, b) => a + out(b), 0);
+        const sink = Math.min(1, depth);
+        // Tossed in: from below and to one side, tilted, landing past its
+        // rest angle and settling back (back-out ease).
+        const t = i === 0 ? 1 : backOut(k);
+        const x = (1 - t) * ex + sink * sx;
+        const y = (i === 0 ? 0 : (1 - t) * rise) - depth * 30;
+        const r = (1 - t) * er + mix(rest, sr, sink);
         card.style.visibility = k > 0 && depth < 3 ? 'visible' : 'hidden';
         card.style.opacity = i === 0 ? String(k) : '1';
-        card.style.transform = `translateY(${(y - depth * 22).toFixed(1)}px) rotate(${(i === 0 ? 0 : (1 - k) * (i % 2 ? 4 : -4)).toFixed(2)}deg) scale(${(1 - depth * 0.05).toFixed(4)})`;
+        card.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(2)}deg) scale(${(1 - depth * 0.045).toFixed(4)})`;
         card.style.setProperty('--dim', Math.min(0.75, depth * 0.4).toFixed(3));
         if (k <= 0 || depth >= 1.5) return;
         const [a, b] = SPANS[i];
@@ -471,7 +491,7 @@ const callouts = [
      the first card — so it shares the cards' skin. */
   .hero__skin, .hero__card {
     background:
-      radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 60%),
+      radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--glow, var(--accent)) 12%, transparent), transparent 60%),
       color-mix(in oklab, var(--accent) 4%, var(--bg));
   }
   .hero__skin { position: absolute; inset: 0; border: 1px solid color-mix(in oklab, var(--accent) calc(20% * var(--edge, 0)), transparent); }
@@ -491,7 +511,7 @@ const callouts = [
       padding: clamp(18px, 2.2vw, 28px) clamp(20px, 2.6vw, 34px); border-radius: 28px; overflow: clip;
       border: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
       box-shadow: 0 -10px 60px -20px rgb(0 0 0 / 0.7);
-      visibility: hidden; transform-origin: 50% 0; will-change: transform;
+      visibility: hidden; transform-origin: 50% 50%; will-change: transform;
     }
     /* Sinks into the stack: dimmed as later cards cover it. */
     :global(.js) .hero__card::after { content: ''; position: absolute; inset: 0; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
