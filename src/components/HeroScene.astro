@@ -21,11 +21,9 @@ const h = {
 <section class="hero" data-hero>
   <div class="hero__head">
     <h1 class="hero__title display">
-      <span class="hero__line">
-        <span data-line>
-          <span class="sr-only">Creative Design</span>
-          <span aria-hidden="true">
-            Cre<svg viewBox="-8 0 32 32" class="hero__cursor" fill="none">
+      <span class="sr-only">Creative Design</span>
+      <span aria-hidden="true">
+        {'Cre'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}<span class="hero__ch" data-ch><svg viewBox="-8 0 32 32" class="hero__cursor" fill="none">
               <g transform="rotate(-1 12.5 20.5)">
                 <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
                 <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
@@ -33,14 +31,12 @@ const h = {
                 <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
                 <path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
               </g>
-            </svg>tive Design
-          </span>
-        </span>
+            </svg></span>{'tive Design'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}
       </span>
     </h1>
-    <div class="hero__signature">
+    <div class="hero__signature" data-sig>
       <span class="hero__signature-rule" aria-hidden="true"></span>
-      <span class="hero__signature-clip"><span data-line>By Ailyn Japa</span></span>
+      <span class="hero__signature-text">By Ailyn Japa</span>
       <span class="hero__signature-rule hero__signature-rule--end" aria-hidden="true"></span>
     </div>
   </div>
@@ -62,15 +58,27 @@ const h = {
     if (root.dataset.heroMounted) continue;
     root.dataset.heroMounted = 'true';
 
-    // The headline rises into focus — starts blurred, like it's not quite in
-    // frame yet, and sharpens as it settles (hipuku.dev's wordmark reveal).
-    // The signature shares the same stagger, right after the headline.
+    const chars = root.querySelectorAll<HTMLElement>('[data-ch]');
+    const sig = root.querySelector<HTMLElement>('[data-sig]');
+    const foot = root.querySelectorAll<HTMLElement>('[data-in]');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) continue;
+
+    // hipuku.dev's wordmark reveal: each letter starts in place as a big soft
+    // blob of colour and pulls into focus, one after another — no slide.
+    // On a first visit the page's intro overlay (index.astro) covers the hero
+    // for ~1.1s — start after it, or the reveal plays unseen behind it.
+    let seen = true;
+    try { seen = sessionStorage.getItem('intro-seen') === '1'; } catch {}
+    const start = !seen && document.querySelector('[data-intro]') ? 1.15 : 0.1;
+    const n = chars.length;
     animate(
-      root.querySelectorAll('[data-line]'),
-      { y: ['105%', '0%'], filter: ['blur(14px)', 'blur(0px)'] },
-      { duration: 1.1, ease: ease.outExpo, delay: stagger(0.09, { startDelay: 0.15 }) }
+      chars,
+      { opacity: [0, 1], filter: ['blur(40px)', 'blur(0px)'], scale: [1.2, 1] },
+      { duration: 1.3, ease: ease.outExpo, delay: stagger(0.06, { startDelay: start }) }
     );
-    animate(root.querySelectorAll('[data-in]'), { opacity: [0, 1], y: [24, 0] }, { duration: 1, ease: ease.outExpo, delay: 0.3 });
+    const after = start + n * 0.06 + 0.3;
+    if (sig) animate(sig, { opacity: [0, 1], filter: ['blur(16px)', 'blur(0px)'] }, { duration: 1, ease: ease.outExpo, delay: after });
+    animate(foot, { opacity: [0, 1], y: [24, 0], filter: ['blur(8px)', 'blur(0px)'] }, { duration: 1, ease: ease.outExpo, delay: after + 0.2 });
   }
 </script>
 
@@ -111,26 +119,29 @@ const h = {
      height offset needed here, just centre the content in the viewport
      like the original Hero.astro did. */
   .hero {
-    position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(28px, 4vw, 44px);
-    padding: clamp(20px, 3vw, 44px);
+    position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(28px, 4vw, 44px);
+    padding: clamp(20px, 3vw, 44px); text-align: center;
     background: var(--bg); color: var(--fg);
   }
-  .hero__head { width: fit-content; }
   .hero__title { --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
-  .hero__line { display: block; overflow: clip; padding-bottom: 0.06em; }
-  .hero__line > span { display: inline-block; }
+  .hero__ch { display: inline-block; white-space: pre; transform-origin: 50% 60%; }
   .hero__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); }
 
   /* By Ailyn Japa */
   .hero__signature { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
   .hero__signature-rule { height: 1px; width: clamp(28px, 3.5vw, 52px); background: linear-gradient(90deg, transparent, var(--fg)); }
   .hero__signature-rule--end { background: linear-gradient(270deg, transparent, var(--fg)); }
-  .hero__signature-clip { display: inline-block; overflow: clip; padding-bottom: 0.12em; }
-  .hero__signature-clip [data-line] { display: inline-block; font-family: var(--font-script); font-size: clamp(1.3rem, 2.4vw, 1.9rem); color: var(--fg); }
+  .hero__signature-text { font-family: var(--font-script); font-size: clamp(1.3rem, 2.4vw, 1.9rem); color: var(--fg); }
 
-  .hero__foot { display: grid; gap: 22px; max-width: 34rem; }
-  .hero__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 36ch; }
-  .hero__cta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .hero__foot { display: grid; justify-items: center; gap: 22px; max-width: 34rem; }
+  .hero__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 40ch; }
+  .hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+  /* Hidden before the entrance runs — only with JS on and motion allowed,
+     so no-JS / reduced-motion visitors just see everything. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.js) .hero [data-ch], :global(.js) .hero [data-sig], :global(.js) .hero [data-in] { opacity: 0; }
+  }
 
   @media (max-width: 809px) {
     .hero { min-height: 100svh; padding: 18px 18px 48px; }
