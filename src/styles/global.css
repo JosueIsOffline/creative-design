@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Parkinsans:wght@300..800&family=Dancing+Script:wght@500;600&display=swap");
+/* Type follows hipuku.dev: Parkinsans for everything, Geist Mono for small
+   labels. Dancing Script stays for the brand's signature only. */
+@import url("https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&family=Geist+Mono:wght@400..600&family=Dancing+Script:wght@500;600&display=swap");
 @import "tailwindcss";
 
 @theme inline {
@@ -12,7 +14,8 @@
   --color-accent: var(--accent);
   --color-brand-black: #0d0d0c;
   --color-brand-lilac: #d9a8d9;
-  --font-display: "Space Grotesk", sans-serif;
+  --font-display: "Parkinsans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
   --font-script: "Dancing Script", cursive;
 }
 
