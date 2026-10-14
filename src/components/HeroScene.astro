@@ -33,19 +33,10 @@ const callouts = [
 ];
 ---
 <section class="hero" data-hero>
-  <!-- hipuku.dev's "goo": blur the letters, then crush the blurred alpha
-       back to a hard edge — overlapping letters fuse into blobs. The script
-       animates the blur down to 0 as the letters spread to their places. -->
-  <svg class="hero__defs" aria-hidden="true" width="0" height="0">
-    <filter id="hero-goo" x="-20%" y="-40%" width="140%" height="180%" color-interpolation-filters="sRGB">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="0" result="b" data-goo-blur />
-      <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" />
-    </filter>
-  </svg>
   <div class="hero__head">
     <h1 class="hero__title display">
       <span class="sr-only">Creative Design</span>
-      <span class="hero__goo" aria-hidden="true" data-goo>
+      <span aria-hidden="true">
         {'Cre'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}<span class="hero__ch" data-ch><svg viewBox="-8 0 32 32" class="hero__cursor" fill="none">
               <g transform="rotate(-1 12.5 20.5)">
                 <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
@@ -141,31 +132,13 @@ const callouts = [
     let seen = true;
     try { seen = sessionStorage.getItem('intro-seen') === '1'; } catch {}
     const start = !seen && document.querySelector('[data-intro]') ? 1.15 : 0.1;
-    // Goo reveal: the letters start bunched toward the middle and soft, so
-    // the filter fuses them into a few lilac blobs; they spread out to
-    // their places while the blur drops to 0 and the blobs split into
-    // crisp letters. The filter is removed once settled — at blur 0 its
-    // alpha threshold would otherwise leave the glyph edges jagged.
-    const goo = root.querySelector<HTMLElement>('[data-goo]');
-    const gooBlur = root.querySelector<SVGElement>('[data-goo-blur]');
     const n = chars.length;
-    const GOO = 2.2;
-    if (goo && gooBlur) {
-      const mid = goo.offsetLeft + goo.offsetWidth / 2;
-      goo.style.filter = 'url(#hero-goo)';
-      chars.forEach((ch, i) => {
-        const pull = mid - (ch.offsetLeft + ch.offsetWidth / 2);
-        animate(ch,
-          { x: [pull * 0.78, 0], scale: [0.55, 1], opacity: [0, 1] },
-          { duration: GOO, ease: [0.22, 1, 0.36, 1], delay: start + Math.abs(i - (n - 1) / 2) * 0.03 });
-      });
-      animate(14, 0, {
-        duration: GOO + 0.2, ease: [0.5, 0, 0.2, 1], delay: start,
-        onUpdate: (v) => gooBlur.setAttribute('stdDeviation', v.toFixed(2)),
-        onComplete: () => { goo.style.filter = ''; },
-      });
-    }
-    const after = start + GOO - 0.2;
+    animate(
+      chars,
+      { opacity: [0, 1], filter: ['blur(40px)', 'blur(0px)'], scale: [1.2, 1] },
+      { duration: 1.3, ease: ease.outExpo, delay: stagger(0.06, { startDelay: start }) }
+    );
+    const after = start + n * 0.06 + 0.3;
     if (sig) animate(sig, { opacity: [0, 1], filter: ['blur(16px)', 'blur(0px)'] }, { duration: 1, ease: ease.outExpo, delay: after });
     animate(foot, { opacity: [0, 1], y: [24, 0], filter: ['blur(8px)', 'blur(0px)'] }, { duration: 1, ease: ease.outExpo, delay: after + 0.2 });
 
@@ -225,8 +198,6 @@ const callouts = [
     background: var(--bg); color: var(--fg);
   }
   .hero__title { --size: var(--fs-hero); font-family: 'Parkinsans', var(--display); font-weight: 700; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
-  .hero__defs { position: absolute; width: 0; height: 0; }
-  .hero__goo { display: inline-block; }
   .hero__ch { display: inline-block; white-space: pre; transform-origin: 50% 60%; }
 
   /* Callouts: room reserved above the headline so the centred layout
