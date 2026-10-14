@@ -1,17 +1,11 @@
 ---
-// Creative Design's own scroll-storytelling hero: the headline becomes the
-// sublimation card, the other pieces (identity, empaquetado, diseño,
-// catálogo) land in turn, and the cursor from "Creative" drags each one
-// into place. Started as a close port of the Halo reference template's
-// HeroDeck.astro (credit where due for the scroll/morph technique); the
-// palette, fonts, content and the cursor-driven storytelling are ours.
-// HeroStory.astro stays in the codebase, on hold, in case we go back to it.
+// Creative Design's hero: the brand name (with the cursor standing in for
+// the "a" of "Creative"), the signature, lead copy and CTAs. The headline
+// rises into focus on load (blurred -> sharp), inspired by hipuku.dev's
+// wordmark reveal. No scroll-pinned board/cards any more — removed per
+// request; HeroStory.astro (an earlier scroll-storytelling attempt) stays
+// in the codebase, on hold.
 import { Icon } from 'astro-icon/components';
-import { Image } from 'astro:assets';
-import catalogoPreview from '../assets/hero/catalogo-preview.jpg';
-import sublimationSvg from '../../tools/heat-press-figure/figure.svg?raw';
-import designSvg from '../../tools/design-figure/figure.svg?raw';
-import packagingSvg from '../../tools/packaging-figure/figure.svg?raw';
 
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 const waMessage = encodeURIComponent('Hola! Quiero más información sobre Creative Design.');
@@ -22,353 +16,80 @@ const h = {
   href: '/catalogo',
   button2: 'Escribinos',
   href2: `https://wa.me/${whatsapp}?text=${waMessage}`,
-  art: 'Prensa de sublimación, ilustración isométrica',
 };
-
-// Each piece carries its own line of the story now (tag: a small label that
-// pops up attached to it once it's the one being talked about) instead of a
-// shared numbered rail at the bottom — see .piece-tag.
-const b = {
-  sublimation: { tag: 'Cada pieza nace del calor y la presión.' },
-  identity: { label: 'Identidad', name: 'Creative Design', line: 'A tu medida', tag: 'Tu marca, tu estilo, en cada detalle.' },
-  packaging: { label: 'Empaquetado', line: 'Lista para entregar', tag: 'Lista para sorprender, lista para entregar.' },
-  design: { label: 'Diseño', line: 'Antes de imprimir', tag: 'Ideas que cobran forma antes de imprimirse.' },
-  web: { label: 'Catálogo', url: '/catalogo', line: 'Todo en un clic', tag: 'Todo tu catálogo, a un clic de distancia.' },
-  button: 'Ver catálogo completo',
-  href: '/catalogo',
-};
-const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8 7.2 12.8 0 12C7.2 11.2 11.2 7.2 12 0Z';
 ---
-<section class="show" data-show>
-  <div class="show__pin">
-    <div class="panel" data-panel>
-      <!-- Wrapped together (not two siblings in .panel's own grid) so the
-           signature sits directly under the headline instead of being
-           auto-placed into .panel's big flexible middle row and centred
-           there. -->
-      <div class="panel__head">
-        <h1 class="panel__title display">
-          <span class="panel__line">
-            <span data-line>
-              <span class="sr-only">Creative Design</span>
-              <!-- "Cre"/"tive Design" fade on scroll (data-copy), same as the rest of
-                   the panel's text. The cursor itself isn't here: this gap is just a
-                   same-sized placeholder reserving its spot in the text — the real
-                   cursor (data-cursor, further down) sits outside .panel entirely, so
-                   it can paint above the card/tiles once it drags them in, instead of
-                   being trapped behind them by .panel's own stacking context. measure()
-                   reads THIS placeholder's position as the cursor's starting point. -->
-              <span aria-hidden="true">
-                <span data-copy>Cre</span><span class="panel__cursor-space" data-cursor-space></span><span data-copy>tive Design</span>
-              </span>
-            </span>
+<section class="hero" data-hero>
+  <div class="hero__head">
+    <h1 class="hero__title display">
+      <span class="hero__line">
+        <span data-line>
+          <span class="sr-only">Creative Design</span>
+          <span aria-hidden="true">
+            Cre<svg viewBox="-8 0 32 32" class="hero__cursor" fill="none">
+              <g transform="rotate(-1 12.5 20.5)">
+                <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
+                <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
+                <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
+                <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
+                <path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+              </g>
+            </svg>tive Design
           </span>
-        </h1>
-        <!-- The signature from the original Hero.astro, brought back — same
-             data-copy fade on scroll, and its own data-line so it rises into
-             focus right after the headline, same stagger, same entrance. -->
-        <div class="panel__signature" data-copy>
-          <span class="panel__signature-rule" aria-hidden="true"></span>
-          <span class="panel__signature-clip"><span data-line>By Ailyn Japa</span></span>
-          <span class="panel__signature-rule panel__signature-rule--end" aria-hidden="true"></span>
-        </div>
-      </div>
-      <div class="panel__foot" data-copy data-in>
-        <p class="panel__lead">{h.lead}</p>
-        <div class="panel__cta">
-          <a class="btn btn--solid" href={h.href}>{h.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
-          <a class="btn" href={h.href2} target="_blank" rel="noopener">{h.button2}</a>
-        </div>
-      </div>
+        </span>
+      </span>
+    </h1>
+    <div class="hero__signature">
+      <span class="hero__signature-rule" aria-hidden="true"></span>
+      <span class="hero__signature-clip"><span data-line>By Ailyn Japa</span></span>
+      <span class="hero__signature-rule hero__signature-rule--end" aria-hidden="true"></span>
     </div>
-
-    <h2 class="sr">Cómo trabajamos</h2>
-    <div class="stage">
-      <!-- A workbench, not a case-study grid: the pieces overlap and sit at
-           their own small angles (CSS below), like things left out on a
-           desk rather than cells in a template. Each carries its own tag
-           (data-tag), popped into view by .is-lit instead of a shared
-           bottom rail — see render()'s lit.forEach. -->
-      <div class="board">
-        <article class="tile tile--id" data-tile>
-          <p class="tile__label">{b.identity.label}</p>
-          <p class="tile__mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={star} /></svg>{b.identity.name}</p>
-          <p class="tile__line">{b.identity.line}</p>
-          <p class="piece-tag" data-tag>{b.identity.tag}</p>
-        </article>
-        <article class="key" data-card>
-          <div class="anatomy-figure iso key__figure" data-theme="dark" aria-label={h.art}><Fragment set:html={sublimationSvg} /></div>
-          <p class="piece-tag" data-tag>{b.sublimation.tag}</p>
-        </article>
-        <article class="tile tile--ad on-photo" data-tile>
-          <div class="anatomy-figure iso tile__figure" data-theme="dark"><Fragment set:html={packagingSvg} /></div>
-          <p class="tile__label">{b.packaging.label}</p>
-          <p class="tile__line">{b.packaging.line}</p>
-          <p class="piece-tag" data-tag>{b.packaging.tag}</p>
-        </article>
-        <article class="tile tile--film on-photo" data-tile>
-          <div class="anatomy-figure iso tile__figure" data-theme="dark"><Fragment set:html={designSvg} /></div>
-          <p class="tile__label">{b.design.label}</p>
-          <p class="tile__line">{b.design.line}</p>
-          <p class="piece-tag" data-tag>{b.design.tag}</p>
-        </article>
-        <article class="tile tile--web" data-tile>
-          <p class="tile__bar"><span class="tile__label">{b.web.label}</span><span class="tile__url">{b.web.url}</span></p>
-          <div class="tile__page on-photo">
-            <Image src={catalogoPreview} alt="Vista previa del catálogo" fill sizes="(max-width: 809px) 60vw, 480px" />
-            <p class="tile__line">{b.web.line}</p>
-          </div>
-          <p class="piece-tag" data-tag>{b.web.tag}</p>
-        </article>
-      </div>
-    </div>
-
-    <!-- The real cursor: the same one standing in for the "a" of "Creative"
-         (the text just reserves its spot — see .panel__cursor-space above).
-         Living here, after .stage in the DOM, lets it paint above the card
-         and tiles as it drags them in. render()'s cursor block positions it
-         with an absolute transform (viewport coordinates), every frame. -->
-    <svg class="panel__cursor" data-cursor viewBox="-8 0 32 32" fill="none" aria-hidden="true">
-      <g transform="rotate(-1 12.5 20.5)">
-        <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
-        <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
-        <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
-        <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
-        <path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
-      </g>
-    </svg>
-
-    <!-- No shared caption rail any more — each piece narrates itself
-         (.piece-tag, above). This is just the CTA, once the story's told. -->
-    <div class="cap" data-cap>
-      <div class="cap__cta" data-late>
-        <a class="btn" href={b.href}>{b.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
-      </div>
+  </div>
+  <div class="hero__foot" data-in>
+    <p class="hero__lead">{h.lead}</p>
+    <div class="hero__cta">
+      <a class="btn btn--solid" href={h.href}>{h.button}<Icon name="lucide:arrow-right" width="16" height="16" class="icon icon--after" /></a>
+      <a class="btn" href={h.href2} target="_blank" rel="noopener">{h.button2}</a>
     </div>
   </div>
 </section>
 
 <script>
-  import { animate, scroll, stagger } from 'motion';
+  import { animate, stagger } from 'motion';
 
-  // Ported from Halo's src/scripts/motion.ts — only the two helpers this
-  // component actually uses (the rest of that file is site-wide hover/
-  // reveal/parallax helpers this component doesn't need).
-  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
 
-  const clamp = (x: number) => Math.min(1, Math.max(0, x));
-  const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a)); // 0→1 while p runs from a to b
-  const inOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
-  const out = (x: number) => 1 - (1 - x) ** 4;
-  const mix = (a: number, b: number, k: number) => a + (b - a) * k;
+  for (const root of document.querySelectorAll<HTMLElement>('[data-hero]')) {
+    if (root.dataset.heroMounted) continue;
+    root.dataset.heroMounted = 'true';
 
-  // The scene's timeline (share of the pinned scroll): the panel becomes the card, the card settles, a tile lands per step.
-  const MORPH = [0.02, 0.24], SETTLE = [0.28, 0.42], FIRST = 0.4, EVERY = 0.12, LAND = 0.14;
-  // Where the two front tiles peek out from behind the portrait in the hero (in card widths / heights) and how they lean.
-  const PEEK = [{ x: -0.5, y: -0.2, r: -10 }, { x: 0.52, y: 0.16, r: 9 }];
-  // The small, permanent tilt each piece settles into — a workbench of
-  // things left at their own angle, not a grid of identical cells. Card
-  // first, then tiles in DOM order (identity, empaquetado, diseño, catálogo).
-  const CARD_TILT = -2;
-  const TILE_TILT = [4, -5, 6, -3];
-
-  for (const root of document.querySelectorAll<HTMLElement>('[data-show]')) {
-    if (reduced()) continue;
-    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
-    const panel = $('[data-panel]'), card = $('[data-card]'), cap = $('[data-cap]'), stage = $('.stage');
-    const cursorIcon = root.querySelector<SVGElement>('[data-cursor]');
-    const cursorSpace = root.querySelector<HTMLElement>('[data-cursor-space]');
-    const copy = root.querySelectorAll<HTMLElement>('[data-copy]');
-    const late = root.querySelectorAll<HTMLElement>('[data-late]');
-    const tiles = [...root.querySelectorAll<HTMLElement>('[data-tile]')];
-    const lit = [card, ...tiles];
-    const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-    // Sizes. The card's own box is its small place on the board; in the hero it is scaled up (big) and moved to the centre.
-    let phone = false, big = 1, home = { x: 0, y: 0 }, rest = { x: 0, y: 0, s: 1 }, crop = { x: 0, y: 0 }, radius = 20;
-    let from: { x: number; y: number }[] = [], peekScale = 1;
-    // Where the cursor travels to: every piece starts from this shared centre
-    // point (that's what `home` / `from[]` already fly them in from) and ends
-    // at its own resting slot — the SAME cursor from the headline rides that
-    // path, starting from its own natural spot in "Creative" (cursorRest).
-    let center = { x: 0, y: 0 }, cardFinal = { x: 0, y: 0 }, tileFinals: { x: number; y: number }[] = [];
-    let cursorRest = { x: 0, y: 0 };
-    const measure = () => {
-      phone = innerWidth < 810;
-      const W = stage.offsetWidth, H = stage.offsetHeight, cw = card.offsetWidth, ch = card.offsetHeight;
-      center = { x: W / 2, y: H / 2 };
-      cardFinal = { x: card.offsetLeft + cw / 2, y: card.offsetTop + ch / 2 };
-      tileFinals = tiles.map((el) => ({ x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }));
-      if (cursorSpace) {
-        const r = cursorSpace.getBoundingClientRect();
-        cursorRest = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        // The cursor lives outside .panel now (see why above), so it can't
-        // inherit the headline's huge font-size to size itself via `0.8em`
-        // the way it used to — match the placeholder's own rendered size
-        // instead, which already tracks the responsive headline size.
-        if (cursorIcon) { cursorIcon.style.width = `${r.width}px`; cursorIcon.style.height = `${r.height}px`; }
-      }
-      const bigW = phone ? Math.min(0.66 * W, 0.42 * H) : Math.min(0.36 * W, 0.51 * H);
-      big = bigW / cw;
-      home = { x: W / 2 - (card.offsetLeft + cw / 2), y: H / 2 - (card.offsetTop + ch / 2) };
-      rest = { x: W * 0.1, y: H * 0.03, s: 0.84 };
-      if (phone) { // on phones the card rests in the gap between the headline block (title + signature) and the lead, as big as the gap allows
-        const head = panel.querySelector<HTMLElement>('.panel__head')!, foot = panel.querySelector<HTMLElement>('.panel__foot')!;
-        const top = head.offsetTop + head.offsetHeight, gap = foot.offsetTop - top;
-        rest = { x: W * 0.2, y: panel.offsetTop + top + gap / 2 - H / 2, s: Math.max(0.3, Math.min(0.56, (gap - 24) / (ch * big))) };
-      }
-      crop = { x: (panel.offsetWidth - bigW) / 2, y: (panel.offsetHeight - ch * big) / 2 };
-      radius = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 20;
-      from = tiles.map((el) => ({ x: W / 2 - (el.offsetLeft + el.offsetWidth / 2), y: H / 2 - (el.offsetTop + el.offsetHeight / 2) }));
-      peekScale = (bigW * rest.s * 0.8) / tiles[0].offsetWidth;
-    };
-
-    let open = 0; // the entrance: the panel opens from its centre
-    let target = 0, now = 0, raf = 0;
-    const ptr = { x: 0, y: 0, tx: 0, ty: 0 }; // pointer, -0.5 … 0.5 from the centre of the screen
-    let step = -1;
-    const render = () => {
-      const m = seg(now, MORPH[0], MORPH[1]), e = inOut(m); // the morph: panel → card
-      const k = inOut(seg(m, 0.08, 0.82));                  // how far the panel has cropped around the card
-      const turn = Math.sin(Math.PI * e);                    // 0 → 1 → 0: the turn swings out and back
-      const rz = 30 * turn, rx = 12 * turn, grow = 1 + 0.06 * turn;
-      const B = inOut(seg(now, SETTLE[0], SETTLE[1]));       // the card leaves the centre for its place on the board
-      const calm = 1 - seg(m, 0, 0.3);                       // pointer depth only while the hero is at rest
-
-      const ix = mix(crop.x, 0.2 * panel.offsetWidth, 1 - open), iy = mix(crop.y, 0.3 * panel.offsetHeight, 1 - open);
-      panel.style.clipPath = `inset(${iy * Math.max(k, 1 - open)}px ${ix * Math.max(k, 1 - open)}px round ${mix(28, radius * big, k)}px)`;
-      panel.style.transform = `rotateX(${rx}deg) rotateZ(${rz}deg) scale(${grow})`;
-      panel.style.opacity = String(1 - seg(m, 0.9, 1)); // hidden once the card fully covers it
-
-      const cx = home.x * (1 - B) + rest.x * (1 - k) + ptr.x * 14 * calm, cy = home.y * (1 - B) + rest.y * (1 - k) + ptr.y * 10 * calm;
-      card.style.transform = `translate3d(${cx}px, ${cy}px, 0) rotateX(${rx - ptr.y * 5 * calm}deg) rotateY(${ptr.x * 7 * calm}deg) rotateZ(${rz + CARD_TILT * B}deg) scale(${grow * mix(big * mix(rest.s, 1, k), 1, B)})`;
-
-      tiles.forEach((el, i) => {
-        const a = FIRST + i * EVERY, T = out(seg(now, a, a + LAND));
-        const peek = PEEK[i], show = peek && !phone ? calm * open : 0;
-        if (T > 0 || !show) { // on its way to (or at) its place on the board
-          el.style.transform = `translate3d(${from[i].x * (1 - T)}px, ${from[i].y * (1 - T)}px, 0) rotate(${mix(i % 2 ? 7 : -7, TILE_TILT[i], T)}deg) scale(${mix(0.55, 1, T)})`;
-          el.style.opacity = String(seg(T, 0, 0.35));
-        } else { // tucked behind the portrait in the hero, leaning out at the sides
-          const bw = card.offsetWidth * big * rest.s, bh = card.offsetHeight * big * rest.s, d = i ? 1 : -1;
-          el.style.transform = `translate3d(${from[i].x + rest.x + peek.x * bw * calm + ptr.x * d * 30}px, ${from[i].y + rest.y + peek.y * bh * calm + ptr.y * d * 22}px, 0) rotate(${peek.r * calm}deg) scale(${peekScale})`;
-          el.style.opacity = String(show);
-        }
-      });
-
-      copy.forEach((c) => { const o = 1 - seg(m, 0, 0.3); c.style.opacity = String(o); c.style.visibility = o > 0 ? '' : 'hidden'; }); // hidden = out of the Tab order too
-      const co = seg(m, 0.85, 1);
-      cap.style.opacity = String(co); cap.style.translate = `0 ${16 * (1 - co)}px`;
-      const lastLand = FIRST + 3 * EVERY + LAND;
-      late.forEach((l) => { const o = seg(now, 0.9, 0.96); l.style.opacity = String(o); l.style.pointerEvents = o > 0.5 ? '' : 'none'; l.style.visibility = o > 0 ? '' : 'hidden'; });
-      const s = now < FIRST + LAND / 2 ? 0 : Math.min(tiles.length, Math.floor((now - FIRST - LAND / 2) / EVERY) + 1);
-      const settled = now > SETTLE[1] - 0.02;
-      if (s !== step || lit[0].classList.contains('is-lit') !== (settled && s === 0)) {
-        step = s;
-        lit.forEach((el, i) => el.classList.toggle('is-lit', i === s && settled));
-      }
-
-      // The SAME cursor that stands in for the "a" of "Creative" is what
-      // drags every piece into place — one element, one continuous trip:
-      // first from its own spot toward the centre (the whole morph, as the
-      // panel becomes the card), then from the centre to the card's slot
-      // (riding B), then back out to each tile's slot in turn (riding that
-      // tile's own landing T). It's what's moving the story, not a marker
-      // reacting to it after the fact — and it's never a second element.
-      if (cursorIcon) {
-        const toCenter = out(seg(now, MORPH[0], MORPH[1]));
-        let px: number, py: number, leg: number, fromX: number;
-        if (toCenter < 1) {
-          px = mix(cursorRest.x, center.x, toCenter);
-          py = mix(cursorRest.y, center.y, toCenter);
-          leg = toCenter;
-          fromX = cursorRest.x;
-        } else {
-          const atCard = s === 0;
-          const i = atCard ? -1 : s - 1;
-          const travelP = atCard ? B : out(seg(now, FIRST + i * EVERY, FIRST + i * EVERY + LAND));
-          const to = atCard ? cardFinal : tileFinals[i];
-          px = mix(center.x, to.x, travelP);
-          py = mix(center.y, to.y, travelP);
-          leg = travelP;
-          fromX = center.x;
-        }
-        const lean = px > fromX ? 1 : -1;
-        const squeeze = 1 + 0.12 * Math.sin(Math.PI * clamp(leg));
-        // position:fixed with top:0;left:0 — this translate IS the viewport position.
-        cursorIcon.style.transform = `translate(${px}px, ${py}px) rotate(${lean * 12 * (1 - leg)}deg) scale(${squeeze})`;
-        cursorIcon.style.opacity = String(1 - seg(now, lastLand, lastLand + 0.05)); // fades only once the last piece has landed
-      }
-    };
-    // Scroll sets the target; the scene eases toward it every frame, so wheel steps glide like a smooth scroll.
-    const tick = () => {
-      now += (target - now) * 0.14;
-      if (Math.abs(target - now) < 0.0004) now = target;
-      ptr.x += (ptr.tx - ptr.x) * 0.08; ptr.y += (ptr.ty - ptr.y) * 0.08;
-      const still = Math.abs(ptr.tx - ptr.x) + Math.abs(ptr.ty - ptr.y) < 0.002;
-      render();
-      raf = now === target && still ? 0 : requestAnimationFrame(tick);
-    };
-    const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
-    measure(); addEventListener('resize', () => { measure(); render(); });
-    scroll((p: number) => { target = p; wake(); }, { target: root, offset: ['start start', 'end end'] });
-    // Keyboard focus on the late case link: jump to the end of the scene, where it is shown.
-    late.forEach((l) => l.addEventListener('focusin', () => { if (now < 0.96) scrollTo(0, root.offsetTop + root.offsetHeight - innerHeight); }));
-    // Pointer depth on desktop: the portrait and the two tiles behind it shift by different amounts.
-    if (fine) root.addEventListener('pointermove', (ev) => { ptr.tx = ev.clientX / innerWidth - 0.5; ptr.ty = ev.clientY / innerHeight - 0.5; if (now < MORPH[1]) wake(); });
-
-    // Entrance: the panel opens, the headline rises into focus (comes in
-    // blurred, like it's not quite in frame yet, and sharpens as it settles
-    // — borrowed from hipuku.dev's wordmark reveal), then the card and rest.
-    const delay = 0.1;
-    animate(0, 1, { duration: 0.9, ease: ease.outExpo, delay: delay - 0.1, onUpdate: (v) => { open = v; render(); } });
+    // The headline rises into focus — starts blurred, like it's not quite in
+    // frame yet, and sharpens as it settles (hipuku.dev's wordmark reveal).
+    // The signature shares the same stagger, right after the headline.
     animate(
       root.querySelectorAll('[data-line]'),
       { y: ['105%', '0%'], filter: ['blur(14px)', 'blur(0px)'] },
-      { duration: 1.1, ease: ease.outExpo, delay: stagger(0.09, { startDelay: delay + 0.15 }) }
+      { duration: 1.1, ease: ease.outExpo, delay: stagger(0.09, { startDelay: 0.15 }) }
     );
-    animate(card, { opacity: [0, 1] }, { duration: 1.1, ease: ease.outExpo, delay: delay + 0.3 });
-    animate(root.querySelectorAll('[data-in]'), { opacity: [0, 1], y: [24, 0] }, { duration: 1, ease: ease.outExpo, delay: delay + 0.2 });
+    animate(root.querySelectorAll('[data-in]'), { opacity: [0, 1], y: [24, 0] }, { duration: 1, ease: ease.outExpo, delay: 0.3 });
   }
 </script>
 
 <style>
-  /* Short local token names (--bg, --fg, --accent, etc.) for the CSS below,
-     pointed at our own brand colors (src/styles/global.css) rather than
-     spelling out var(--background) etc. everywhere. These resolve through
-     the theme toggle too, since they reference our real :root properties. */
-  .show {
-    /* --color-surface / --color-muted (Tailwind's @theme inline aliases),
-       not --surface / --muted directly: this rule redeclares those two
-       names below, and a custom property that's redeclared in the same
-       rule always resolves to its last value — referencing the bare name
-       here would just point back at itself. */
-    --bg: var(--background); --bg-2: var(--color-surface); --fg: var(--foreground); --muted: var(--color-muted);
+  /* Short local token names for the CSS below, pointed at our own brand
+     colors (src/styles/global.css) rather than spelling out
+     var(--background) etc. everywhere. These resolve through the theme
+     toggle too, since they reference our real :root properties. */
+  .hero {
+    --bg: var(--background); --fg: var(--foreground);
     --accent: var(--color-brand-lilac); --accent-ink: var(--color-brand-black);
-    --glow: var(--color-brand-lilac); --glow-2: color-mix(in oklab, var(--color-brand-lilac) 70%, white 30%);
-    --scrim: color-mix(in oklab, var(--bg) 60%, transparent);
     --surface: color-mix(in oklab, var(--fg) 5%, transparent);
     --line: color-mix(in oklab, var(--fg) 14%, transparent);
-    /* Flat, not a lit gradient panel — the radial+linear glow (even toned
-       down) still read as Halo's own signature panel treatment. The rest
-       of the site is flat dark surfaces; this panel is now one too. */
-    --stage-bg: var(--bg);
-    /* Space Grotesk is already loaded site-wide (global.css) and is the
-       body's own font (BaseLayout's <body> carries font-display) — so
-       --text uses it too, matching how the rest of the site reads. */
     --display: var(--font-display);
     --text: var(--font-display);
-    --label: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-    --r: 20px; --r-sm: 999px; --r-lg: 28px;
+    --r-sm: 999px;
     --dur-1: 400ms;
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-    --gut: clamp(16px, 2.5vw, 32px);
-    --w: 1280px;
-    --head: 72px;
-    --space: clamp(88px, 11vw, 160px);
     --fs-hero: clamp(3.2rem, 8.4vw, 8.5rem);
-    --gap: 16px;
   }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 10px;
@@ -386,135 +107,33 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
   }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* Light ground around the panel: the page ink, so every preset keeps its contrast. */
-  .show { position: relative; background: var(--fg); color: var(--bg); overflow: clip; }
-  .show__pin { display: grid; gap: clamp(40px, 5vw, 64px); justify-items: center; padding: 12px 12px var(--space); }
-
-  /* The panel */
-  .panel {
-    position: relative; width: 100%; min-height: calc(100svh - 24px); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
-    padding: calc(var(--head) + 20px) clamp(20px, 3vw, 44px) clamp(24px, 3vw, 44px);
-    border-radius: var(--r-lg); background: var(--stage-bg); color: var(--fg);
+  /* Our header floats fixed (a pill, out of document flow) — no header-
+     height offset needed here, just centre the content in the viewport
+     like the original Hero.astro did. */
+  .hero {
+    position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(28px, 4vw, 44px);
+    padding: clamp(20px, 3vw, 44px);
+    background: var(--bg); color: var(--fg);
   }
-  .panel__head { position: relative; z-index: 2; }
-  .panel__title { position: relative; --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
-  .panel__title em { font-style: normal; color: color-mix(in oklab, var(--glow-2) 70%, var(--fg)); }
-  /* The cursor icon standing in for the "a" of "Creative" — Hero.astro's own trick, ported as-is. */
-  /* The one cursor, for its whole life: starts as the "a" of "Creative",
-     then drags itself toward the centre and out to each piece's slot
-     (render()'s cursorIcon block translates/rotates/scales it every
-     frame, relative to this natural rest spot — see cursorRest). */
-  /* Reserves the cursor's spot inside "Creative" — sized like the old inline
-     icon was (0.8em square), margin pulled in the same way so "Cre"/"tive"
-     sit exactly as close as they used to with a real inline icon there. */
-  .panel__cursor-space { display: inline-block; height: 0.8em; width: 0.8em; vertical-align: baseline; margin-inline: -0.2em; }
-  /* The real cursor: fixed to the viewport, living outside .panel so it can
-     paint above .stage's card/tiles — top:0;left:0 plus the translate the
-     script sets every frame (an absolute viewport position, not an offset)
-     IS its position. Sized in JS (measure()) to match the placeholder. */
-  .panel__cursor { position: fixed; top: 0; left: 0; z-index: 10; color: var(--fg); transform-origin: 50% 50%; will-change: transform; pointer-events: none; }
-  .panel__line { display: block; overflow: clip; padding-bottom: 0.06em; }
-  .panel__line > span { display: inline-block; }
-  /* By Ailyn Japa — brought back from the original Hero.astro. */
-  .panel__signature { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
-  .panel__signature-rule { height: 1px; width: clamp(28px, 3.5vw, 52px); background: linear-gradient(90deg, transparent, var(--fg)); }
-  .panel__signature-rule--end { background: linear-gradient(270deg, transparent, var(--fg)); }
-  .panel__signature-clip { display: inline-block; overflow: clip; padding-bottom: 0.12em; }
-  .panel__signature-clip [data-line] { display: inline-block; font-family: var(--font-script); font-size: clamp(1.3rem, 2.4vw, 1.9rem); color: var(--fg); }
-  .panel__foot { grid-row: 3; position: relative; z-index: 2; display: grid; gap: 22px; max-width: 34rem; }
-  .panel__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 36ch; }
-  .panel__cta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .hero__head { width: fit-content; }
+  .hero__title { --size: var(--fs-hero); font-family: var(--display); font-weight: 560; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
+  .hero__line { display: block; overflow: clip; padding-bottom: 0.06em; }
+  .hero__line > span { display: inline-block; }
+  .hero__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); }
 
-  /* The board: the portrait in the middle, two tiles either side. Without motion this is simply how it looks. */
-  .stage { width: min(100%, var(--w)); padding-inline: var(--gut); }
-  .board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1fr); grid-template-rows: 1fr 1fr; gap: var(--gap); }
-  .key { grid-area: 1 / 2 / 3 / 3; position: relative; aspect-ratio: 3 / 4; border-radius: var(--r); background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 10%; }
-  .key__figure { width: 100%; height: 100%; }
-  .tile { position: relative; display: flex; flex-direction: column; min-height: 0; padding: clamp(10px, 1.5vw, 22px); border-radius: var(--r); background: var(--bg); color: var(--fg); container-type: inline-size; }
-  .tile--id { grid-area: 1 / 1; } .tile--ad { grid-area: 1 / 3; } .tile--film { grid-area: 2 / 1; } .tile--web { grid-area: 2 / 3; }
-  .tile__figure { position: absolute; inset: 12%; z-index: 0; }
-  /* The ring round whichever piece the caption is talking about. */
-  .key::after, .tile::after { content: ""; position: absolute; inset: -6px; border: 2px solid var(--glow); border-radius: calc(var(--r) + 6px); opacity: 0; transition: opacity var(--dur-1) var(--ease-out); pointer-events: none; }
-  .is-lit::after { opacity: 1; }
-  /* The tag: pops up hand-stuck-on-the-piece style when it's the one being
-     talked about, instead of a shared bottom rail. Hangs off the bottom
-     corner so it reads over whatever the piece overlaps, not just itself. */
-  .piece-tag {
-    position: absolute; z-index: 5; left: 14px; bottom: -14px; max-width: calc(100% - 20px);
-    padding: 7px 11px; border-radius: 7px; background: var(--bg); border: 1px solid var(--accent);
-    box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--bg) 70%, transparent);
-    font: 500 clamp(11px, 1.3cqi, 13px)/1.3 var(--display); color: var(--fg);
-    transform: rotate(-4deg) translateY(8px); transform-origin: 0% 0%;
-    opacity: 0; transition: opacity var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
-    pointer-events: none;
-  }
-  .is-lit .piece-tag { opacity: 1; transform: rotate(-4deg) translateY(0); }
+  /* By Ailyn Japa */
+  .hero__signature { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
+  .hero__signature-rule { height: 1px; width: clamp(28px, 3.5vw, 52px); background: linear-gradient(90deg, transparent, var(--fg)); }
+  .hero__signature-rule--end { background: linear-gradient(270deg, transparent, var(--fg)); }
+  .hero__signature-clip { display: inline-block; overflow: clip; padding-bottom: 0.12em; }
+  .hero__signature-clip [data-line] { display: inline-block; font-family: var(--font-script); font-size: clamp(1.3rem, 2.4vw, 1.9rem); color: var(--fg); }
 
-  .tile__label { position: relative; z-index: 1; font: 500 max(10px, 4cqi)/1 var(--label); color: color-mix(in oklab, var(--fg) 72%, transparent); }
-  .tile__line { position: relative; z-index: 1; margin-top: auto; font: 560 9.5cqi/1 var(--display); letter-spacing: -0.04em; }
-  .tile--ad::before, .tile--film::before, .tile__page::after { content: ""; position: absolute; z-index: 1; inset: 0; border-radius: inherit; background: linear-gradient(180deg, var(--scrim), transparent 45%, var(--scrim)); pointer-events: none; }
-  /* Identity: the mark and name, the palette and a type sample */
-  .tile--id { background: var(--bg-2); }
-  .tile__mark { display: flex; align-items: center; gap: 0.12em; font: 560 20cqi/1 var(--display); letter-spacing: -0.045em; }
-  .tile__mark svg { width: 0.62em; height: 0.62em; fill: currentColor; }
-  /* Website: a browser bar over the page */
-  .tile--web { padding: 0; }
-  .tile__bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: clamp(8px, 1vw, 14px) clamp(10px, 1.5vw, 22px); }
-  .tile__url { padding: 1.4cqi 4cqi; border: 1px solid var(--line); border-radius: var(--r-sm); font: 500 max(9px, 3.4cqi)/1.2 var(--label); color: var(--muted); }
-  .tile__page { position: relative; flex: 1; display: flex; padding: clamp(10px, 1.5vw, 22px); border-radius: 0 0 var(--r) var(--r); overflow: hidden; }
-  .tile__page :global(img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-  .tile__page .tile__line { z-index: 2; font-size: 8.4cqi; max-width: 12ch; }
-
-  /* The caption: just the CTA now — each piece narrates itself (.piece-tag). */
-  .cap { display: grid; justify-items: center; width: min(100%, var(--w)); padding-inline: var(--gut); text-align: center; }
-  .cap__cta :global(.btn) { background: var(--bg); color: var(--fg); border-color: var(--bg); }
-
-  /* Scroll-driven version (JS on, motion allowed): one pinned scene. Set before paint through the .js class, so no jump. */
-  @media (prefers-reduced-motion: no-preference) {
-  :global(.js) .show { height: 460svh; --ch: min(56svh, 40vw); --cw: calc(var(--ch) * 0.75); --th: calc((var(--ch) - var(--gap)) / 2); --tw: calc(var(--th) * 1.45); --caph: 24svh; }
-  :global(.js) .show .show__pin { position: sticky; top: 0; height: 100svh; padding: 0; display: block; perspective: 1400px; }
-  :global(.js) .show .panel { position: absolute; inset: 12px; width: auto; min-height: 0; z-index: 2; clip-path: inset(30% 20% round var(--r-lg)); will-change: transform, clip-path; }
-  :global(.js) .show .stage { position: absolute; inset: 0; z-index: 3; width: auto; padding: calc(var(--head) + 8px) 0 var(--caph); display: grid; place-items: center; perspective: 1400px; pointer-events: none; }
-  /* The workbench: a 12x10 grid where the card's area and each tile's area
-     overlap by a track or two at the corners, instead of neat non-touching
-     cells — tiles paint over the card there (z-index), like things left
-     out on a desk rather than a tidy case-study layout. */
-  :global(.js) .show .board { width: min(84vw, 980px); height: min(60svh, 640px); display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(10, 1fr); }
-  :global(.js) .show .key { grid-area: 2 / 4 / 10 / 10; aspect-ratio: auto; z-index: 1; opacity: 0; will-change: transform; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
-  :global(.js) .show .tile { z-index: 2; opacity: 0; will-change: transform, opacity; box-shadow: 0 30px 60px -30px color-mix(in oklab, var(--bg) 70%, transparent); }
-  :global(.js) .show .tile--id { grid-area: 1 / 1 / 5 / 6; }
-  :global(.js) .show .tile--ad { grid-area: 1 / 8 / 5 / 13; }
-  :global(.js) .show .tile--film { grid-area: 7 / 1 / 11 / 6; }
-  :global(.js) .show .tile--web { grid-area: 7 / 8 / 11 / 13; }
-  :global(.js) .show .cap { position: absolute; left: 0; right: 0; bottom: max(20px, 3svh); z-index: 4; }
-  :global(.js) .show .cap__cta { opacity: 0; }
-  :global(.js) .show [data-in] { opacity: 0; }
-  }
+  .hero__foot { display: grid; gap: 22px; max-width: 34rem; }
+  .hero__lead { color: color-mix(in oklab, var(--fg) 82%, transparent); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.45; max-width: 36ch; }
+  .hero__cta { display: flex; flex-wrap: wrap; gap: 10px; }
 
   @media (max-width: 809px) {
-    .show { --gap: 10px; }
-    .show__pin { padding: 8px 8px var(--space); }
-    .panel { min-height: calc(100svh - 16px); padding: calc(var(--head) + 4px) 18px 22px; border-radius: 22px; }
-    .panel__title { --size: clamp(2.6rem, 12.5vw, 4rem); }
-    .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto; }
-    .key { grid-area: auto / 1 / auto / -1; order: -1; width: 62%; justify-self: center; }
-    .tile { grid-area: auto; aspect-ratio: 3 / 2; }
-  }
-  @media (max-width: 809px) and (prefers-reduced-motion: no-preference) {
-    /* The workbench overlap is a desktop flourish — phones keep the plain
-       2-column layout, so these override the desktop block's grid-areas
-       (same selector specificity, later in the file: this wins). */
-    :global(.js) .show { --ch: min(33svh, 64vw); --th: 14svh; --caph: 21svh; }
-    :global(.js) .show .panel { inset: 8px; }
-    :global(.js) .show .stage { padding-top: calc(var(--head) + 4px); }
-    :global(.js) .show .board { width: calc(100% - 32px); height: auto; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: var(--ch) var(--th) var(--th); }
-    :global(.js) .show .key { grid-area: 1 / 1 / 2 / 3; width: var(--cw); justify-self: center; }
-    :global(.js) .show .tile--id { grid-area: 2 / 1 / 3 / 2; }
-    :global(.js) .show .tile--ad { grid-area: 2 / 2 / 3 / 3; }
-    :global(.js) .show .tile--film { grid-area: 3 / 1 / 4 / 2; }
-    :global(.js) .show .tile--web { grid-area: 3 / 2 / 4 / 3; }
-    :global(.js) .show .tile { aspect-ratio: auto; }
-    :global(.js) .show .cap__cta { position: static; }
-    :global(.js) .show .cap { align-content: start; }
+    .hero { min-height: 100svh; padding: 18px 18px 48px; }
+  .hero__title { --size: clamp(2.6rem, 12.5vw, 4rem); }
   }
 </style>
