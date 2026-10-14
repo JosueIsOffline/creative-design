@@ -232,11 +232,13 @@ const svg = k.figureSvg({
   label:
     'Una prensa de calor para sublimación. El cabezal superior, con su cara calefactora, baja sobre la base: debajo hay una pieza en blanco y encima una hoja con el diseño impreso en tinta sublimática. Calor y presión sostenidos pasan la tinta de la hoja a la pieza; al abrir y despegar la hoja, el diseño queda fijado en la pieza.',
   body: [
-    base(),
-    posts(),
-    panel(),
-    product(),
-    `<g data-part="design-sub" style="opacity:0">${designOnSubstrate()}</g>`,
+    // Each assembly gets its own group so the site can explode the press
+    // apart and put it back together on scroll (PressStory.astro).
+    `<g data-part="base">${base()}</g>`,
+    `<g data-part="posts">${posts()}</g>`,
+    `<g data-part="panel">${panel()}</g>`,
+    `<g data-part="product">${product()}`,
+    `<g data-part="design-sub" style="opacity:0">${designOnSubstrate()}</g></g>`,
     `<g data-part="paper" transform="${k.translateAlong(P, [0, 0, 0])}">${paper()}</g>`,
     `<g data-part="head" transform="${k.translateAlong(P, [0, 0, OPEN_Z])}">${head()}</g>`,
   ],
@@ -270,7 +272,15 @@ if (theme === 'dark') {
   writeFileSync(join(HERE, 'figure.svg'), svg);
   writeFileSync(
     join(HERE, 'figure-data.json'),
-    JSON.stringify({ P, OPEN_Z, CLOSED_Z, PAPER_PEEL: [0, 60, 46] }, null, 2)
+    JSON.stringify(
+      {
+        P, OPEN_Z, CLOSED_Z, PAPER_PEEL: [0, 60, 46],
+        // Screen-space px per world unit along x / y / z, for runtime moves.
+        AXES: { x: k.axisVector(P, [1, 0, 0]), y: k.axisVector(P, [0, 1, 0]), z: k.axisVector(P, [0, 0, 1]) },
+      },
+      null,
+      2
+    )
   );
   console.log('wrote figure.svg, figure-data.json');
 }
