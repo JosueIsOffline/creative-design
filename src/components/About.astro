@@ -5,20 +5,20 @@
 // kinetic heading/paragraph reveals. Without JS or with reduced motion: the
 // photo simply shown.
 import { Image } from 'astro:assets';
-import ailyn from '../assets/ailyn-jaspa.jpg';
+import ailyn from '../assets/ailyn-japa.jpg';
 ---
 <section id="sobre-la-marca" class="owner scroll-mt-24" data-owner>
   <div class="owner__inner">
     <figure class="owner__photo" data-owner-photo>
       <Image
         src={ailyn}
-        alt="Ailyn Jaspa, fundadora de Creative Design, de brazos cruzados y sonriendo"
+        alt="Ailyn Japa, fundadora de Creative Design, de brazos cruzados y sonriendo"
         widths={[480, 720, 1066]}
         sizes="(max-width: 860px) 92vw, 40vw"
         class="owner__img"
         data-owner-img
       />
-      <figcaption class="owner__tag">Ailyn Jaspa · Fundadora</figcaption>
+      <figcaption class="owner__tag">Ailyn Japa · Fundadora</figcaption>
     </figure>
 
     <div class="owner__copy">
@@ -32,7 +32,7 @@ import ailyn from '../assets/ailyn-jaspa.jpg';
       </p>
       <blockquote data-gsap="kinetic-paragraph" class="owner__quote">Muchas ganas de crear cosas bonitas, diferentes y hechas con propósito.</blockquote>
       <p data-gsap="kinetic-paragraph" class="owner__p">Y esto apenas comienza…</p>
-      <span class="owner__sign">Ailyn Jaspa</span>
+      <span class="owner__sign">Ailyn Japa</span>
     </div>
   </div>
 </section>
