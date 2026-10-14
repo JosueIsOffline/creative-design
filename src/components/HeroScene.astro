@@ -23,13 +23,13 @@ const h = {
 // list: C r e ▸ t i v e · D e s i g n) the wire starts from; x: tag centre
 // as a fraction of the headline width; y: tag centre in em of the
 // headline font size (negative = above it).
-// The tags are the story's chapters: each jumps to its chapter in the
-// scroll story further down (ProcessStory.astro).
+// The tags are the services — each links into the catalog.
 const callouts = [
-  { label: 'Diseño', href: '#cap-diseno', ch: 0, x: 0.12, y: -0.62 },
-  { label: 'Sublimación', href: '#cap-sublimacion', ch: 5, x: 0.36, y: -1.05 },
-  { label: 'Empaquetado', href: '#cap-empaquetado', ch: 9, x: 0.62, y: -0.78 },
-  { label: 'Entrega', href: '#cap-entrega', ch: 14, x: 0.88, y: -0.5 },
+  { label: 'Identidad visual', href: '/catalogo/servicios-de-diseno', ch: 0, x: 0.08, y: -0.6 },
+  { label: 'Flyers', href: '/catalogo/servicios-de-diseno', ch: 5, x: 0.3, y: -1.12 },
+  { label: 'Papelería', href: '/catalogo/servicios-de-diseno/papeleria-personalizada', ch: 7, x: 0.49, y: -0.72 },
+  { label: 'Personalización', href: '/catalogo', ch: 9, x: 0.7, y: -1.12 },
+  { label: 'Sublimación', href: '/catalogo', ch: 14, x: 0.92, y: -0.58 },
 ];
 ---
 <section class="hero" data-hero>
