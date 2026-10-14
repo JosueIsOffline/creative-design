@@ -10,10 +10,10 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 const waMessage = encodeURIComponent('Hola! Quiero hacer un pedido.');
 
 const steps = [
-  { icon: 'lucide:mouse-pointer-click', color: '#d9a8d9', tilt: -1.5, title: 'Elegí', text: 'Escogé una pieza del catálogo o contanos tu idea.' },
+  { icon: 'lucide:mouse-pointer-click', color: '#d9a8d9', tilt: -1.5, title: 'Elige', text: 'Escoge una pieza del catálogo o cuéntanos tu idea.' },
   { icon: 'lucide:pen-tool', color: '#e86a9f', tilt: 1.2, title: 'Diseñamos', text: 'Armamos tu diseño y te lo mostramos para que lo apruebes antes de producir.' },
   { icon: 'lucide:flame', color: '#f2cf4a', tilt: -0.8, title: 'Producimos', text: 'Sublimamos o imprimimos tu pieza y la empacamos a mano.' },
-  { icon: 'lucide:package-check', color: '#5ec8e8', tilt: 1.6, title: 'Te llega', text: 'Coordinamos la entrega con vos por WhatsApp.' },
+  { icon: 'lucide:package-check', color: '#5ec8e8', tilt: 1.6, title: 'Te llega', text: 'Coordinamos la entrega contigo por WhatsApp.' },
 ];
 ---
 <section id="como-pedir" class="order scroll-mt-24" data-order>
@@ -39,7 +39,7 @@ const steps = [
 
     <div class="order__cta">
       <a class="order__btn order__btn--solid" href="/catalogo">Ver catálogo <Icon name="lucide:arrow-right" width="16" height="16" /></a>
-      <a class="order__btn" href={`https://wa.me/${whatsapp}?text=${waMessage}`} target="_blank" rel="noopener">Escribinos</a>
+      <a class="order__btn" href={`https://wa.me/${whatsapp}?text=${waMessage}`} target="_blank" rel="noopener">Escríbenos</a>
     </div>
   </div>
 </section>

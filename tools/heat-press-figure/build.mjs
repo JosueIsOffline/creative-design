@@ -225,7 +225,7 @@ const svg = k.figureSvg({
 const body = k.plateHtml({
   fig: 'Fig 1',
   title: 'Prensa de sublimación',
-  hint: 'Mirá el ciclo de prensado',
+  hint: 'Mira el ciclo de prensado',
   readout: 'abierta · 20°C',
   keys: [
     { mark: 'lit', label: 'Cara calefactora: calor + presión transfieren la tinta' },
