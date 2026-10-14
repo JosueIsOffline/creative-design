@@ -304,10 +304,16 @@ const star = 'M12 0C12.8 7.2 16.8 11.2 24 12C16.8 12.8 12.8 16.8 12 24C11.2 16.8
     // Pointer depth on desktop: the portrait and the two tiles behind it shift by different amounts.
     if (fine) root.addEventListener('pointermove', (ev) => { ptr.tx = ev.clientX / innerWidth - 0.5; ptr.ty = ev.clientY / innerHeight - 0.5; if (now < MORPH[1]) wake(); });
 
-    // Entrance: the panel opens, the lines rise one by one, then the cards and the rest.
+    // Entrance: the panel opens, the headline rises into focus (comes in
+    // blurred, like it's not quite in frame yet, and sharpens as it settles
+    // — borrowed from hipuku.dev's wordmark reveal), then the card and rest.
     const delay = 0.1;
     animate(0, 1, { duration: 0.9, ease: ease.outExpo, delay: delay - 0.1, onUpdate: (v) => { open = v; render(); } });
-    animate(root.querySelectorAll('[data-line]'), { y: ['105%', '0%'] }, { duration: 1.1, ease: ease.outExpo, delay: stagger(0.09, { startDelay: delay + 0.15 }) });
+    animate(
+      root.querySelectorAll('[data-line]'),
+      { y: ['105%', '0%'], filter: ['blur(14px)', 'blur(0px)'] },
+      { duration: 1.1, ease: ease.outExpo, delay: stagger(0.09, { startDelay: delay + 0.15 }) }
+    );
     animate(card, { opacity: [0, 1] }, { duration: 1.1, ease: ease.outExpo, delay: delay + 0.3 });
     animate(root.querySelectorAll('[data-in]'), { opacity: [0, 1], y: [24, 0] }, { duration: 1, ease: ease.outExpo, delay: delay + 0.2 });
   }

@@ -5,6 +5,11 @@ import path from 'node:path';
 const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 
 describe("HeroScene (Creative Design's own scroll-storytelling hero — started as a Halo-reference port, now its own thing)", () => {
+  it('headline rises into focus on load (blurred -> sharp), inspired by hipuku.dev\'s wordmark reveal', async () => {
+    const src = await read('src/components/HeroScene.astro');
+    expect(src).toContain("{ y: ['105%', '0%'], filter: ['blur(14px)', 'blur(0px)'] }");
+  });
+
   it('arranges the board as an overlapping workbench, not a case-study grid — each tile spans into the key\'s area and sits above it', async () => {
     const src = await read('src/components/HeroScene.astro');
     expect(src).toContain('grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(10, 1fr)');
