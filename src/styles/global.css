@@ -120,6 +120,14 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   border-radius: 1rem;
 }
 
+/* Opened, the photo holds still: no hover zoom, no pointer tilt (GSAP sets
+   it inline, hence !important). */
+.product-card.is-expanded [data-tilt],
+.product-card.is-expanded .card-image {
+  transform: none !important;
+  scale: none;
+}
+
 /* Only added once the box has already settled into position:fixed (after
    the open view-transition finishes) — animating height at the same
    instant position switches from in-flow to fixed makes the browser
@@ -379,7 +387,7 @@ html.is-theme-transition::view-transition-group(theme-icon) {
    (HeroScene.astro keeps its pin for this last 100svh) instead of the deck
    scrolling away — only where the hero is pinned. */
 @media (prefers-reduced-motion: no-preference) {
-  .js:not(.story-seen) .after-hero {
+  .js .after-hero {
     position: relative;
     z-index: 5;
     margin-top: -100svh;
@@ -392,7 +400,7 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   /* Its z-index makes a stacking context that would trap an expanded
      product card under the page-wide backdrop (z-40). Tree order still
      paints it over the hero. */
-  .js:not(.story-seen) .after-hero:has(.product-card.is-expanded) { z-index: auto; }
+  .js .after-hero:has(.product-card.is-expanded) { z-index: auto; }
 }
 
 /* Add-to-cart effect (src/scripts/add-to-cart-fx.ts). */

@@ -10,8 +10,7 @@
 // over the last, which sinks back into the stack; inside each, the
 // service's iso scene assembles part by part (Sublimación last, with the
 // heat press). On desktop the tags slide into a column as the chapter
-// index. Without JS or with reduced motion: just the hero. Once the story
-// has played (localStorage story-seen), later visits get the cards as a grid.
+// index. Without JS or with reduced motion: just the hero.
 import { Icon } from 'astro-icon/components';
 import pressSvg from '../../tools/heat-press-figure/figure.svg?raw';
 import identidadSvg from '../../tools/services-figure/identidad.svg?raw';
@@ -109,7 +108,7 @@ const callouts = [
 </section>
 
 <script>
-  import { animate, stagger, inView } from 'motion';
+  import { animate, stagger } from 'motion';
   import press from '../../tools/heat-press-figure/figure-data.json';
 
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
@@ -287,16 +286,6 @@ const callouts = [
       });
     }, (after + 0.4) * 1000);
 
-    // Story already played once: the cards sit in a grid — just rise in.
-    if (document.documentElement.classList.contains('story-seen')) {
-      const grid = root.querySelectorAll<HTMLElement>('[data-card]');
-      animate(grid, { opacity: 0 }, { duration: 0 });
-      inView(root.querySelector('[data-deck]')!, () => {
-        animate(grid, { opacity: [0, 1], y: [40, 0] }, { duration: 0.8, ease: ease.outExpo, delay: stagger(0.08) });
-      }, { amount: 0.15 });
-      continue;
-    }
-
     // --- The scroll story ---------------------------------------------
     const outs = root.querySelectorAll<HTMLElement>('[data-out]');
     const skin = root.querySelector<HTMLElement>('[data-skin]')!;
@@ -430,13 +419,7 @@ const callouts = [
       const r = root.getBoundingClientRect(), run = r.height - innerHeight;
       return run > 0 ? Math.min(1, Math.max(0, -r.top / run)) : 0;
     };
-    // Reaching the end of the story once is enough: from the next visit on,
-    // the grid (applied on load, never mid-scroll).
-    const sync = () => {
-      target = progress();
-      if (target >= END) try { localStorage.setItem('story-seen', '1'); } catch {}
-      if (!raf) raf = requestAnimationFrame(tick);
-    };
+    const sync = () => { target = progress(); if (!raf) raf = requestAnimationFrame(tick); };
     addEventListener('scroll', sync, { passive: true, signal: ac.signal });
     addEventListener('resize', sync, { signal: ac.signal });
     // Re-read over the first frames, once the swap and Lenis's scroll-to-top settle.
@@ -569,34 +552,24 @@ const callouts = [
   .hero__scene { position: relative; min-height: 0; }
   .hero__scene :global(svg) { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; scale: var(--zoom, 1); }
 
-  /* The deck: only with JS and motion allowed, until the story has played
-     once (html.story-seen, set in BaseLayout) — then the grid below. */
+  /* The deck: only with JS and motion allowed. */
   @media (prefers-reduced-motion: no-preference) {
-    :global(.js:not(.story-seen)) .hero { height: 880svh; } /* keep in sync with END in the script */
-    :global(.js:not(.story-seen)) .hero__pin { position: sticky; top: 0; height: 100svh; }
-    :global(.js:not(.story-seen)) .hero__deck {
+    :global(.js) .hero { height: 880svh; } /* keep in sync with END in the script */
+    :global(.js) .hero__pin { position: sticky; top: 0; height: 100svh; }
+    :global(.js) .hero__deck {
       display: block; position: absolute; z-index: 1; left: 57%; top: 53%; translate: -50% -50%;
       width: min(62vw, 920px); height: min(74svh, 640px); pointer-events: none;
     }
-    :global(.js:not(.story-seen)) .hero__card {
+    :global(.js) .hero__card {
       position: absolute; inset: 0;
       box-shadow: 0 -10px 60px -20px rgb(0 0 0 / 0.7);
       visibility: hidden; transform-origin: 50% 50%; will-change: transform;
     }
     /* Sinks into the stack: dimmed as later cards cover it. */
-    :global(.js:not(.story-seen)) .hero__card::after { content: ''; position: absolute; inset: 0; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
-    :global(.js:not(.story-seen)) .hero__scene :global([data-part]) { will-change: transform, opacity; }
-    :global(.js:not(.story-seen)) .hero__panel { position: relative; z-index: 2; }
+    :global(.js) .hero__card::after { content: ''; position: absolute; inset: 0; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
+    :global(.js) .hero__scene :global([data-part]) { will-change: transform, opacity; }
+    :global(.js) .hero__panel { position: relative; z-index: 2; }
   }
-
-  /* Repeat visits: the six cards as a plain grid under the hero. */
-  :global(.story-seen) .hero__pin { display: flex; flex-direction: column; }
-  :global(.story-seen) .hero__deck {
-    position: relative; order: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-    width: min(1120px, 100% - 40px); margin: 0 auto clamp(48px, 8vw, 96px);
-  }
-  :global(.story-seen) .hero__scene { aspect-ratio: 4 / 3; }
-  @media (max-width: 1023px) { :global(.story-seen) .hero__deck { grid-template-columns: repeat(2, 1fr); } }
 
   /* A step lighter than the site's default anatomy palette — the scenes are
      the protagonists on a near-black page, not small insets. */
@@ -619,13 +592,7 @@ const callouts = [
     /* Too cramped for wires at phone width — the header nav covers these links. */
     .hero__callouts { display: none; }
     .hero__head { margin-top: 0; }
-    :global(.js:not(.story-seen)) .hero__deck { left: 50%; top: 54%; width: calc(100vw - 32px); height: min(72svh, 620px); }
+    :global(.js) .hero__deck { left: 50%; top: 54%; width: calc(100vw - 32px); height: min(72svh, 620px); }
     .hero__card { border-radius: 22px; }
-    /* Grid → a swipeable row on phones. */
-    :global(.story-seen) .hero__deck {
-      display: flex; width: 100%; padding-inline: 16px; overflow-x: auto; scroll-snap-type: x mandatory;
-      scroll-padding-inline: 16px; scrollbar-width: none;
-    }
-    :global(.story-seen) .hero__card { flex: 0 0 82%; scroll-snap-align: start; }
   }
 </style>
