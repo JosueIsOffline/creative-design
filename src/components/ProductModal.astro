@@ -10,19 +10,10 @@
   let expandedArticle: HTMLElement | null = null;
   let expandedLink: HTMLElement | null = null;
 
-  function setBoxName(article: HTMLElement, active: boolean) {
-    article.style.viewTransitionName = active ? 'expanding-card' : '';
-  }
-
-  // View Transitions freeze the live DOM behind static before/after snapshots
-  // for the duration of the box morph — a CSS transition on a child element
-  // never gets to visually play while that's happening, it just jumps between
-  // whatever state it was in at each snapshot instant. So the reveal-only
-  // close button gets its own real transition run OUTSIDE that window:
-  // faded/shrunk out before the box starts shrinking, faded/grown in after
-  // it's done growing. (card-add-to-cart used to be reveal-only too, but
-  // it's always visible now — see the Apple Store style pass.)
+  // The close button fades/shrinks out before the card fades away, and in
+  // only once the card has faded in.
   const REVEAL_FADE_MS = 200;
+  const CARD_FADE_MS = 220; // keep in sync with card-fade in global.css
 
   function getRevealEls(article: HTMLElement) {
     return [article.querySelector<HTMLElement>('.card-close')].filter((el): el is HTMLElement => !!el);
@@ -51,15 +42,9 @@
         document.body.style.overflow = '';
       };
 
-      if (document.startViewTransition) {
-        setBoxName(article, true);
-        const transition = document.startViewTransition(applyClosed);
-        transition.finished.finally(() => {
-          setBoxName(article, false);
-        });
-      } else {
-        applyClosed();
-      }
+      // Fades out where it is, then drops back into the grid.
+      article.classList.add('is-leaving');
+      setTimeout(() => { article.classList.remove('is-leaving'); applyClosed(); }, CARD_FADE_MS);
     };
 
     setTimeout(collapse, revealEls.length ? REVEAL_FADE_MS : 0);
@@ -94,17 +79,10 @@
       });
     };
 
-    if (document.startViewTransition) {
-      setBoxName(article, true);
-      const transition = document.startViewTransition(applyOpen);
-      transition.finished.finally(() => {
-        setBoxName(article, false);
-        revealButtons();
-      });
-    } else {
-      applyOpen();
-      revealButtons();
-    }
+    // No flight from the grid: the card just fades in, centred, so the
+    // photo never travels or stretches.
+    applyOpen();
+    setTimeout(revealButtons, CARD_FADE_MS);
 
     expandedArticle = article;
     expandedLink = link;

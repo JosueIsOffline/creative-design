@@ -89,19 +89,6 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   animation-duration: 0.15s;
 }
 
-/* Plain ease-out for the card's own box (no bounce — an overshoot curve
-   stretches the flat snapshot's baked-in photo past its real size before
-   settling, which reads as a flicker/shimmer). */
-::view-transition-group(expanding-card) {
-  animation-duration: 0.35s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-::view-transition-old(expanding-card),
-::view-transition-new(expanding-card) {
-  animation-duration: 1ms;
-}
-
 .product-card.is-expanded {
   position: fixed;
   inset: 0;
@@ -118,7 +105,11 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 1rem;
+  animation: card-fade 220ms ease-out;
 }
+.product-card.is-expanded.is-leaving { animation: card-fade-out 220ms ease-in forwards; }
+@keyframes card-fade { from { opacity: 0; } }
+@keyframes card-fade-out { to { opacity: 0; } }
 
 /* Opened, the photo holds still: no hover zoom, no pointer tilt (GSAP sets
    it inline, hence !important). */
