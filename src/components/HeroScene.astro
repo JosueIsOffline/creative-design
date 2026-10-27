@@ -10,7 +10,8 @@
 // over the last, which sinks back into the stack; inside each, the
 // service's iso scene assembles part by part (Sublimación last, with the
 // heat press). On desktop the tags slide into a column as the chapter
-// index. Without JS or with reduced motion: just the hero.
+// index. Without JS or with reduced motion: just the hero. Once the story
+// has played (localStorage story-seen), later visits get the cards as a grid.
 import { Icon } from 'astro-icon/components';
 import pressSvg from '../../tools/heat-press-figure/figure.svg?raw';
 import identidadSvg from '../../tools/services-figure/identidad.svg?raw';
@@ -65,15 +66,17 @@ const callouts = [
     <h1 class="hero__title display" data-out>
       <span class="sr-only">Creative Design</span>
       <span aria-hidden="true">
-        {'Cre'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}<span class="hero__ch" data-ch><svg viewBox="-8 0 32 32" class="hero__cursor" fill="none">
-              <g transform="rotate(-1 12.5 20.5)">
-                <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
-                <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
-                <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
-                <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
-                <path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        <span class="hero__word">{'Cre'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}<span class="hero__ch" data-ch><svg viewBox="-4 -0.5 27 32.5" class="hero__cursor" fill="none">
+              <g transform="rotate(16.5 12.5 20.5)">
+                <g class="hero__burst">
+                  <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
+                  <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
+                  <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
+                  <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
+                </g>
+                <g class="hero__arrowhead"><path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /></g>
               </g>
-            </svg></span>{'tive Design'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}
+            </svg></span>{'tive'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}</span><span class="hero__ch" data-ch>{' '}</span><span class="hero__word">{'Design'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}</span>
       </span>
     </h1>
     <nav class="hero__callouts" aria-label="Secciones">
@@ -106,7 +109,7 @@ const callouts = [
 </section>
 
 <script>
-  import { animate, stagger } from 'motion';
+  import { animate, stagger, inView } from 'motion';
   import press from '../../tools/heat-press-figure/figure-data.json';
 
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
@@ -265,6 +268,10 @@ const callouts = [
       { duration: 1.3, ease: ease.outExpo, delay: stagger(0.06, { startDelay: start }) }
     );
     const after = start + n * 0.06 + 0.3;
+    // The cursor glides in while the letters focus, clicks once, and the
+    // confetti bursts from its tip (the closing panel's gesture, unlooped).
+    const cursor = root.querySelector('.hero__cursor');
+    setTimeout(() => cursor?.classList.add('is-go'), (start + 0.6) * 1000);
     if (sig) animate(sig, { opacity: [0, 1], filter: ['blur(16px)', 'blur(0px)'] }, { duration: 1, ease: ease.outExpo, delay: after });
     animate(foot, { opacity: [0, 1], y: [24, 0], filter: ['blur(8px)', 'blur(0px)'] }, { duration: 1, ease: ease.outExpo, delay: after + 0.2 });
 
@@ -279,6 +286,16 @@ const callouts = [
         animate(tag, { opacity: [0, 1], filter: ['blur(8px)', 'blur(0px)'] }, { duration: 0.6, ease: ease.outExpo, delay: t + 0.55 });
       });
     }, (after + 0.4) * 1000);
+
+    // Story already played once: the cards sit in a grid — just rise in.
+    if (document.documentElement.classList.contains('story-seen')) {
+      const grid = root.querySelectorAll<HTMLElement>('[data-card]');
+      animate(grid, { opacity: 0 }, { duration: 0 });
+      inView(root.querySelector('[data-deck]')!, () => {
+        animate(grid, { opacity: [0, 1], y: [40, 0] }, { duration: 0.8, ease: ease.outExpo, delay: stagger(0.08) });
+      }, { amount: 0.15 });
+      continue;
+    }
 
     // --- The scroll story ---------------------------------------------
     const outs = root.querySelectorAll<HTMLElement>('[data-out]');
@@ -413,7 +430,13 @@ const callouts = [
       const r = root.getBoundingClientRect(), run = r.height - innerHeight;
       return run > 0 ? Math.min(1, Math.max(0, -r.top / run)) : 0;
     };
-    const sync = () => { target = progress(); if (!raf) raf = requestAnimationFrame(tick); };
+    // Reaching the end of the story once is enough: from the next visit on,
+    // the grid (applied on load, never mid-scroll).
+    const sync = () => {
+      target = progress();
+      if (target >= END) try { localStorage.setItem('story-seen', '1'); } catch {}
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
     addEventListener('scroll', sync, { passive: true, signal: ac.signal });
     addEventListener('resize', sync, { signal: ac.signal });
     // Re-read over the first frames, once the swap and Lenis's scroll-to-top settle.
@@ -468,6 +491,9 @@ const callouts = [
   }
   .hero__copy { display: flex; flex-direction: column; align-items: center; gap: clamp(28px, 4vw, 44px); }
   .hero__title { --size: var(--fs-hero); font-family: 'Parkinsans', var(--display); font-weight: 700; font-size: var(--size); line-height: 0.95; letter-spacing: -0.045em; color: var(--accent); }
+  /* Each letter is its own inline-block, which would let a line break
+     between any two — keep each word whole. */
+  .hero__word { white-space: nowrap; }
   .hero__ch { display: inline-block; white-space: pre; transform-origin: 50% 60%; }
 
   /* Callouts: room reserved above the headline so the centred layout
@@ -488,7 +514,27 @@ const callouts = [
   .hero__tag { transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out); }
   .hero__tag.is-story { color: color-mix(in oklab, var(--fg) 55%, transparent); border-color: color-mix(in oklab, var(--fg) 18%, transparent); }
   .hero__tag.is-story.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .hero__cursor { display: inline-block; height: 0.8em; width: auto; vertical-align: baseline; margin-inline: -0.2em; color: var(--fg); }
+  .hero__burst, .hero__arrowhead { transform-box: fill-box; }
+  .hero__burst { transform-origin: 100% 100%; }
+  .hero__arrowhead { transform-origin: 0 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.js) .hero__cursor:not(.is-go) { opacity: 0; }
+    :global(.js) .hero__cursor:not(.is-go) .hero__burst { opacity: 0; }
+    .hero__cursor.is-go { animation: hero-cursor-in 800ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .hero__cursor.is-go .hero__arrowhead { animation: hero-click 300ms 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .hero__cursor.is-go .hero__burst { animation: hero-burst 600ms 760ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  }
+  @keyframes hero-cursor-in {
+    from { opacity: 0; translate: 0.5em 0.35em; rotate: 12deg; }
+    to { opacity: 1; translate: 0 0; rotate: 0deg; }
+  }
+  @keyframes hero-click { 50% { scale: 0.8; } }
+  @keyframes hero-burst {
+    from { scale: 0.2; opacity: 0; }
+    50% { scale: 1.15; opacity: 1; }
+    to { scale: 1; opacity: 1; }
+  }
+  .hero__cursor { display: inline-block; height: 0.8125em; width: auto; vertical-align: baseline; margin-inline: 0.03em -0.01em; color: var(--fg); }
 
   /* By Ailyn Japa */
   .hero__signature { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; }
@@ -511,31 +557,47 @@ const callouts = [
   .hero__pin { position: relative; overflow: hidden; }
   .hero__deck { display: none; }
 
-  /* The deck: only with JS and motion allowed. */
+  /* A card's skin and layout, shared by the story deck and the grid. */
+  .hero__card {
+    display: grid; grid-template-rows: auto 1fr auto; gap: 8px;
+    padding: clamp(18px, 2.2vw, 28px) clamp(20px, 2.6vw, 34px); border-radius: 28px; overflow: clip;
+    border: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+  }
+  .hero__card-head { display: flex; align-items: center; gap: 12px; font: 600 12px/1 'Parkinsans', var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: color-mix(in oklab, var(--fg) 75%, transparent); }
+  .hero__card-n { color: var(--accent); }
+  .hero__card-line { font: 500 clamp(15px, 1.3vw, 19px)/1.4 var(--text); color: color-mix(in oklab, var(--fg) 82%, transparent); max-width: 36ch; }
+  .hero__scene { position: relative; min-height: 0; }
+  .hero__scene :global(svg) { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; scale: var(--zoom, 1); }
+
+  /* The deck: only with JS and motion allowed, until the story has played
+     once (html.story-seen, set in BaseLayout) — then the grid below. */
   @media (prefers-reduced-motion: no-preference) {
-    :global(.js) .hero { height: 880svh; } /* keep in sync with END in the script */
-    :global(.js) .hero__pin { position: sticky; top: 0; height: 100svh; }
-    :global(.js) .hero__deck {
+    :global(.js:not(.story-seen)) .hero { height: 880svh; } /* keep in sync with END in the script */
+    :global(.js:not(.story-seen)) .hero__pin { position: sticky; top: 0; height: 100svh; }
+    :global(.js:not(.story-seen)) .hero__deck {
       display: block; position: absolute; z-index: 1; left: 57%; top: 53%; translate: -50% -50%;
       width: min(62vw, 920px); height: min(74svh, 640px); pointer-events: none;
     }
-    :global(.js) .hero__card {
-      position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 8px;
-      padding: clamp(18px, 2.2vw, 28px) clamp(20px, 2.6vw, 34px); border-radius: 28px; overflow: clip;
-      border: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+    :global(.js:not(.story-seen)) .hero__card {
+      position: absolute; inset: 0;
       box-shadow: 0 -10px 60px -20px rgb(0 0 0 / 0.7);
       visibility: hidden; transform-origin: 50% 50%; will-change: transform;
     }
     /* Sinks into the stack: dimmed as later cards cover it. */
-    :global(.js) .hero__card::after { content: ''; position: absolute; inset: 0; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
-    :global(.js) .hero__card-head { display: flex; align-items: center; gap: 12px; font: 600 12px/1 'Parkinsans', var(--display); letter-spacing: 0.16em; text-transform: uppercase; color: color-mix(in oklab, var(--fg) 75%, transparent); }
-    :global(.js) .hero__card-n { color: var(--accent); }
-    :global(.js) .hero__card-line { font: 500 clamp(15px, 1.3vw, 19px)/1.4 var(--text); color: color-mix(in oklab, var(--fg) 82%, transparent); max-width: 36ch; }
-    :global(.js) .hero__scene { position: relative; min-height: 0; }
-    :global(.js) .hero__scene :global(svg) { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; scale: var(--zoom, 1); }
-    :global(.js) .hero__scene :global([data-part]) { will-change: transform, opacity; }
-    :global(.js) .hero__panel { position: relative; z-index: 2; }
+    :global(.js:not(.story-seen)) .hero__card::after { content: ''; position: absolute; inset: 0; background: var(--bg); opacity: var(--dim, 0); pointer-events: none; }
+    :global(.js:not(.story-seen)) .hero__scene :global([data-part]) { will-change: transform, opacity; }
+    :global(.js:not(.story-seen)) .hero__panel { position: relative; z-index: 2; }
   }
+
+  /* Repeat visits: the six cards as a plain grid under the hero. */
+  :global(.story-seen) .hero__pin { display: flex; flex-direction: column; }
+  :global(.story-seen) .hero__deck {
+    position: relative; order: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    width: min(1120px, 100% - 40px); margin: 0 auto clamp(48px, 8vw, 96px);
+  }
+  :global(.story-seen) .hero__scene { aspect-ratio: 4 / 3; }
+  @media (max-width: 1023px) { :global(.story-seen) .hero__deck { grid-template-columns: repeat(2, 1fr); } }
+
   /* A step lighter than the site's default anatomy palette — the scenes are
      the protagonists on a near-black page, not small insets. */
   .hero__scene.anatomy-figure.iso {
@@ -557,7 +619,13 @@ const callouts = [
     /* Too cramped for wires at phone width — the header nav covers these links. */
     .hero__callouts { display: none; }
     .hero__head { margin-top: 0; }
-    :global(.js) .hero__deck { left: 50%; top: 54%; width: calc(100vw - 32px); height: min(72svh, 620px); }
-    :global(.js) .hero__card { border-radius: 22px; }
+    :global(.js:not(.story-seen)) .hero__deck { left: 50%; top: 54%; width: calc(100vw - 32px); height: min(72svh, 620px); }
+    .hero__card { border-radius: 22px; }
+    /* Grid → a swipeable row on phones. */
+    :global(.story-seen) .hero__deck {
+      display: flex; width: 100%; padding-inline: 16px; overflow-x: auto; scroll-snap-type: x mandatory;
+      scroll-padding-inline: 16px; scrollbar-width: none;
+    }
+    :global(.story-seen) .hero__card { flex: 0 0 82%; scroll-snap-align: start; }
   }
 </style>

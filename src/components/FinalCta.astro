@@ -1,71 +1,175 @@
 ---
+// Closing panel before the footer: the brand's cursor "clicking" the
+// headline, the two ways to reach Ailyn, and a fan of real pieces from the
+// catalog that spreads out as the panel scrolls in (and on hover).
+import { Icon } from 'astro-icon/components';
+import type { Product } from '../lib/sheets';
+interface Props { products: Product[] }
+const { products } = Astro.props;
+// The last few pieces, so the fan doesn't repeat Destacados.
+const fan = products.slice(-3);
+
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
+const instagram = import.meta.env.INSTAGRAM_URL;
 const message = encodeURIComponent('Hola! Quiero hacer una pieza personalizada.');
 ---
-<section id="cta-final" class="relative" data-final-cta>
-  <div class="relative lg:h-screen overflow-hidden" data-final-cta-stage>
-    <div
-      class="lg:absolute lg:inset-0 bg-brand-lilac border border-accent flex flex-col items-center justify-center text-center px-8 py-20 rounded-[2rem] lg:rounded-[2rem] max-w-xl lg:max-w-none mx-auto my-10 lg:my-0"
-      data-final-cta-panel
-    >
-      <span class="font-mono text-xs tracking-[0.2em] uppercase text-brand-black/60 mb-4">Creative Design</span>
-      <h2 data-gsap="kinetic-heading" class="font-display text-3xl sm:text-5xl lg:text-6xl font-bold text-brand-black uppercase tracking-tight leading-[0.95]">
-        ¿Creamos tu pieza?
+<section id="cta-final" class="cta" data-cta>
+  <div class="cta__panel">
+    <div class="cta__copy">
+      <span class="cta__eyebrow">Contacto</span>
+      <h2 class="cta__title">
+        <span class="sr-only">¿Tienes una idea?</span>
+        <span aria-hidden="true">¿Tienes una{' '}<span class="cta__idea">ide<svg viewBox="-4 -0.5 27 32.5" class="cta__cursor" fill="none">
+          <g transform="rotate(16.5 12.5 20.5)">
+            <g class="cta__burst">
+              <g transform="translate(4,4) rotate(15)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="currentColor" /></g>
+              <g transform="translate(-1,6) rotate(-40)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#f7d842" /></g>
+              <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
+              <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
+            </g>
+            <g class="cta__arrowhead"><path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /></g>
+          </g>
+        </svg></span>?</span>
+        <span class="cta__title-sub">La hacemos realidad.</span>
       </h2>
-      <p class="text-brand-black/80 mt-4 max-w-md">Cuéntanos tu idea y la hacemos realidad, personalizada para ti.</p>
-      <a
-        href={`https://wa.me/${whatsapp}?text=${message}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        data-magnetic
-        class="mt-8 inline-flex items-center gap-2 rounded-full bg-brand-black text-white px-6 py-3 font-medium hover:opacity-90"
-      >
-        Escríbenos por WhatsApp
-      </a>
+      <p class="cta__lead">Cuéntanos qué tienes en mente: un logo, un regalo, una taza con tu foto. Te mostramos el diseño antes de producirlo.</p>
+      <div class="cta__actions">
+        <a class="cta__btn cta__btn--solid" href={`https://wa.me/${whatsapp}?text=${message}`} target="_blank" rel="noopener noreferrer" data-magnetic>
+          <Icon name="simple-icons:whatsapp" class="w-4 h-4" />
+          Escríbenos por WhatsApp
+          <Icon name="lucide:arrow-up-right" class="w-4 h-4 cta__arrow" />
+        </a>
+        <a class="cta__btn" href={instagram} target="_blank" rel="noopener noreferrer">
+          <Icon name="simple-icons:instagram" class="w-4 h-4" />
+          Instagram
+        </a>
+      </div>
     </div>
+
+    {fan.length > 0 && (
+      <div class="cta__fan" data-fan>
+        {fan.map((p, i) => (
+          <a class={`cta__photo${i === Math.floor(fan.length / 2) ? ' cta__photo--front' : ''}`} style={`--i: ${i - (fan.length - 1) / 2}; --a: ${Math.abs(i - (fan.length - 1) / 2)}`} href={`/catalogo/${p.slug}/${p.productoSlug}`} data-fan-card>
+            <img src={p.fotos[0]} alt={p.nombre} loading="lazy" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
+            <span>{p.nombre}</span>
+          </a>
+        ))}
+      </div>
+    )}
   </div>
 </section>
 
 <script>
-  import gsap from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { inView } from 'motion';
 
-  gsap.registerPlugin(ScrollTrigger);
-
-  // Closing plate: grows from a small card to fill the screen as you scroll
-  // through it (adapted from the Halo reference's FinalCta). Desktop +
-  // motion-safe only — on phones it's just a normal, modestly-sized card,
-  // consistent with how this project gates every other pin effect.
+  // The fan opens once the panel is in view (CSS does the motion).
   function mount() {
-    document.querySelectorAll<HTMLElement>('[data-final-cta]').forEach((root) => {
-      if (root.dataset.finalCtaMounted) return;
-      root.dataset.finalCtaMounted = 'true';
-
-      const stage = root.querySelector<HTMLElement>('[data-final-cta-stage]');
-      const panel = root.querySelector<HTMLElement>('[data-final-cta-panel]');
-      if (!stage || !panel) return;
-
-      const mm = gsap.matchMedia();
-      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-        gsap.fromTo(
-          panel,
-          { scale: 0.4, borderRadius: '2rem' },
-          {
-            scale: 1,
-            borderRadius: '0rem',
-            ease: 'none',
-            scrollTrigger: {
-              trigger: stage,
-              start: 'top top',
-              end: '+=80%',
-              pin: true,
-              scrub: 0.6,
-            },
-          }
-        );
-      });
+    document.querySelectorAll<HTMLElement>('[data-cta]').forEach((root) => {
+      if (root.dataset.ctaMounted) return;
+      root.dataset.ctaMounted = 'true';
+      inView(root, () => { root.classList.add('is-open'); }, { amount: 0.35 });
     });
   }
-
   document.addEventListener('astro:page-load', mount);
 </script>
+
+<style>
+  .cta { max-width: 72rem; margin: 0 auto; padding: 4rem 1.5rem; }
+  .cta__panel {
+    position: relative; overflow: clip; display: grid; gap: 3rem; align-items: center;
+    padding: clamp(2rem, 5vw, 4.5rem);
+    border: 1px solid color-mix(in oklab, var(--lilac) 22%, transparent); border-radius: 2rem;
+    background:
+      radial-gradient(70% 90% at 100% 0%, color-mix(in oklab, var(--lilac) 18%, transparent), transparent 60%),
+      radial-gradient(50% 70% at 0% 100%, color-mix(in oklab, #5ec8e8 8%, transparent), transparent 60%),
+      var(--surface);
+  }
+  @media (min-width: 1024px) { .cta__panel { grid-template-columns: 1.15fr 1fr; } }
+
+  .cta__eyebrow { font: 500 12px/1 var(--font-mono, monospace); letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-subtle, var(--muted)); }
+  .cta__title {
+    margin-top: 1rem; font-family: 'Parkinsans', var(--font-display); font-weight: 700;
+    font-size: clamp(2.4rem, 5.5vw, 4.5rem); line-height: 0.98; letter-spacing: -0.04em; color: var(--foreground);
+  }
+  .cta__idea { color: var(--lilac); white-space: nowrap; }
+  /* The cursor stands in for the "a" of "idea", as in the hero's "Cre▸tive". */
+  .cta__cursor { display: inline-block; height: 0.8125em; width: auto; vertical-align: baseline; margin-inline: 0.03em -0.01em; color: var(--foreground); }
+  .cta__burst, .cta__arrowhead { transform-box: fill-box; }
+  .cta__burst { transform-origin: 100% 100%; }
+  .cta__arrowhead { transform-origin: 0 0; }
+  /* In view: the cursor glides in and clicks, then clicks again every few
+     seconds — the arrow presses down and the confetti bursts from its tip. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.js) .cta:not(.is-open) .cta__cursor { opacity: 0; }
+    .cta.is-open .cta__cursor { animation: cta-cursor-in 800ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .cta.is-open .cta__arrowhead { animation: cta-click 3.6s 700ms cubic-bezier(0.34, 1.56, 0.64, 1) infinite; }
+    .cta.is-open .cta__burst { animation: cta-burst 3.6s 700ms cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+  }
+  @keyframes cta-cursor-in {
+    from { opacity: 0; translate: 0.5em 0.35em; rotate: 12deg; }
+    to { opacity: 1; translate: 0 0; rotate: 0deg; }
+  }
+  @keyframes cta-click {
+    0%, 8%, 100% { scale: 1; }
+    4% { scale: 0.8; }
+  }
+  @keyframes cta-burst {
+    0%, 3% { scale: 0.2; opacity: 0; }
+    12% { scale: 1.15; opacity: 1; }
+    20%, 70% { scale: 1; opacity: 1; }
+    85%, 100% { scale: 1; opacity: 0; }
+  }
+  .cta__title-sub { display: block; color: var(--lilac); }
+  .cta__lead { margin-top: 1.25rem; max-width: 46ch; color: var(--color-muted); font-size: 1.05rem; line-height: 1.55; }
+
+  .cta__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+  .cta__btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; white-space: nowrap; padding: 0 1.4rem; border-radius: 999px;
+    border: 1px solid var(--border-strong); color: var(--foreground); font-weight: 500;
+    transition: border-color 200ms, color 200ms, background-color 200ms, scale 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cta__btn:active { scale: 0.97; }
+  .cta__btn--solid { background: var(--accent); border-color: var(--accent); color: var(--background); }
+  .cta__arrow { transition: translate 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+  @media (hover: hover) {
+    .cta__btn:hover { border-color: var(--accent); color: var(--accent); }
+    .cta__btn--solid:hover { color: var(--background); filter: brightness(1.06); }
+    .cta__btn--solid:hover .cta__arrow { translate: 2px -2px; }
+  }
+
+  /* The fan: three photo cards stacked in the middle; opened, each turns
+     and slides out by its index (--i: -1, 0, 1). */
+  .cta__fan { position: relative; height: clamp(300px, 34vw, 420px); }
+  .cta__photo {
+    position: absolute; left: 50%; top: 50%; width: clamp(160px, 17vw, 220px);
+    padding: 10px 10px 0; border-radius: 18px; background: var(--background);
+    border: 1px solid var(--border); box-shadow: 0 24px 50px -20px rgb(0 0 0 / 0.6);
+    translate: -50% -50%; rotate: calc(var(--i) * 3deg);
+    transition: translate 900ms cubic-bezier(0.16, 1, 0.3, 1), rotate 900ms cubic-bezier(0.16, 1, 0.3, 1), scale 450ms cubic-bezier(0.16, 1, 0.3, 1), filter 450ms, box-shadow 450ms;
+    transition-delay: calc((var(--i) + 1) * 80ms);
+  }
+  .cta__photo img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 10px; }
+  .cta__photo span { display: block; padding: 10px 2px 12px; font-size: 13px; color: var(--color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cta.is-open .cta__photo {
+    translate: calc(-50% + var(--i) * var(--spread, 58%)) calc(-50% + var(--a) * 18px - var(--lift, 0px));
+    rotate: calc(var(--i) * var(--tilt, 9deg));
+  }
+  .cta__photo--front { z-index: 1; }
+  /* Hover: the card under the pointer is picked up — it comes to the front,
+     lifts and straightens — while the rest step back and dim. Moving to
+     another card hands the front over to it. */
+  @media (hover: hover) {
+    .cta.is-open .cta__fan:hover .cta__photo { --spread: 64%; transition-delay: 0ms; transition-duration: 450ms; }
+    .cta.is-open .cta__fan:has(.cta__photo:hover) .cta__photo:not(:hover) { scale: 0.94; filter: brightness(0.6); }
+    .cta.is-open .cta__fan .cta__photo:hover { z-index: 3; --lift: 18px; --tilt: 2deg; scale: 1.04; box-shadow: 0 34px 60px -20px rgb(0 0 0 / 0.75); }
+  }
+  @media (max-width: 639px) {
+    .cta__actions .cta__btn { flex: 1 1 100%; }
+    .cta__fan { height: 280px; }
+    .cta__photo { width: 128px; }
+    .cta.is-open .cta__photo { translate: calc(-50% + var(--i) * 48%) calc(-50% + var(--a) * 14px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cta__photo { transition: none; }
+  }
+</style>

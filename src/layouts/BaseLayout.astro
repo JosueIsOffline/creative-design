@@ -23,7 +23,17 @@ const whatsapp = import.meta.env.WHATSAPP_NUMBER;
     <meta charset="utf-8" />
     <script is:inline>
       (function () {
-        document.documentElement.classList.add('js');
+        // Re-applied after every client-side swap, which resets <html>'s classes.
+        // story-seen: the home's scroll story already played (HeroScene.astro).
+        function flags() {
+          var html = document.documentElement;
+          html.classList.add('js');
+          try {
+            if (localStorage.getItem('story-seen') === '1') html.classList.add('story-seen');
+          } catch {}
+        }
+        flags();
+        document.addEventListener('astro:after-swap', flags);
         try {
           var stored = localStorage.getItem('theme');
           var theme = stored === 'light' || stored === 'dark'
