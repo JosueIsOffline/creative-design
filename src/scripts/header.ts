@@ -24,7 +24,8 @@ function mount() {
     const onScroll = () => {
       const y = window.scrollY;
       header!.classList.toggle('is-scrolled', y > 10);
-      header!.classList.toggle('is-away', y > lastY && y > 80);
+      // Never slides away with the menu open.
+      header!.classList.toggle('is-away', y > lastY && y > 80 && !header!.classList.contains('is-open'));
       lastY = y;
       tone();
       queued = false;

@@ -53,40 +53,54 @@
   display: none;
 }
 
-/* Scope the theme-toggle crossfade to just the icon, not the whole page.
-   Without this, the browser's default root view-transition group
-   crossfades every element on the page for ~250ms on each click — a
-   full-page flash instead of a simple icon swap. .is-theme-transition is
+/* Theme switch: the new theme sweeps in from the top-left corner as a
+   diagonal wipe with a soft gradient edge (a gradient mask slid across —
+   "polygon gradient" from theme-toggle.rdsx.dev). .is-theme-transition is
    added right before startViewTransition() and removed once it settles
-   (see theme.ts), so this never touches Astro's separate page-navigation
-   transitions, which don't set that class. */
-html.is-theme-transition::view-transition-old(root),
-html.is-theme-transition::view-transition-new(root) {
+   (see theme.ts), so Astro's page-navigation transitions are untouched. */
+html.is-theme-transition::view-transition-old(root) {
   animation: none;
+  z-index: -1;
 }
-
-#theme-toggle {
-  view-transition-name: theme-icon;
+html.is-theme-transition::view-transition-new(root) {
+  /* A CSS gradient slid into place, not a growing SVG: no image to load or
+     re-rasterize at every frame, so it stays smooth. */
+  /* Sized so the soft edge starts at the top-left corner and ends just past
+     the bottom-right one — the whole sweep happens on screen. */
+  mask: linear-gradient(135deg, #000 40%, transparent 56%) 100% 100% / 250% 250%
+    no-repeat;
+  animation: theme-wipe 1.8s cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+@keyframes theme-wipe {
+  to {
+    mask-position: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.is-theme-transition::view-transition-new(root) {
+    animation: none;
+    mask: none;
+  }
 }
 
 /* Pointer spotlight (see micro-interactions.ts): a soft glow that follows
    the cursor, positioned via --mx/--my set on pointermove. */
 [data-spot]::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), color-mix(in oklab, var(--accent) 25%, transparent), transparent 70%);
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--accent) 25%, transparent),
+    transparent 70%
+  );
   transition: opacity 0.3s ease;
 }
 
 [data-spot]:hover::after {
   opacity: 1;
-}
-
-html.is-theme-transition::view-transition-group(theme-icon) {
-  animation-duration: 0.15s;
 }
 
 .product-card.is-expanded {
@@ -107,9 +121,19 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   border-radius: 1rem;
   animation: card-fade 220ms ease-out;
 }
-.product-card.is-expanded.is-leaving { animation: card-fade-out 220ms ease-in forwards; }
-@keyframes card-fade { from { opacity: 0; } }
-@keyframes card-fade-out { to { opacity: 0; } }
+.product-card.is-expanded.is-leaving {
+  animation: card-fade-out 220ms ease-in forwards;
+}
+@keyframes card-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes card-fade-out {
+  to {
+    opacity: 0;
+  }
+}
 
 /* Opened, the photo holds still: no hover zoom, no pointer tilt (GSAP sets
    it inline, hence !important). */
@@ -203,7 +227,10 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   background: color-mix(in oklab, var(--background) 55%, transparent);
   border-color: var(--border);
   color: var(--foreground);
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 #site-header.is-scrolled .header-pill {
@@ -218,6 +245,24 @@ html.is-theme-transition::view-transition-group(theme-icon) {
 
 #site-header.is-scrolled[data-tone="forced-dark"] .header-pill {
   background: color-mix(in oklab, var(--color-brand-black) 92%, transparent);
+}
+
+/* Menu open (SiteHeader.astro): the pill becomes the dark panel — after the
+   tone rules so it wins over them. */
+#site-header.is-open .header-pill,
+#site-header.is-open[data-tone] .header-pill {
+  width: min(620px, 100vw - 48px);
+  overflow: hidden;
+  border-radius: 24px;
+  /* Smoked glass: the page shows through, blurred. */
+  background: rgb(14 15 17 / 0.82);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.7);
+  color: #fff;
+  border-color: rgb(255 255 255 / 0.08);
+  /* Quick, so the pill doesn't pass through a muddy grey on the way. */
+  transition-duration: 0.12s;
 }
 
 /* Subtle filmic grain for the Services storytelling section — cheap
@@ -283,16 +328,16 @@ html.is-theme-transition::view-transition-group(theme-icon) {
 .anatomy-figure .iso-top {
   stroke: none;
 }
-.anatomy-figure .iso-shade[data-shade='0'] {
+.anatomy-figure .iso-shade[data-shade="0"] {
   fill: var(--anatomy-shade-0);
 }
-.anatomy-figure .iso-shade[data-shade='1'] {
+.anatomy-figure .iso-shade[data-shade="1"] {
   fill: var(--anatomy-shade-1);
 }
-.anatomy-figure .iso-shade[data-shade='2'] {
+.anatomy-figure .iso-shade[data-shade="2"] {
   fill: var(--anatomy-shade-2);
 }
-.anatomy-figure .iso-shade[data-shade='3'] {
+.anatomy-figure .iso-shade[data-shade="3"] {
   fill: var(--anatomy-shade-3);
 }
 .anatomy-figure .iso-top {
@@ -321,19 +366,19 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.anatomy-figure .iso-line[data-tone='hi'] {
+.anatomy-figure .iso-line[data-tone="hi"] {
   stroke: var(--anatomy-hi);
 }
-.anatomy-figure .iso-line[data-tone='mid'] {
+.anatomy-figure .iso-line[data-tone="mid"] {
   stroke: var(--anatomy-mid);
 }
-.anatomy-figure .iso-line[data-tone='lo'] {
+.anatomy-figure .iso-line[data-tone="lo"] {
   stroke: var(--anatomy-lo);
 }
-.anatomy-figure .iso-line[data-tone='faint'] {
+.anatomy-figure .iso-line[data-tone="faint"] {
   stroke: var(--anatomy-faint);
 }
-.anatomy-figure .iso-line[data-tone='lit'] {
+.anatomy-figure .iso-line[data-tone="lit"] {
   stroke: var(--anatomy-lit);
 }
 .anatomy-figure .iso-dots circle {
@@ -341,36 +386,36 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   stroke: none;
   opacity: 0.32;
 }
-.anatomy-figure .iso-dots[data-tone='hi'] circle {
+.anatomy-figure .iso-dots[data-tone="hi"] circle {
   opacity: 0.85;
 }
-.anatomy-figure .iso-dots[data-tone='mid'] circle {
+.anatomy-figure .iso-dots[data-tone="mid"] circle {
   opacity: 0.45;
 }
-.anatomy-figure .iso-dots[data-tone='lo'] circle {
+.anatomy-figure .iso-dots[data-tone="lo"] circle {
   opacity: 0.22;
 }
-.anatomy-figure .iso-dots[data-tone='faint'] circle {
+.anatomy-figure .iso-dots[data-tone="faint"] circle {
   opacity: 0.12;
 }
 .anatomy-figure .iso-face-text {
   fill: var(--anatomy-mid);
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   letter-spacing: 0.04em;
 }
-.anatomy-figure .iso-face-text[data-tone='hi'] {
+.anatomy-figure .iso-face-text[data-tone="hi"] {
   fill: var(--anatomy-hi);
 }
-.anatomy-figure .iso-face-text[data-tone='lo'] {
+.anatomy-figure .iso-face-text[data-tone="lo"] {
   fill: var(--anatomy-lo);
 }
-.anatomy-figure .iso-face-text[data-tone='faint'] {
+.anatomy-figure .iso-face-text[data-tone="faint"] {
   fill: var(--anatomy-faint);
 }
-.anatomy-figure .iso-face-text[data-tone='lit'] {
+.anatomy-figure .iso-face-text[data-tone="lit"] {
   fill: var(--anatomy-lit);
 }
-.anatomy-figure [data-part='heat-face'] {
+.anatomy-figure [data-part="heat-face"] {
   transition: opacity 0.15s linear;
 }
 
@@ -391,7 +436,9 @@ html.is-theme-transition::view-transition-group(theme-icon) {
   /* Its z-index makes a stacking context that would trap an expanded
      product card under the page-wide backdrop (z-40). Tree order still
      paints it over the hero. */
-  .js .after-hero:has(.product-card.is-expanded) { z-index: auto; }
+  .js .after-hero:has(.product-card.is-expanded) {
+    z-index: auto;
+  }
 }
 
 /* Add-to-cart effect (src/scripts/add-to-cart-fx.ts). */

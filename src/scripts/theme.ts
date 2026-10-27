@@ -22,20 +22,37 @@ if (typeof document !== 'undefined') {
     }
 
     if (document.startViewTransition) {
-      // Scope the crossfade to just the toggle icon (see the
-      // .is-theme-transition rule in global.css) — without this marker
-      // class the browser's default root transition group crossfades the
-      // ENTIRE page for ~250ms on every click, which reads as a full-page
-      // flash/wash rather than a simple icon swap.
+      // The marker class turns on the diagonal wipe (global.css) for this
+      // transition only, not for Astro's page navigations.
       document.documentElement.classList.add('is-theme-transition');
       const transition = document.startViewTransition(() => applyTheme(theme));
+      active = transition;
       transition.finished.catch(() => {}).finally(() => {
         document.documentElement.classList.remove('is-theme-transition');
+        if (active === transition) active = null;
       });
     } else {
       applyTheme(theme);
     }
   };
+
+  // While a view transition plays, Chrome hit-tests every click to <html>,
+  // so nothing on the page responds for the whole wipe. A click then ends
+  // the wipe at once and is handed to whatever is under the pointer.
+  let active: ViewTransition | null = null;
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!active || e.target !== document.documentElement) return;
+      const { clientX: x, clientY: y } = e;
+      active.skipTransition();
+      // dispatchEvent, not .click(): the target may be an SVG icon.
+      active.finished.finally(() =>
+        document.elementFromPoint(x, y)?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: x, clientY: y }))
+      );
+    },
+    true
+  );
 
   document.getElementById('theme-toggle')?.addEventListener('click', () => {
     setTheme(currentTheme() === 'light' ? 'dark' : 'light');

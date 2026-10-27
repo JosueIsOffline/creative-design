@@ -5,7 +5,8 @@
 <script>
   import { addToCartWithFx } from '../scripts/add-to-cart-fx';
 
-  const backdrop = document.getElementById('card-expand-backdrop');
+  // Looked up on use: each page navigation brings a fresh backdrop element.
+  const backdrop = () => document.getElementById('card-expand-backdrop');
 
   let expandedArticle: HTMLElement | null = null;
   let expandedLink: HTMLElement | null = null;
@@ -38,7 +39,7 @@
         article.classList.remove('is-expanded');
         revealEls.forEach((el) => el.classList.remove('is-hiding'));
         link.style.minHeight = '';
-        backdrop?.classList.add('opacity-0', 'pointer-events-none');
+        backdrop()?.classList.add('opacity-0', 'pointer-events-none');
         document.body.style.overflow = '';
       };
 
@@ -65,7 +66,7 @@
 
     const applyOpen = () => {
       article.classList.add('is-expanded');
-      backdrop?.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop()?.classList.remove('opacity-0', 'pointer-events-none');
       document.body.style.overflow = 'hidden';
     };
 
@@ -133,7 +134,7 @@
         }
       }
 
-      if (target === backdrop) {
+      if (target === backdrop()) {
         closeExpanded();
       }
     },

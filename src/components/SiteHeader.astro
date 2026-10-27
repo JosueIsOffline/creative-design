@@ -1,0 +1,202 @@
+---
+// The floating pill header. The menu button morphs the pill itself into a
+// dark panel: big links on the left, a product photo on the right that
+// follows the hovered link, socials underneath (details.so "Morphing
+// Navigation"). Cart and theme stay in the bar, open or closed.
+import { Icon } from 'astro-icon/components';
+import { fetchCatalog } from '../lib/sheets';
+
+const instagram = import.meta.env.INSTAGRAM_URL;
+const whatsapp = import.meta.env.WHATSAPP_NUMBER;
+// ponytail: fetches the catalog once per page at build time; memoize in sheets.ts if builds get slow.
+const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
+const photo = (i: number) => products[i % products.length]?.fotos[0] ?? '/logo.jpg';
+const links = [
+  { label: 'Inicio', href: '/' },
+  { label: 'Catálogo', href: '/catalogo' },
+  { label: 'Cómo pedir', href: '/#como-pedir' },
+  { label: 'Nosotros', href: '/#sobre-la-marca' },
+  { label: 'Contacto', href: '/#cta-final' },
+].map((l, i) => ({ ...l, img: photo(i) }));
+---
+<header transition:persist="site-header" id="site-header" class="fixed inset-x-0 top-6 z-40 flex justify-center px-6 pointer-events-none">
+  <div class="header-pill pointer-events-auto w-full sm:w-auto rounded-[22px] border backdrop-blur-xl">
+    <div class="nav-bar flex items-center justify-between sm:justify-start gap-2 sm:gap-4 h-11 pl-3.5 pr-1.5">
+      <a href="/" class="flex items-center gap-2 shrink-0" aria-label="Creative Design, inicio">
+        <img src="/logo.jpg" alt="" class="h-6 w-6 rounded-full" />
+        <span class="font-semibold text-sm">Creative Design</span>
+      </a>
+      <!-- The one destination that matters most stays a click away on desktop. -->
+      <a href="/catalogo" class="nav-quick hidden sm:inline-flex items-center px-3 py-1.5 rounded-full text-sm hover:text-accent transition-colors">Catálogo</a>
+      <div class="flex items-center gap-1 shrink-0 sm:ml-auto">
+        <a href="/carrito" id="cart-toggle" aria-label="Ver carrito" class="relative w-8 h-8 rounded-full flex items-center justify-center hover:text-accent transition-colors">
+          <Icon name="lucide:shopping-cart" class="w-4 h-4" />
+          <span id="cart-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-accent text-background text-[10px] font-bold flex items-center justify-center">0</span>
+        </a>
+        <button type="button" id="theme-toggle" aria-label="Cambiar entre modo claro y oscuro" class="w-8 h-8 rounded-full flex items-center justify-center hover:text-accent transition-colors">
+          <Icon name="line-md:sunny-filled" class="theme-icon-sun w-4 h-4" aria-hidden="true" />
+          <Icon name="line-md:moon-filled" class="theme-icon-moon w-4 h-4" aria-hidden="true" />
+        </button>
+        <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-panel" aria-label="Abrir menú" data-nav-toggle>
+          <span class="nav-toggle__label">Menú</span>
+          <span class="nav-toggle__icon" aria-hidden="true"><i></i><i></i></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="nav-panel" id="nav-panel">
+      <nav class="nav-links" aria-label="Principal">
+        <span class="nav-eyebrow">Menú</span>
+        {links.map((l, i) => <a href={l.href} style={`--i: ${i}`} data-nav-link={i}>{l.label}</a>)}
+      </nav>
+      <div class="nav-media" aria-hidden="true">
+        {links.map((l, i) => <img src={l.img} alt="" loading="lazy" class={i === 0 ? 'is-on' : ''} data-nav-img={i} onerror="this.onerror=null;this.src='/placeholder.jpg';" />)}
+      </div>
+      <div class="nav-foot">
+        <a href={instagram} target="_blank" rel="noopener noreferrer"><Icon name="simple-icons:instagram" class="w-3.5 h-3.5" /> Instagram</a>
+        <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer"><Icon name="simple-icons:whatsapp" class="w-3.5 h-3.5" /> WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { animate, stagger } from 'motion';
+
+  const header = document.getElementById('site-header')!;
+  const pill = header.querySelector<HTMLElement>('.header-pill')!;
+  const toggle = header.querySelector<HTMLButtonElement>('[data-nav-toggle]')!;
+  const imgs = header.querySelectorAll<HTMLElement>('[data-nav-img]');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  // Springs timed by how long they *look* (visualDuration), not their tail:
+  // a soft settle on open, no bounce on the way back.
+  const openSpring = { type: 'spring', visualDuration: 0.55, bounce: 0.16 } as const;
+  const closeSpring = { type: 'spring', visualDuration: 0.45, bounce: 0 } as const;
+  const expo = [0.16, 1, 0.3, 1] as const;
+  const items = header.querySelectorAll<HTMLElement>('.nav-eyebrow, [data-nav-link], .nav-foot');
+  const media = header.querySelector<HTMLElement>('.nav-media')!;
+  let closed: DOMRect | null = null;
+  // The running morph. A click mid-animation reverses it from wherever the
+  // pill is (no busy lock to get stuck on); a superseded morph's ending is
+  // simply ignored.
+  let morph: ReturnType<typeof animate> | null = null;
+
+  const show = (i: string) => imgs.forEach((im) => im.classList.toggle('is-on', im.dataset.navImg === i));
+  const isOpen = () => header.classList.contains('is-open') && !header.classList.contains('is-closing');
+
+  // The pill grows from its current size to the panel's: measure both ends,
+  // then spring between them and hand back to CSS.
+  function open() {
+    if (isOpen()) return;
+    const from = pill.getBoundingClientRect();
+    if (!header.classList.contains('is-open')) closed = from;
+    morph?.stop();
+    pill.style.width = pill.style.height = '';
+    header.classList.remove('is-closing');
+    header.classList.add('is-open');
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.setAttribute('aria-label', 'Cerrar menú');
+    show('0');
+    const to = pill.getBoundingClientRect();
+    header.querySelector<HTMLElement>('[data-nav-link]')?.focus({ preventScroll: true });
+    if (reduce.matches) return;
+    // Content rises in while the pill is still growing; the photo wipes up
+    // and settles from a slight zoom.
+    animate(items, { opacity: [0, 1], y: [28, 0] }, { duration: 0.8, ease: expo, delay: stagger(0.05, { startDelay: 0.12 }) });
+    animate(media, { opacity: [0, 1], clipPath: ['inset(100% 0% 0% 0% round 14px)', 'inset(0% 0% 0% 0% round 14px)'] }, { duration: 0.9, ease: expo, delay: 0.18 });
+    animate(header.querySelector('.nav-media img.is-on')!, { scale: [1.2, 1] }, { duration: 1.1, ease: expo, delay: 0.18 });
+    const m = (morph = animate(pill, { width: [from.width, to.width], height: [from.height, to.height] }, openSpring));
+    m.then(() => { if (morph === m) pill.style.width = pill.style.height = ''; });
+  }
+
+  function close(focusToggle = false) {
+    if (!isOpen()) return;
+    header.classList.add('is-closing');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Abrir menú');
+    const done = () => {
+      header.classList.remove('is-open', 'is-closing');
+      pill.style.width = pill.style.height = '';
+      if (focusToggle) toggle.focus();
+    };
+    morph?.stop();
+    if (reduce.matches || !closed) return done();
+    const from = pill.getBoundingClientRect();
+    // On phones the pill is full width either way.
+    const w = innerWidth < 640 ? from.width : closed.width;
+    animate([...items, media], { opacity: 0 }, { duration: 0.15 });
+    const m = (morph = animate(pill, { width: [from.width, w], height: [from.height, closed.height] }, closeSpring));
+    m.then(() => { if (morph === m) done(); });
+  }
+
+  toggle.addEventListener('click', () => (isOpen() ? close() : open()));
+  header.querySelectorAll<HTMLElement>('[data-nav-link]').forEach((a) => {
+    a.addEventListener('pointerenter', () => show(a.dataset.navLink!));
+    a.addEventListener('focus', () => show(a.dataset.navLink!));
+    a.addEventListener('click', () => close());
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(true); });
+  // A press on <html> itself is one landing mid view-transition (see theme.ts),
+  // not a real click outside.
+  document.addEventListener('pointerdown', (e) => { if (e.target !== document.documentElement && !pill.contains(e.target as Node)) close(); });
+  document.addEventListener('astro:after-swap', () => close());
+</script>
+
+<style>
+  /* Bar */
+  .nav-toggle {
+    display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px 0 14px; margin-left: 2px;
+    border-radius: 999px; font-size: 13px; font-weight: 500; cursor: pointer;
+    background: color-mix(in oklab, currentColor 10%, transparent);
+    transition: background-color 0.2s;
+  }
+  .nav-toggle:hover { background: color-mix(in oklab, currentColor 16%, transparent); }
+  .nav-toggle__icon { position: relative; width: 12px; height: 8px; }
+  .nav-toggle__icon i {
+    position: absolute; left: 0; width: 100%; height: 1.5px; border-radius: 1px; background: currentColor;
+    transition: top 0.35s cubic-bezier(0.16, 1, 0.3, 1), rotate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-toggle__icon i:first-child { top: 1px; }
+  .nav-toggle__icon i:last-child { top: 5.5px; }
+  :global(#site-header.is-open:not(.is-closing)) .nav-toggle__icon i { top: 3.25px; }
+  :global(#site-header.is-open:not(.is-closing)) .nav-toggle__icon i:first-child { rotate: 45deg; }
+  :global(#site-header.is-open:not(.is-closing)) .nav-toggle__icon i:last-child { rotate: -45deg; }
+
+  /* The panel lists Catálogo itself. */
+  :global(#site-header.is-open) .nav-quick { display: none; }
+
+  /* Open: the pill turns into the panel (pill colours in global.css). */
+  .nav-panel { display: none; }
+  :global(#site-header.is-open) .nav-panel {
+    display: grid; grid-template-columns: 1fr 190px; grid-template-areas: 'links media' 'foot foot';
+    gap: 20px 24px; padding: 18px 18px 16px 22px;
+  }
+  .nav-links { grid-area: links; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .nav-eyebrow { margin-bottom: 10px; font: 500 11px/1 var(--font-mono, monospace); letter-spacing: 0.18em; text-transform: uppercase; color: rgb(255 255 255 / 0.45); }
+  .nav-links a {
+    font-family: 'Parkinsans', var(--font-display); font-weight: 600; font-size: clamp(1.75rem, 4.2vw, 2.4rem);
+    line-height: 1.1; letter-spacing: -0.035em; color: #fff; transition: opacity 0.25s, translate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* Hovering one link steps the others back. */
+  .nav-links:hover a:not(:hover) { opacity: 0.35; }
+  .nav-links a:hover, .nav-links a:focus-visible { translate: 6px 0; color: var(--lilac, #d9a8d9); outline: none; }
+
+  .nav-media { grid-area: media; position: relative; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; background: #1a1a1a; }
+  .nav-media img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; scale: 1.06; transition: opacity 0.45s, scale 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-media img.is-on { opacity: 1; scale: 1; }
+
+  .nav-foot { grid-area: foot; display: flex; gap: 18px; padding-top: 14px; border-top: 1px solid rgb(255 255 255 / 0.1); }
+  .nav-foot a { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: rgb(255 255 255 / 0.6); transition: color 0.2s; }
+  .nav-foot a:hover { color: #fff; }
+
+
+  @media (max-width: 639px) {
+    :global(#site-header.is-open) .nav-panel { grid-template-columns: 1fr; grid-template-areas: 'links' 'foot'; }
+    .nav-media { display: none; }
+    .nav-toggle__label { display: none; }
+    .nav-toggle { padding: 0; width: 32px; justify-content: center; }
+  }
+</style>
