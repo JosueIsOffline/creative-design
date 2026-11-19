@@ -1,7 +1,7 @@
 ---
 import { Icon } from 'astro-icon/components';
-interface Props { nombreMarca: string; frase: string }
-const { nombreMarca, frase } = Astro.props;
+interface Props { brandName: string; tagline: string }
+const { brandName, tagline } = Astro.props;
 const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', 'Sublimación'];
 ---
 <section id="hero-panel" class="relative min-h-screen flex flex-col items-center justify-center text-center px-6">
@@ -13,7 +13,7 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
     ))}
   </div>
   <h1 data-gsap="hero-title" class="font-display text-6xl sm:text-8xl md:text-9xl font-bold tracking-tight text-accent leading-none">
-    {nombreMarca === 'Creative Design' ? (
+    {brandName === 'Creative Design' ? (
       <>
         <span class="sr-only">Creative Designnnn</span>
         <span aria-hidden="true">
@@ -44,14 +44,14 @@ const chips = ['Identidad visual', 'Flyers', 'Papelería', 'Personalización', '
           </svg>tive Design
         </span>
       </>
-    ) : nombreMarca}
+    ) : brandName}
   </h1>
   <div class="mt-4 flex items-center justify-center gap-4">
     <span class="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-foreground"></span>
     <span data-gsap="signature" class="font-script text-2xl sm:text-3xl text-foreground">By Ailyn Japa</span>
     <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-foreground"></span>
   </div>
-  <p data-gsap="hero-subtitle" class="mt-6 text-lg text-muted max-w-xl">{frase}</p>
+  <p data-gsap="hero-subtitle" class="mt-6 text-lg text-muted max-w-xl">{tagline}</p>
   <a data-gsap="hero-cta" data-magnetic href="/catalogo" class="mt-8 inline-flex items-center rounded-full bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90">
     <span class="text-brand-black font-medium pr-4">Ver catálogo</span>
     <span class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-black text-white" aria-hidden="true">

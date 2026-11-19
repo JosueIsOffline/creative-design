@@ -37,7 +37,7 @@ describe('micro-interactions are wired onto real elements', () => {
   it('Hero CTA and both add-to-cart buttons are magnetic', async () => {
     const hero = await read('src/components/Hero.astro');
     const card = await read('src/components/ProductCard.astro');
-    const detail = await read('src/pages/catalogo/[categoria]/[producto].astro');
+    const detail = await read('src/pages/catalogo/[category]/[product].astro');
     expect(hero).toContain('data-magnetic');
     expect(card).toContain('data-magnetic');
     expect(detail).toContain('data-magnetic');

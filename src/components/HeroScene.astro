@@ -73,6 +73,13 @@ const callouts = [
                   <g transform="translate(-4,10) rotate(-80)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#e85fa0" /></g>
                   <g transform="translate(-3,15) rotate(-115)"><rect x="-0.65" y="-2" width="1.3" height="4" rx="0.65" fill="#5ec8e8" /></g>
                 </g>
+                <!-- Christmas: the click bursts snow and stars instead of confetti. -->
+                <g class="hero__burst hero__burst--xmas">
+                  <circle cx="4" cy="4" r="1.1" fill="#fff" />
+                  <path d="M-1 3.4 Q-1 5.8 1.4 6 Q-1 6.2 -1 8.6 Q-1 6.2 -3.4 6 Q-1 5.8 -1 3.4Z" fill="#f7d842" />
+                  <circle cx="-4" cy="10" r="0.9" fill="#fff" />
+                  <path d="M-3 12.8 Q-3 14.8 -1 15 Q-3 15.2 -3 17.2 Q-3 15.2 -5 15 Q-3 14.8 -3 12.8Z" fill="#d9a8d9" />
+                </g>
                 <g class="hero__arrowhead"><path d="M4 12l7.07 17 2.51-7.39L21 19.07 4 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /></g>
               </g>
             </svg></span>{'tive'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}</span><span class="hero__ch" data-ch>{' '}</span><span class="hero__word">{'Design'.split('').map((c) => <span class="hero__ch" data-ch>{c}</span>)}</span>
@@ -109,6 +116,7 @@ const callouts = [
 
 <script>
   import { animate, stagger } from 'motion';
+  import { snowOnContour, capPill } from '../scripts/snow-cap';
   import press from '../../tools/heat-press-figure/figure-data.json';
 
   const ease = { outExpo: [0.16, 1, 0.3, 1] as const };
@@ -227,8 +235,27 @@ const callouts = [
         dot.setAttribute('cx', String(dx)); dot.setAttribute('cy', String(dy)); dot.setAttribute('r', '4.5');
         if (!shown) { path.style.strokeDashoffset = '1'; dot.style.opacity = '0'; }
         wires.append(path, dot);
+        if (document.documentElement.classList.contains('is-christmas')) wires.append(...bulbs(path));
         return { path, dot, tag };
       });
+    };
+    // Christmas: each wire becomes a light string. Bulbs every ~20px along it,
+    // in the cursor's confetti colours, twinkling one after another.
+    const BULBS = ['#d9a8d9', '#f7d842', '#e85fa0', '#5ec8e8'];
+    let bulbIndex = 0;
+    const bulbs = (path: SVGPathElement) => {
+      const len = path.getTotalLength(), out: SVGCircleElement[] = [];
+      for (let s = 14; s < len - 8; s += 20) {
+        const pt = path.getPointAtLength(s);
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', pt.x.toFixed(1)); c.setAttribute('cy', pt.y.toFixed(1)); c.setAttribute('r', '2.6');
+        c.setAttribute('class', 'hero__bulb');
+        c.style.setProperty('--c', BULBS[bulbIndex % BULBS.length]);
+        c.style.animationDelay = `${(bulbIndex % 9) * 0.18}s`;
+        bulbIndex++;
+        out.push(c);
+      }
+      return out;
     };
     // Story mode: each tag's offset from its callout spot to its slot in a
     // left-hand column, measured at rest (pin and head move together, so
@@ -246,10 +273,52 @@ const callouts = [
       });
     };
     let parts = draw();
+    if (shown) wires?.classList.add('is-lit');
     measure();
     let rerender = () => {};
-    addEventListener('resize', () => { parts = draw(); measure(); rerender(); }, { signal: ac.signal });
-    document.fonts?.ready.then(() => { parts = draw(); measure(); rerender(); });
+
+    // Christmas: snow settled where it would really rest — on the flat tops of
+    // the headline's letters and on the tags. Each glyph is drawn on an
+    // offscreen canvas at its laid-out spot; the first opaque pixel per column
+    // is the surface; snowOnContour() keeps only the near-flat stretches.
+    let settled = false;
+    const settle = () => {
+      if (!title || !document.documentElement.classList.contains('is-christmas')) return null;
+      tags.forEach((t, i) => capPill(t, 4, i + 3));
+      const tr = title.getBoundingClientRect();
+      const W = Math.ceil(tr.width), H = Math.ceil(tr.height);
+      if (!W || !H) return null;
+      const cv = document.createElement('canvas');
+      cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d', { willReadFrequently: true })!;
+      const cs = getComputedStyle(title);
+      ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      chars.forEach((ch) => {
+        const t = ch.textContent ?? '';
+        if (ch.querySelector('svg') || !t.trim()) return; // the cursor and the space carry none
+        // The letters are inline-blocks on a tight line-height: the baseline sits half the
+        // (negative) leading below the box top, plus the font's ascent.
+        const r = ch.getBoundingClientRect(), m = ctx.measureText(t);
+        const A = m.fontBoundingBoxAscent, D = m.fontBoundingBoxDescent;
+        ctx.fillText(t, r.left - tr.left, r.top - tr.top + (r.height - (A + D)) / 2 + A);
+      });
+      const px = ctx.getImageData(0, 0, W, H).data;
+      const top: number[] = new Array(W).fill(-1);
+      for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) if (px[(y * W + x) * 4 + 3] > 128) { top[x] = y; break; }
+      let svg = title.querySelector<SVGSVGElement>('.hero__snow');
+      if (!svg) {
+        svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'hero__snow');
+        svg.setAttribute('aria-hidden', 'true');
+        title.append(svg);
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = `<path d="${snowOnContour(top, parseFloat(cs.fontSize) * 0.065, 5)}" />`;
+      settled = true;
+      return svg;
+    };
+    addEventListener('resize', () => { parts = draw(); measure(); rerender(); if (settled) settle(); }, { signal: ac.signal });
+    document.fonts?.ready.then(() => { parts = draw(); measure(); rerender(); if (reduce || settled) settle(); });
 
     if (reduce) continue;
 
@@ -267,6 +336,12 @@ const callouts = [
       { duration: 1.3, ease: ease.outExpo, delay: stagger(0.06, { startDelay: start }) }
     );
     const after = start + n * 0.06 + 0.3;
+    // Snow settles once the last letter is in focus (positions are final then).
+    setTimeout(async () => {
+      await document.fonts?.ready;
+      const svg = settle();
+      if (svg) animate(svg, { opacity: [0, 1], y: [-8, 0], filter: ['blur(3px)', 'blur(0px)'] }, { duration: 1.1, ease: ease.outExpo });
+    }, (start + (n - 1) * 0.06 + 1.35) * 1000);
     // The cursor glides in while the letters focus, clicks once, and the
     // confetti bursts from its tip (the closing panel's gesture, unlooped).
     const cursor = root.querySelector('.hero__cursor');
@@ -284,6 +359,8 @@ const callouts = [
         animate(path, { strokeDashoffset: [1, 0] }, { duration: 0.7, ease: [0.65, 0, 0.35, 1], delay: t + 0.1 });
         animate(tag, { opacity: [0, 1], filter: ['blur(8px)', 'blur(0px)'] }, { duration: 0.6, ease: ease.outExpo, delay: t + 0.55 });
       });
+      // The light strings switch on once the last wire has drawn out.
+      setTimeout(() => wires?.classList.add('is-lit'), (parts.length * 0.18 + 0.8) * 1000);
     }, (after + 0.4) * 1000);
 
     // --- The scroll story ---------------------------------------------
@@ -486,6 +563,25 @@ const callouts = [
   .hero__wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .hero__wires :global(path) { fill: none; stroke: color-mix(in oklab, var(--fg) 45%, transparent); stroke-width: 1.25; stroke-dasharray: 1; }
   .hero__wires :global(circle) { fill: var(--fg); transform-box: fill-box; transform-origin: center; }
+  /* Christmas light strings (bulbs only exist in season, see bulbs()). */
+  .hero__wires :global(.hero__bulb) {
+    fill: var(--c); opacity: 0; transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1);
+    filter: drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 7px color-mix(in oklab, var(--c) 60%, transparent));
+  }
+  .hero__wires:global(.is-lit) :global(.hero__bulb) { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__wires:global(.is-lit) :global(.hero__bulb) { animation: hero-twinkle 1.6s ease-in-out infinite alternate; }
+  }
+  @keyframes hero-twinkle { from { opacity: 1; } to { opacity: 0.35; } }
+  /* Christmas cursor: a snow-and-star burst instead of confetti. */
+  .hero__burst--xmas { display: none; }
+  :global(html.is-christmas) .hero__burst--xmas { display: inline; }
+  /* Christmas: snow resting on the letters' tops (built from their real outline, see settle()). */
+  .hero__title { position: relative; }
+  /* Built from script (no scope attribute), so these are global. */
+  :global(.hero__snow) { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  :global(.hero__snow path), :global(.hero__tag .snow-cap path) { fill: #fff; filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.28)); }
+  :global(html.is-christmas) .hero__burst:not(.hero__burst--xmas) { display: none; }
   .hero__tag {
     position: absolute; translate: -50% -50%; pointer-events: auto; white-space: nowrap;
     padding: 6px 14px; border: 1px solid color-mix(in oklab, var(--fg) 40%, transparent); border-radius: 999px;

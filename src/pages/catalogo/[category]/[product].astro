@@ -7,7 +7,7 @@ export async function getStaticPaths() {
   const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
 
   return products.map((product) => ({
-    params: { categoria: product.slug, producto: product.productoSlug },
+    params: { category: product.slug, product: product.productSlug },
     props: { product },
   }));
 }
@@ -17,31 +17,31 @@ interface Props {
 }
 
 const { product } = Astro.props;
-const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
+const formattedPrice = `RD$ ${product.price.toLocaleString('es-DO')}`;
 ---
-<BaseLayout title={`${product.nombre} - Catálogo`} description={product.descripcion}>
+<BaseLayout title={`${product.name} - Catálogo`} description={product.description}>
   <div class="max-w-4xl mx-auto px-6 pt-28 pb-16">
     <a href={`/catalogo/${product.slug}`} class="js-hover-fx inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent transition-colors">
       <Icon name="line-md:arrow-left" class="w-3.5 h-3.5" />
-      Volver a {product.categoria}
+      Volver a {product.category}
     </a>
     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
       <img
-        src={product.fotos[0]}
-        alt={product.nombre}
+        src={product.photos[0]}
+        alt={product.name}
         class="w-full aspect-square object-cover rounded-2xl border border-border"
         onerror="this.onerror=null;this.src='/placeholder.jpg';"
       />
       <div>
-        <span class="text-xs px-3 py-1 rounded-full border border-border-strong text-muted">{product.categoria}</span>
-        <h1 class="font-display text-3xl sm:text-4xl font-bold mt-4 text-accent">{product.nombre}</h1>
-        <p class="mt-4 text-muted leading-relaxed">{product.descripcion}</p>
-        <p class="mt-6 text-2xl font-bold">{precioFormateado}</p>
+        <span class="text-xs px-3 py-1 rounded-full border border-border-strong text-muted">{product.category}</span>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold mt-4 text-accent">{product.name}</h1>
+        <p class="mt-4 text-muted leading-relaxed">{product.description}</p>
+        <p class="mt-6 text-2xl font-bold">{formattedPrice}</p>
         <button
           type="button"
           class="card-add-to-cart mt-8 inline-flex items-center rounded-full bg-brand-lilac border border-accent p-1.5 pl-6 hover:opacity-90 cursor-pointer"
           data-magnetic
-          data-product={JSON.stringify({ slug: product.slug, productoSlug: product.productoSlug, nombre: product.nombre, precio: product.precio, foto: product.fotos[0] })}
+          data-product={JSON.stringify({ slug: product.slug, productSlug: product.productSlug, name: product.name, price: product.price, photo: product.photos[0] })}
         >
           <span class="card-add-label text-brand-black font-medium pr-4">Agregar al carrito</span>
           <span class="card-add-label-added hidden text-brand-black font-medium pr-4">¡Agregado!</span>

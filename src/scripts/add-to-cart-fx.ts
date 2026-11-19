@@ -8,7 +8,7 @@ const CHECK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" strok
 
 const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function addToCartWithFx(button: HTMLElement, item: Omit<CartItem, 'cantidad'>) {
+export function addToCartWithFx(button: HTMLElement, item: Omit<CartItem, 'quantity'>) {
   addItem(item);
   morphButton(button);
   const badge = document.getElementById('cart-badge');

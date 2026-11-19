@@ -49,9 +49,9 @@ const message = encodeURIComponent('Hola! Quiero hacer una pieza personalizada.'
     {fan.length > 0 && (
       <div class="cta__fan" data-fan>
         {fan.map((p, i) => (
-          <a class={`cta__photo${i === Math.floor(fan.length / 2) ? ' cta__photo--front' : ''}`} style={`--i: ${i - (fan.length - 1) / 2}; --a: ${Math.abs(i - (fan.length - 1) / 2)}`} href={`/catalogo/${p.slug}/${p.productoSlug}`} data-fan-card>
-            <img src={p.fotos[0]} alt={p.nombre} loading="lazy" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
-            <span>{p.nombre}</span>
+          <a class={`cta__photo${i === Math.floor(fan.length / 2) ? ' cta__photo--front' : ''}`} style={`--i: ${i - (fan.length - 1) / 2}; --a: ${Math.abs(i - (fan.length - 1) / 2)}`} href={`/catalogo/${p.slug}/${p.productSlug}`} data-fan-card>
+            <img src={p.photos[0]} alt={p.name} loading="lazy" onerror="this.onerror=null;this.src='/placeholder.jpg';" />
+            <span>{p.name}</span>
           </a>
         ))}
       </div>

@@ -12,7 +12,7 @@ import path from 'node:path';
 const FILES = [
   'src/components/Hero.astro',
   'src/components/ProductCard.astro',
-  'src/pages/catalogo/[categoria]/[producto].astro',
+  'src/pages/catalogo/[category]/[product].astro',
 ];
 
 describe('bg-brand-lilac fills have a theme-aware border for light-mode contrast', () => {

@@ -10,15 +10,29 @@ const instagram = import.meta.env.INSTAGRAM_URL;
 const whatsapp = import.meta.env.WHATSAPP_NUMBER;
 // ponytail: fetches the catalog once per page at build time; memoize in sheets.ts if builds get slow.
 const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
-const photo = (i: number) => products[i % products.length]?.fotos[0] ?? '/logo.jpg';
+const photo = (i: number) => products[i % products.length]?.photos[0] ?? '/logo.jpg';
+// Christmas season (shown only with html.is-christmas): the Sheet's "Navidad" category, and the promo code.
+const CHRISTMAS_CATEGORY = 'navidad'; // the category slug as it comes from the Sheet
+const christmasProduct = products.find((p) => p.slug === CHRISTMAS_CATEGORY);
+const christmasCode = import.meta.env.CHRISTMAS_CODE;
+const christmasText = import.meta.env.CHRISTMAS_TEXT || 'ahorra en tu pedido';
 const links = [
   { label: 'Inicio', href: '/' },
   { label: 'Catálogo', href: '/catalogo' },
+  ...(christmasProduct ? [{ label: 'Navidad 🎄', href: '/catalogo/navidad', season: true, img: christmasProduct.photos[0] }] : []),
   { label: 'Cómo pedir', href: '/#como-pedir' },
   { label: 'Nosotros', href: '/#sobre-la-marca' },
   { label: 'Contacto', href: '/#cta-final' },
-].map((l, i) => ({ ...l, img: photo(i) }));
+].map((l, i) => ({ season: false, ...l, img: 'img' in l && l.img ? l.img : photo(i) }));
 ---
+<!-- Christmas bar: in the page flow above everything; the floating header waits under it (global.css). -->
+<div class="season-bar" data-season="flex" role="region" aria-label="Temporada navideña">
+  <span class="season-bar__lead"><span aria-hidden="true">✨</span> Temporada navideña</span>
+  {christmasCode
+    ? <span class="season-bar__promo"><span class="season-bar__long">Usa </span><button type="button" class="season-bar__code" data-copy-code={christmasCode} aria-label={`Copiar el código ${christmasCode}`}>{christmasCode}</button><span class="season-bar__long"> y {christmasText}</span></span>
+    : <span class="season-bar__promo">Pide con tiempo: se acercan las fiestas</span>}
+  <a class="season-bar__link" href={christmasProduct ? '/catalogo/navidad' : '/catalogo'}>{christmasProduct ? 'Catálogo de Navidad' : 'Ver catálogo'} <span aria-hidden="true">→</span></a>
+</div>
 <header transition:persist="site-header" id="site-header" class="fixed inset-x-0 top-6 z-40 flex justify-center px-6 pointer-events-none">
   <div class="header-pill pointer-events-auto w-full sm:w-auto rounded-[22px] border backdrop-blur-xl">
     <div class="nav-bar flex items-center justify-between sm:justify-start gap-2 sm:gap-4 h-11 pl-3.5 pr-1.5">
@@ -47,7 +61,7 @@ const links = [
     <div class="nav-panel" id="nav-panel">
       <nav class="nav-links" aria-label="Principal">
         <span class="nav-eyebrow">Menú</span>
-        {links.map((l, i) => <a href={l.href} style={`--i: ${i}`} data-nav-link={i}>{l.label}</a>)}
+        {links.map((l, i) => <a href={l.href} style={`--i: ${i}`} data-nav-link={i} data-season={l.season ? '' : undefined}>{l.label}</a>)}
       </nav>
       <div class="nav-media" aria-hidden="true">
         {links.map((l, i) => <img src={l.img} alt="" loading="lazy" class={i === 0 ? 'is-on' : ''} data-nav-img={i} onerror="this.onerror=null;this.src='/placeholder.jpg';" />)}
@@ -62,6 +76,7 @@ const links = [
 
 <script>
   import { animate, stagger } from 'motion';
+  import { capPill } from '../scripts/snow-cap';
 
   const header = document.getElementById('site-header')!;
   const pill = header.querySelector<HTMLElement>('.header-pill')!;
@@ -136,13 +151,69 @@ const links = [
     a.addEventListener('click', () => close());
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(true); });
+  // Christmas: brushing the snowy pill knocks a few flakes off its edge (throttled, never with reduced motion).
+  let lastFlakes = 0;
+  pill.addEventListener('pointerenter', () => {
+    if (!document.documentElement.classList.contains('is-christmas') || reduce.matches || isOpen()) return;
+    if (performance.now() - lastFlakes < 1200) return;
+    lastFlakes = performance.now();
+    for (let i = 0; i < 5; i++) {
+      const f = document.createElement('span');
+      f.className = 'header-flake';
+      f.style.left = `${24 + Math.random() * (pill.offsetWidth - 48)}px`;
+      pill.append(f);
+      animate(f, { y: [0, 26 + Math.random() * 18], x: [0, (Math.random() - 0.5) * 16], opacity: [1, 0], scale: [1, 0.6] },
+        { duration: 0.9 + Math.random() * 0.5, ease: [0.4, 0, 0.6, 1], delay: i * 0.06 }).then(() => f.remove());
+    }
+  });
+  // The Christmas bar is re-rendered per page (not persisted), so its copy button is handled by delegation.
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-copy-code]');
+    if (!btn) return;
+    const code = btn.dataset.copyCode!;
+    try { await navigator.clipboard.writeText(code); } catch { return; }
+    btn.textContent = '¡Copiado!';
+    btn.classList.add('is-copied');
+    setTimeout(() => { btn.textContent = code; btn.classList.remove('is-copied'); }, 1600);
+  });
   // A press on <html> itself is one landing mid view-transition (see theme.ts),
   // not a real click outside.
   document.addEventListener('pointerdown', (e) => { if (e.target !== document.documentElement && !pill.contains(e.target as Node)) close(); });
   document.addEventListener('astro:after-swap', () => close());
+  // Christmas: a snow cap shaped to the pill (its corners included); redrawn when the pill's width changes.
+  const snowHeader = () => {
+    const on = document.documentElement.classList.contains('is-christmas');
+    if (on && !header.classList.contains('is-open')) capPill(pill, 7, 7);
+    else if (!on) pill.querySelector(':scope > .snow-cap')?.remove();
+  };
+  snowHeader();
+  document.addEventListener('astro:after-swap', snowHeader); // the season can change per page (?christmas preview)
 </script>
 
 <style>
+  /* Christmas bar: brand black in both themes, the code as a dashed lilac ticket. */
+  .season-bar {
+    position: relative; z-index: 41; align-items: center; justify-content: center; gap: 14px; min-height: 40px; padding: 6px 16px;
+    background: #0d0d0c; color: rgb(255 255 255 / 0.86); font-size: 13px; text-align: center; flex-wrap: wrap; row-gap: 2px;
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  }
+  .season-bar__lead { font: 500 11px/1 var(--font-mono, monospace); letter-spacing: 0.16em; text-transform: uppercase; color: #d9a8d9; }
+  .season-bar__code {
+    margin: 0 2px; padding: 2px 8px; border: 1px dashed rgb(217 168 217 / 0.7); border-radius: 6px; color: #fff;
+    font: 600 12px/1.4 var(--font-mono, monospace); letter-spacing: 0.08em; cursor: copy; transition: background-color 200ms;
+  }
+  .season-bar__code:hover { background: rgb(217 168 217 / 0.14); }
+  .season-bar__code.is-copied { border-style: solid; background: rgb(217 168 217 / 0.2); }
+  .season-bar__code:focus-visible, .season-bar__link:focus-visible { outline: 2px solid #d9a8d9; outline-offset: 2px; }
+  .season-bar__link { color: #fff; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+  .season-bar__link span { display: inline-block; transition: translate 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .season-bar__link:hover span { translate: 3px 0; }
+  /* Phones: one line only (code + link), so the header below never overlaps it. */
+  @media (max-width: 639px) {
+    .season-bar { gap: 12px; font-size: 12.5px; flex-wrap: nowrap; white-space: nowrap; }
+    .season-bar__lead, .season-bar__long { display: none; }
+  }
+
   /* Bar */
   .nav-toggle {
     display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px 0 14px; margin-left: 2px;

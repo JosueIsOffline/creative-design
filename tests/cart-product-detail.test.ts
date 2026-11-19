@@ -5,7 +5,7 @@ import path from 'node:path';
 describe('the product detail page also uses add-to-cart, not its own WhatsApp link', () => {
   it('has no leftover direct wa.me button', async () => {
     const src = await fs.readFile(
-      path.join(process.cwd(), 'src/pages/catalogo/[categoria]/[producto].astro'),
+      path.join(process.cwd(), 'src/pages/catalogo/[category]/[product].astro'),
       'utf-8'
     );
     expect(src).not.toContain('Solicitar por WhatsApp');

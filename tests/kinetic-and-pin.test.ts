@@ -110,7 +110,7 @@ describe('About and Catálogo integrated into the editorial/cinematic language',
 
   it('Catálogo pages get a much bigger title inside a distinct background band, not just a text-style swap', async () => {
     const index = await read('src/pages/catalogo/index.astro');
-    const category = await read('src/pages/catalogo/[categoria].astro');
+    const category = await read('src/pages/catalogo/[category].astro');
     for (const src of [index, category]) {
       expect(src).toContain('data-gsap="kinetic-heading"');
       expect(src).toContain('film-grain');

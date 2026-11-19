@@ -17,8 +17,8 @@ const { products } = Astro.props;
         data-float-speed={(0.4 + (i % 3) * 0.25).toFixed(2)}
       >
         <img
-          src={product.fotos[0]}
-          alt={product.nombre}
+          src={product.photos[0]}
+          alt={product.name}
           class="w-full aspect-square object-cover"
           loading="lazy"
           onerror="this.onerror=null;this.src='/placeholder.jpg';"
