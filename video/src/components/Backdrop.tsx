@@ -17,6 +17,21 @@ export const Backdrop: React.FC<{ glow?: number; spot?: [number, number] }> = ({
   </AbsoluteFill>
 );
 
+// The same set by day (the site's light theme): warm beige, the key light
+// a soft lilac bloom, the corners only slightly closed down.
+export const LightBackdrop: React.FC<{ spot?: [number, number] }> = ({ spot = [50, 45] }) => (
+  <AbsoluteFill style={{ background: '#f4eee4' }}>
+    <AbsoluteFill
+      style={{
+        background: `radial-gradient(50% 44% at ${spot[0]}% ${spot[1]}%, rgba(255,255,255,0.7), transparent 70%),
+          radial-gradient(70% 60% at ${spot[0]}% ${spot[1] - 6}%, rgba(190,120,200,0.16), transparent 72%),
+          radial-gradient(60% 50% at ${100 - spot[0]}% 100%, rgba(94,200,232,0.08), transparent 70%)`,
+      }}
+    />
+    <AbsoluteFill style={{ background: 'radial-gradient(circle farthest-corner at 50% 45%, transparent 45%, rgba(90,70,50,0.18) 100%)' }} />
+  </AbsoluteFill>
+);
+
 // Fine film grain over everything, re-seeded every frame so it lives.
 export const Grain: React.FC = () => {
   const frame = useCurrentFrame();

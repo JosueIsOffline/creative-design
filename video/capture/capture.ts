@@ -230,27 +230,40 @@ function recorder(page: Page, log: Log, dir: string) {
 }
 type Rec = ReturnType<typeof recorder>;
 
-async function record(browser: Browser, name: string, act: (page: Page, rec: Rec) => Promise<void>, firstVisit = false) {
+type Device = { width: number; height: number; dpr?: number; mobile?: boolean };
+const DESKTOP: Device = { width: 1440, height: 900 };
+// The phone clips: 390×844 CSS px at 2× for a sharp screen in the Phone frame.
+const PHONE: Device = { width: 390, height: 844, dpr: 2, mobile: true };
+
+async function record(browser: Browser, name: string, act: (page: Page, rec: Rec) => Promise<void>, firstVisit = false, device = DESKTOP) {
   const dir = `${OUT}${name}-frames/`;
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, colorScheme: 'dark' });
+  const ctx = await browser.newContext({ viewport: { width: device.width, height: device.height }, deviceScaleFactor: device.dpr ?? 1, isMobile: device.mobile, hasTouch: device.mobile, colorScheme: 'dark' });
   const page = await ctx.newPage();
   const log: Log = (logs[name] = { marks: {}, path: [], clicks: [], points: {} });
   await prime(page, firstVisit);
   await page.addInitScript(vclock);
   // The floating WhatsApp button would sit in every clip's corner; the
   // video has its own CTA in the outro.
-  await page.addInitScript(() => addEventListener('DOMContentLoaded', () => {
-    const s = document.createElement('style');
-    s.textContent = 'a[aria-label="Contactar por WhatsApp"] { display: none !important; }';
-    document.head.append(s);
-  }));
+  // Re-added after each client-side navigation, which swaps <head>.
+  await page.addInitScript(() => {
+    const hide = () => {
+      const s = document.createElement('style');
+      s.textContent = 'a[aria-label="Contactar por WhatsApp"] { display: none !important; }';
+      document.head.append(s);
+    };
+    addEventListener('DOMContentLoaded', hide);
+    document.addEventListener('astro:after-swap', hide);
+  });
   const t0 = Date.now();
   await act(page, recorder(page, log, dir));
   await ctx.close();
   // JPEG sequence → H.264 at FPS (keyframe every half second, for seeking).
   execFileSync('npx', ['remotion', 'ffmpeg', '-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', `${dir}%05d.jpg`,
+    // Sizes rounded down to a multiple of 16: the 780×1688 phone take made
+    // Remotion's frame extraction return garbled (tiled) frames now and then.
+    '-vf', 'scale=trunc(iw/16)*16:trunc(ih/16)*16',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', '-g', String(FPS / 2), `${OUT}${name}.mp4`]);
   rmSync(dir, { recursive: true, force: true });
   console.log('recorded', name, `${((Date.now() - t0) / 1000).toFixed(0)}s`);
@@ -269,12 +282,12 @@ if (!process.env.RECORD_ONLY && !process.env.ONLY) {
   await shots(browser, 'mobile', { width: 390, height: 844 }, true);
 }
 const only = process.env.ONLY?.split(',');
-const take = (name: string, act: (page: Page, rec: Rec) => Promise<void>, firstVisit = false) =>
-  !only || only.includes(name) ? record(browser, name, act, firstVisit) : Promise.resolve();
+const take = (name: string, act: (page: Page, rec: Rec) => Promise<void>, firstVisit = false, device = DESKTOP) =>
+  !only || only.includes(name) ? record(browser, name, act, firstVisit, device) : Promise.resolve();
 
 // Hero entrance: letters focus, the cursor glides in and clicks; then the
 // pointer drifts over a service tag.
-await take('rec-hero', async (page, rec) => {
+const hero = async (page: Page, rec: Rec) => {
   await page.goto(BASE + '/', { waitUntil: 'load' });
   // Freeze the entrance where it is (frame 0) while the fonts load in real time.
   await page.evaluate(async () => { (window as any).__vt.advance(0); await document.fonts.ready; (window as any).__vt.advance(0); });
@@ -284,10 +297,11 @@ await take('rec-hero', async (page, rec) => {
   const [tx, ty] = await center(page, '[data-callout]:nth-of-type(4)');
   await rec.move(tx, ty, 900);
   await rec.hold(900);
-});
+};
+await take('rec-hero', hero);
 
 // Footer spray paint: two passes over the wordmark.
-await take('rec-spray', async (page, rec) => {
+const spray = async (page: Page, rec: Rec) => {
   await page.goto(BASE + '/', { waitUntil: 'load' });
   await rec.warm();
   await page.locator('[data-wordmark-text]').evaluate((el) => el.scrollIntoView({ block: 'center' }));
@@ -304,7 +318,8 @@ await take('rec-spray', async (page, rec) => {
   }
   await rec.move(b.x + b.width * 0.5, b.y - 120, 500);
   await rec.hold(800);
-});
+};
+await take('rec-spray', spray);
 
 // Closing panel: the fan opens and the cursor clicks "ide▸?"; then the
 // pointer picks up each card.
@@ -382,6 +397,104 @@ await take('rec-story', async (page, rec) => {
   await rec.scroll(end, 9000);
   await rec.hold(800);
 }, true);
+
+// --- The menu film (m-*) ----------------------------------------------
+// Same hero and spray takes, now with the morphing header in frame.
+await take('m-hero', hero);
+await take('m-spray', spray);
+
+// Home at rest under the hero: open a page in the background so its images
+// are cached before the take (navigations then don't film blank photos).
+async function home(page: Page, rec: Rec, cache?: string) {
+  if (cache) { await page.goto(BASE + cache, { waitUntil: 'networkidle' }); await rec.warm(); }
+  await page.goto(BASE + '/', { waitUntil: 'load' });
+  await page.evaluate(async () => { await document.fonts.ready; });
+  await page.waitForLoadState('networkidle');
+  await rec.idle(4500); // the hero entrance plays out
+}
+
+// The menu, one continuous take: the pointer clicks "Menú", the pill morphs
+// into the glass panel, runs down the links (the photo follows), comes back
+// to Catálogo and clicks — the page changes to the grid — then a product
+// opens in place and goes to the cart.
+await take('m-menu', async (page, rec) => {
+  await home(page, rec, '/catalogo');
+  await rec.move(980, 330, 50);
+  rec.start();
+  await rec.hold(300);
+  const [mx, my] = await center(page, '[data-nav-toggle]');
+  rec.point('toggle', mx, my);
+  await rec.move(mx, my, 900);
+  await rec.hold(200);
+  rec.mark('click');
+  await rec.click();
+  await rec.hold(1400);
+  const b = (await page.locator('.header-pill').boundingBox())!;
+  rec.point('panel', b.x + b.width / 2, b.y + b.height / 2);
+  rec.mark('links');
+  const link = async (i: number) => {
+    const l = (await page.locator(`[data-nav-link="${i}"]`).boundingBox())!;
+    return [l.x + Math.min(l.width * 0.6, 160), l.y + l.height / 2] as const;
+  };
+  for (const i of [1, 2, 3]) {
+    await rec.move(...(await link(i)), 550);
+    rec.mark(`link${i}`);
+    await rec.hold(750);
+  }
+  await rec.move(...(await link(1)), 650);
+  await rec.hold(200);
+  rec.mark('nav');
+  await rec.click();
+  await rec.hold(2200);
+  rec.mark('grid');
+  const [cx, cy] = await center(page, '[data-product-trigger] img');
+  await rec.move(cx, cy, 900);
+  await rec.hold(200);
+  rec.mark('open');
+  await rec.click();
+  await rec.hold(1200);
+  const [ax, ay] = await center(page, '.product-card.is-expanded .card-add-to-cart');
+  await rec.move(ax, ay, 800);
+  await rec.hold(200);
+  rec.mark('add');
+  await rec.click();
+  await rec.hold(1800);
+});
+
+// The phone: a tap on the theme toggle — a first glimpse of day mode.
+await take('m-phone', async (page, rec) => {
+  await home(page, rec);
+  rec.start();
+  await rec.hold(900);
+  const [tx, ty] = await center(page, '#theme-toggle');
+  await rec.move(tx, ty, 50);
+  rec.mark('tap');
+  await rec.click();
+  await rec.hold(2800);
+}, false, PHONE);
+
+// The theme toggle: dark → light (the diagonal wipe), then back to dark.
+await take('m-theme', async (page, rec) => {
+  await page.goto(BASE + '/catalogo', { waitUntil: 'networkidle' });
+  await rec.warm();
+  await rec.idle(800);
+  await rec.move(900, 380, 50);
+  rec.start();
+  await rec.hold(300);
+  const [tx, ty] = await center(page, '#theme-toggle');
+  rec.point('toggle', tx, ty);
+  await rec.move(tx, ty, 900);
+  await rec.hold(200);
+  rec.mark('light');
+  await rec.click();
+  await rec.hold(2400);
+  await rec.move(tx + 60, ty + 140, 500);
+  await rec.move(tx, ty, 500);
+  await rec.hold(200);
+  rec.mark('dark');
+  await rec.click();
+  await rec.hold(2400);
+});
 
 // Merge with what's already there, so ONLY= re-records keep the rest.
 let previous: Record<string, Log> = {};

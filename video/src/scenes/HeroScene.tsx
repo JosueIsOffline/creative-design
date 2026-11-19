@@ -8,9 +8,8 @@ import { copy, timing } from '../config';
 import { REEL_SAFE, keys, mix, useLayout } from '../motion';
 import { markOf } from '../recordings';
 
-const S = markOf('rec-hero');
 // The hero's entrance in real time, then the pointer's drift, quicker.
-const SEGMENTS: Segment[] = [
+const segments = (S: number): Segment[] => [
   { from: S, to: S + 3.4, rate: 1 },
   { from: S + 3.4, to: S + 5.4, rate: 1.8 },
 ];
@@ -18,11 +17,10 @@ const SEGMENTS: Segment[] = [
 // 3 — Low angle: the laptop rises from below the frame, tipped back, while
 // the camera orbits round to face it; on screen, the real hero entrance.
 // Reels: the laptop is big enough to bleed past the frame's edges.
-export const HeroScene: React.FC = () => {
+export const HeroScene: React.FC<{ name?: 'rec-hero' | 'm-hero'; end?: number }> = ({ name = 'rec-hero', end = timing.scenes.hero }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { vertical } = useLayout();
-  const end = timing.scenes.hero;
   const rise = spring({ frame, fps, config: { damping: 200, mass: 1.3, stiffness: 42 } });
   const pose = {
     y: mix(vertical ? 1100 : 640, vertical ? 170 : 40, rise),
@@ -37,7 +35,7 @@ export const HeroScene: React.FC = () => {
       <Backdrop spot={vertical ? [50, 52] : [62, 48]} />
       <Rig {...pose}>
         <Laptop screenWidth={vertical ? 980 : 1040} sheen={keys(frame, [[0, 0.1], [end, 0.9]])}>
-          <Footage name="rec-hero" segments={SEGMENTS} />
+          <Footage name={name} segments={segments(markOf(name))} />
         </Laptop>
       </Rig>
       <Caption text={copy.captions.hero} at={14} out={end - 10} size={vertical ? 96 : 76} align={vertical ? 'center' : 'left'}

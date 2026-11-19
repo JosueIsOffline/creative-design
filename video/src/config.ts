@@ -56,3 +56,26 @@ export const timing = {
     outro: 9 * BEAT,
   },
 };
+
+// The menu film (MenuFilm.tsx): ~60 s, same grid and look.
+export const menuCopy = {
+  title: ['Todo.', '*A un toque.*'],
+  captions: {
+    menu: 'Un menú que *se transforma.*',
+    phone: 'También en *tu celular.*',
+    product: 'Pide en *un clic.*',
+    theme: 'De día *o de noche.*',
+  },
+};
+export const menuTiming = {
+  intro: 8 * BEAT,
+  title: 8 * BEAT,
+  hero: 12 * BEAT,
+  menu: 12 * BEAT,
+  links: 15 * BEAT,
+  product: 12 * BEAT,
+  phone: 10 * BEAT,
+  theme: 16 * BEAT,
+  spray: 8 * BEAT,
+  outro: 10 * BEAT,
+};

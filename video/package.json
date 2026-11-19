@@ -5,6 +5,7 @@
   "scripts": {
     "capture": "node capture/capture.ts",
     "studio": "remotion studio",
+    "render:menu": "remotion render Menu-16x9 out/menu-16x9.mp4 --offthreadvideo-video-threads=6 && remotion render Menu-9x16 out/menu-9x16.mp4 --offthreadvideo-video-threads=6",
     "render": "remotion render Promo-16x9 out/promo-16x9.mp4 --offthreadvideo-video-threads=6 && remotion render Promo-9x16 out/promo-9x16.mp4 --offthreadvideo-video-threads=6"
   },
   "devDependencies": {

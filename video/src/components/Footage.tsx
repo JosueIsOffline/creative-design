@@ -35,10 +35,11 @@ export const totalOf = (segments: Segment[], fps: number) => segments.reduce((a,
 
 type PointerKind = 'arrow' | 'spray' | false;
 
-// The recording at 1440×900 with a drawn pointer (headless captures have
-// none) that presses on each click and leaves a lilac ripple.
-export const Footage: React.FC<{ name: Recording; segments: Segment[]; pointer?: PointerKind; pointerFrom?: number; children?: ReactNode }> = ({
-  name, segments, pointer = 'arrow', pointerFrom = -Infinity, children,
+// The recording at its CSS size (1440×900 desktop, or `size` — the phone
+// takes are 390×844) with a drawn pointer (headless captures have none)
+// that presses on each click and leaves a lilac ripple.
+export const Footage: React.FC<{ name: Recording; segments: Segment[]; pointer?: PointerKind; pointerFrom?: number; size?: [number, number]; children?: ReactNode }> = ({
+  name, segments, pointer = 'arrow', pointerFrom = -Infinity, size: [w, h] = [1440, 900], children,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -48,7 +49,7 @@ export const Footage: React.FC<{ name: Recording; segments: Segment[]; pointer?:
     const d = framesOf(s, fps);
     const el = (
       <Sequence key={i} from={at} durationInFrames={i === segments.length - 1 ? Infinity : d} layout="none">
-        <OffthreadVideo src={staticFile(`capture/${name}.mp4`)} trimBefore={Math.max(0, Math.round(s.from * fps))} playbackRate={s.rate} muted style={{ position: 'absolute', inset: 0, width: 1440, height: 900 }} />
+        <OffthreadVideo src={staticFile(`capture/${name}.mp4`)} trimBefore={Math.max(0, Math.round(s.from * fps))} playbackRate={s.rate} muted style={{ position: 'absolute', inset: 0, width: w, height: h }} />
       </Sequence>
     );
     at += d;
@@ -58,7 +59,7 @@ export const Footage: React.FC<{ name: Recording; segments: Segment[]; pointer?:
   const clicks = clicksOf(name);
   const press = clicks.some(([c]) => t >= c && t - c < 0.14);
   return (
-    <div style={{ position: 'relative', width: 1440, height: 900, overflow: 'hidden', background: brand.bg }}>
+    <div style={{ position: 'relative', width: w, height: h, overflow: 'hidden', background: brand.bg }}>
       {clips}
       {children}
       {clicks.map(([c, x, y], i) => {
