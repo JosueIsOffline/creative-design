@@ -9,12 +9,17 @@ interface Props {
   title: string;
   description?: string;
   hideFooter?: boolean;
+  /** The cart page's main action already goes to WhatsApp: drop the floating bubble there. */
+  hideWhatsApp?: boolean;
 }
 const {
   title,
   description = 'Diseño gráfico y sublimación: artículos personalizados hechos con amor, por Ailyn Japa.',
   hideFooter = false,
+  hideWhatsApp = false,
 } = Astro.props;
+// Christmas season window (MM-DD), inclusive; it may wrap the new year.
+const christmas = { start: import.meta.env.CHRISTMAS_START || '12-01', end: import.meta.env.CHRISTMAS_END || '01-06' };
 ---
 <html lang="es">
   <head>
@@ -39,6 +44,26 @@ const {
         }
       })();
     </script>
+    <!-- Christmas layer: on by date in the visitor's browser, so it starts and ends without a rebuild.
+         ?christmas=1 previews it any day (for the session), ?christmas=0 turns the preview off. -->
+    <script is:inline define:vars={{ christmas }}>
+      (function () {
+        function apply() {
+          var d = new Date();
+          var md = ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+          var on = christmas.start <= christmas.end ? md >= christmas.start && md <= christmas.end : md >= christmas.start || md <= christmas.end;
+          try {
+            var q = new URLSearchParams(location.search).get('christmas');
+            if (q === '1') sessionStorage.setItem('christmas-preview', '1');
+            if (q === '0') sessionStorage.removeItem('christmas-preview');
+            if (sessionStorage.getItem('christmas-preview') === '1') on = true;
+          } catch (e) {}
+          document.documentElement.classList.toggle('is-christmas', on);
+        }
+        apply();
+        document.addEventListener('astro:after-swap', apply);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
@@ -53,7 +78,7 @@ const {
     <SiteHeader />
     <slot />
     {!hideFooter && <Footer transition:persist="footer" />}
-    <WhatsAppButton transition:persist="whatsapp" />
+    {!hideWhatsApp && <WhatsAppButton transition:persist="whatsapp" />}
     <ProductModal transition:persist="product-modal" />
     <script>
       import '../scripts/theme';

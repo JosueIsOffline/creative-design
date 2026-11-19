@@ -7,7 +7,7 @@ const read = (p: string) => fs.readFile(path.join(process.cwd(), p), 'utf-8');
 describe('Gallery (adapted from the Halo reference floating gallery)', () => {
   it('uses real catalog product photos, not stock images', async () => {
     const src = await read('src/components/Gallery.astro');
-    expect(src).toContain('product.fotos[0]');
+    expect(src).toContain('product.photos[0]');
     expect(src, 'should take real products as a prop, not hardcoded placeholder data').toContain('products: Product[]');
   });
 
@@ -27,6 +27,6 @@ describe('Gallery (adapted from the Halo reference floating gallery)', () => {
   it('the home page places it between the Destacados rail and About, driven by real fetched products', async () => {
     const src = await read('src/pages/index.astro');
     expect(src).toContain("import Gallery from '../components/Gallery.astro'");
-    expect(src).toContain('products={galeria}');
+    expect(src).toContain('products={gallery}');
   });
 });

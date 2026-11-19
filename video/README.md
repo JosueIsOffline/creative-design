@@ -38,3 +38,16 @@ RECORD_ONLY=1 node capture/capture.ts # recordings only
 It saves everything to `public/capture/`. The recordings aren't screen-recorded: they're captured **frame by frame at 60 fps on a virtual clock**. The page's clock only advances 1/60 s per photo, and the CSS, Web Animations and view-transition animations are synced to it. That means no frame can drop, no matter how slow the machine is (~7 min for all of them). `recordings.json` stores the mouse path, the clicks and the marks for each one.
 
 `ONLY=rec-gallery node capture/capture.ts` re-records only the ones you name.
+
+## The menu film (`Menu-16x9` / `Menu-9x16`)
+
+A second, ~60 s video about the morphing menu and the theme switch: `out/menu-16x9.mp4` and `out/menu-9x16.mp4`.
+
+```bash
+npm run render:menu
+```
+
+- **Order and cuts:** `src/MenuFilm.tsx`. Its own shots are in `src/scenes/MenuScenes.tsx`; the intro, hero, spray and outro are shared with the first film.
+- **Texts and timing:** `menuCopy` and `menuTiming` in `src/config.ts`.
+- **Recordings:** the `m-*` takes in `capture/capture.ts` (`ONLY=m-menu,m-theme … node capture/capture.ts`). `m-phone` is filmed at 390×844.
+- **Day/night:** in `ThemeScene`, the set (backdrop and caption) wipes from dark to light in step with the site's own wipe on the laptop screen. `WIPE` is when the diagonal crosses the screen after each click; it was measured off the take, so re-measure it if the site's wipe timing changes.

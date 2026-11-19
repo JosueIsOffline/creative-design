@@ -7,6 +7,7 @@ const { categories, active } = Astro.props;
   <a
     href="/catalogo"
     data-lift
+    data-cat="all"
     class={`relative shrink-0 text-sm pb-2 border-b-2 border-transparent transition-colors duration-200 ${active === null ? 'text-foreground font-semibold' : 'text-muted hover:text-foreground hover:border-border-strong'}`}
   >
     Todos
@@ -16,6 +17,7 @@ const { categories, active } = Astro.props;
     <a
       href={`/catalogo/${encodeURIComponent(cat.slug)}`}
       data-lift
+      data-cat={cat.slug}
       class={`relative shrink-0 text-sm pb-2 border-b-2 border-transparent transition-colors duration-200 ${active === cat.slug ? 'text-foreground font-semibold' : 'text-muted hover:text-foreground hover:border-border-strong'}`}
     >
       {cat.name}
@@ -23,3 +25,10 @@ const { categories, active } = Astro.props;
     </a>
   ))}
 </nav>
+
+<style>
+  /* Christmas season: the Navidad category moves to the front, with its tree. */
+  :global(html.is-christmas) [data-cat='all'] { order: -2; }
+  :global(html.is-christmas) [data-cat='navidad'] { order: -1; }
+  :global(html.is-christmas) [data-cat='navidad']::before { content: '🎄 '; }
+</style>

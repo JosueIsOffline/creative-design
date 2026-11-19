@@ -457,3 +457,16 @@ html.is-theme-transition::view-transition-new(root) {
   display: grid;
   place-items: center;
 }
+
+/* ---- Christmas layer (on with html.is-christmas, see BaseLayout) ---- */
+[data-season] { display: none !important; }
+html.is-christmas [data-season] { display: revert !important; }
+html.is-christmas [data-season="flex"] { display: flex !important; }
+/* The bar sits on top of the page; the floating header waits below it until the page scrolls. */
+html.is-christmas #site-header { transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), top 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+html.is-christmas #site-header:not(.is-scrolled) { top: 56px; }
+/* Snow resting on the header pill (built in SiteHeader with snow-cap.ts), gone while the menu is open. */
+html.is-christmas .header-pill { position: relative; }
+.header-pill .snow-cap path { fill: #fff; filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.25)); }
+#site-header.is-open .header-pill .snow-cap { display: none; }
+.header-flake { position: absolute; top: 0; width: 4px; height: 4px; border-radius: 999px; background: #fff; pointer-events: none; z-index: 1; box-shadow: 0 0 2px rgb(0 0 0 / 0.2); }

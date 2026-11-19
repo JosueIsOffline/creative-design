@@ -14,19 +14,19 @@ describe('parseCatalogCsv', () => {
     const products = parseCatalogCsv(SAMPLE_CSV);
     expect(products).toHaveLength(2);
     expect(products[0]).toMatchObject({
-      nombre: 'Vestido Luna',
-      precio: 2500,
-      categoria: 'vestidos',
+      name: 'Vestido Luna',
+      price: 2500,
+      category: 'vestidos',
       slug: 'vestidos',
-      fotos: ['https://res.cloudinary.com/demo/a.jpg'],
-      disponible: true,
+      photos: ['https://res.cloudinary.com/demo/a.jpg'],
+      available: true,
     });
   });
 
   it('splits multiple photo URLs on the fotos column', () => {
     const products = parseCatalogCsv(SAMPLE_CSV);
-    const bolso = products.find((p) => p.nombre === 'Bolso Aurora');
-    expect(bolso?.fotos).toEqual([
+    const bolso = products.find((p) => p.name === 'Bolso Aurora');
+    expect(bolso?.photos).toEqual([
       'https://res.cloudinary.com/demo/b.jpg',
       'https://res.cloudinary.com/demo/c.jpg',
     ]);
@@ -34,12 +34,12 @@ describe('parseCatalogCsv', () => {
 
   it('excludes products marked as disponible=no', () => {
     const products = parseCatalogCsv(SAMPLE_CSV);
-    expect(products.find((p) => p.nombre === 'Producto Oculto')).toBeUndefined();
+    expect(products.find((p) => p.name === 'Producto Oculto')).toBeUndefined();
   });
 
   it('skips rows missing required fields', () => {
     const products = parseCatalogCsv(SAMPLE_CSV);
-    expect(products.find((p) => p.nombre === 'Fila Incompleta')).toBeUndefined();
+    expect(products.find((p) => p.name === 'Fila Incompleta')).toBeUndefined();
   });
 
   it('skips rows with non-numeric prices', () => {
@@ -49,8 +49,8 @@ Producto NA,N/A,accesorios,https://res.cloudinary.com/demo/b.jpg,Sin precio,si
 `;
     const products = parseCatalogCsv(csvWithMalformedPrice);
     expect(products).toHaveLength(0);
-    expect(products.find((p) => p.nombre === 'Producto Gratis')).toBeUndefined();
-    expect(products.find((p) => p.nombre === 'Producto NA')).toBeUndefined();
+    expect(products.find((p) => p.name === 'Producto Gratis')).toBeUndefined();
+    expect(products.find((p) => p.name === 'Producto NA')).toBeUndefined();
   });
 
   it('parses a dot-separated price as a whole-peso thousands separator (es-DO)', () => {
@@ -58,7 +58,7 @@ Producto NA,N/A,accesorios,https://res.cloudinary.com/demo/b.jpg,Sin precio,si
 Taza Grande,2.500,tazas,https://res.cloudinary.com/demo/a.jpg,Taza de cerámica,si
 `;
     const products = parseCatalogCsv(csvWithDottedPrice);
-    expect(products.find((p) => p.nombre === 'Taza Grande')?.precio).toBe(2500);
+    expect(products.find((p) => p.name === 'Taza Grande')?.price).toBe(2500);
   });
 
   it('drops a trailing ,00 cents suffix instead of treating it as extra digits', () => {
@@ -67,8 +67,8 @@ Taza Blanca,"RD$350,00",tazas,https://res.cloudinary.com/demo/a.jpg,Taza,si
 Hoodie,"RD$1.200,00",camisetas,https://res.cloudinary.com/demo/b.jpg,Hoodie,si
 `;
     const products = parseCatalogCsv(csvWithCentsSuffix);
-    expect(products.find((p) => p.nombre === 'Taza Blanca')?.precio).toBe(350);
-    expect(products.find((p) => p.nombre === 'Hoodie')?.precio).toBe(1200);
+    expect(products.find((p) => p.name === 'Taza Blanca')?.price).toBe(350);
+    expect(products.find((p) => p.name === 'Hoodie')?.price).toBe(1200);
   });
 
   it('skips rows whose fotos cell has no real URLs after splitting', () => {
@@ -76,7 +76,7 @@ Hoodie,"RD$1.200,00",camisetas,https://res.cloudinary.com/demo/b.jpg,Hoodie,si
 Producto Sin Foto,500,vestidos,",",Sin foto real,si
 `;
     const products = parseCatalogCsv(csvWithEmptyFotos);
-    expect(products.find((p) => p.nombre === 'Producto Sin Foto')).toBeUndefined();
+    expect(products.find((p) => p.name === 'Producto Sin Foto')).toBeUndefined();
   });
 
   it('skips leading title/summary rows and reads dashboard-style column names', () => {
@@ -91,21 +91,21 @@ PROD-002,Altavoz Portátil,Audio,audio,4550,Sonido 360,https://example.com/b.jpg
     const products = parseCatalogCsv(dashboardCsv);
     expect(products).toHaveLength(1);
     expect(products[0]).toMatchObject({
-      nombre: 'Auriculares Pro',
-      precio: 7999,
-      categoria: 'Audio',
-      fotos: ['https://example.com/a.jpg'],
-      disponible: true,
+      name: 'Auriculares Pro',
+      price: 7999,
+      category: 'Audio',
+      photos: ['https://example.com/a.jpg'],
+      available: true,
     });
-    expect(products.find((p) => p.nombre === 'Altavoz Portátil')).toBeUndefined();
+    expect(products.find((p) => p.name === 'Altavoz Portátil')).toBeUndefined();
   });
 
-  it('produces a URL-safe productoSlug from the product name', () => {
+  it('produces a URL-safe productSlug from the product name', () => {
     const csv = `nombre,precio,categoria,fotos,descripcion,disponible
 Taza de Café Grande,500,Tazas,https://res.cloudinary.com/demo/a.jpg,Taza,si
 `;
     const products = parseCatalogCsv(csv);
-    expect(products[0].productoSlug).toBe('taza-de-cafe-grande');
+    expect(products[0].productSlug).toBe('taza-de-cafe-grande');
   });
 
   it('disambiguates two products in the same category that slugify to the same name', () => {
@@ -114,8 +114,8 @@ Taza Grande,500,Tazas,https://res.cloudinary.com/demo/a.jpg,Primera,si
 Taza Grande!,550,Tazas,https://res.cloudinary.com/demo/b.jpg,Segunda,si
 `;
     const products = parseCatalogCsv(csv);
-    expect(products[0].productoSlug).toBe('taza-grande');
-    expect(products[1].productoSlug).toBe('taza-grande-2');
+    expect(products[0].productSlug).toBe('taza-grande');
+    expect(products[1].productSlug).toBe('taza-grande-2');
   });
 
   it('produces a URL-safe slug for a category with accents and spaces', () => {
@@ -124,7 +124,7 @@ Cuadro Decorativo,1500,Diseño Gráfico,https://res.cloudinary.com/demo/a.jpg,Cu
 `;
     const products = parseCatalogCsv(csvWithAccentedCategory);
     expect(products[0].slug).toBe('diseno-grafico');
-    expect(products[0].categoria).toBe('Diseño Gráfico');
+    expect(products[0].category).toBe('Diseño Gráfico');
   });
 });
 
@@ -150,14 +150,14 @@ Vestido Luna,2500,vestidos,https://res.cloudinary.com/demo/a.jpg,Vestido de gala
 `;
     const mockProducts = [
       {
-        nombre: 'Vestido Luna',
-        precio: 2500,
-        categoria: 'vestidos',
+        name: 'Vestido Luna',
+        price: 2500,
+        category: 'vestidos',
         slug: 'vestidos',
-        productoSlug: 'vestido-luna',
-        fotos: ['https://res.cloudinary.com/demo/a.jpg'],
-        descripcion: 'Vestido de gala',
-        disponible: true,
+        productSlug: 'vestido-luna',
+        photos: ['https://res.cloudinary.com/demo/a.jpg'],
+        description: 'Vestido de gala',
+        available: true,
       },
     ];
 
@@ -178,14 +178,14 @@ Vestido Luna,2500,vestidos,https://res.cloudinary.com/demo/a.jpg,Vestido de gala
   it('falls back to fallback.json when fetch fails', async () => {
     const fallbackProducts = [
       {
-        nombre: 'Fallback Product',
-        precio: 100,
-        categoria: 'test',
+        name: 'Fallback Product',
+        price: 100,
+        category: 'test',
         slug: 'test',
-        productoSlug: 'fallback-product',
-        fotos: ['https://example.com/test.jpg'],
-        descripcion: 'From fallback',
-        disponible: true,
+        productSlug: 'fallback-product',
+        photos: ['https://example.com/test.jpg'],
+        description: 'From fallback',
+        available: true,
       },
     ];
 

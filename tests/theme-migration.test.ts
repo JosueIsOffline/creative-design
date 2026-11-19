@@ -11,8 +11,8 @@ const FILES = [
   'src/components/ProductCard.astro',
   'src/pages/index.astro',
   'src/pages/catalogo/index.astro',
-  'src/pages/catalogo/[categoria].astro',
-  'src/pages/catalogo/[categoria]/[producto].astro',
+  'src/pages/catalogo/[category].astro',
+  'src/pages/catalogo/[category]/[product].astro',
 ];
 
 // These have zero legitimate exceptions anywhere in FILES — every
@@ -40,7 +40,7 @@ const FILES_WITH_BRAND_FIXED_EXCEPTIONS = new Set([
   'src/components/ProductCard.astro',
   'src/components/Services.astro',
   'src/components/About.astro',
-  'src/pages/catalogo/[categoria]/[producto].astro',
+  'src/pages/catalogo/[category]/[product].astro',
 ]);
 
 describe('theme migration: no legacy color classes remain', () => {

@@ -1,110 +1,119 @@
 [
   {
-    "nombre": "Taza Blanca Personalizada",
-    "precio": 450,
-    "categoria": "Tazas",
+    "id": "PROD-001",
+    "name": "Taza Blanca Personalizada",
+    "price": 450,
+    "category": "Tazas",
     "slug": "tazas",
-    "productoSlug": "taza-blanca-personalizada",
-    "fotos": [
+    "productSlug": "taza-blanca-personalizada",
+    "photos": [
       "https://images.unsplash.com/photo-1605714196241-00bf7a8fe7bb?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Taza cerámica blanca de 11oz, sublimada a todo color con tu foto, logo o diseño favorito.",
-    "disponible": true
+    "description": "Taza cerámica blanca de 11oz, sublimada a todo color con tu foto, logo o diseño favorito.",
+    "available": true
   },
   {
-    "nombre": "Vaso Térmico Personalizado",
-    "precio": 650,
-    "categoria": "Vasos",
+    "id": "PROD-002",
+    "name": "Vaso Térmico Personalizado",
+    "price": 650,
+    "category": "Vasos",
     "slug": "vasos",
-    "productoSlug": "vaso-termico-personalizado",
-    "fotos": [
+    "productSlug": "vaso-termico-personalizado",
+    "photos": [
       "https://images.unsplash.com/photo-1705952333804-52c9ca2993d1?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Vaso/tumbler de acero inoxidable con tapa, sublimado con tu nombre, foto o diseño personalizado.",
-    "disponible": true
+    "description": "Vaso/tumbler de acero inoxidable con tapa, sublimado con tu nombre, foto o diseño personalizado.",
+    "available": true
   },
   {
-    "nombre": "Bolso Tote Personalizado",
-    "precio": 850,
-    "categoria": "Bolsos",
+    "id": "PROD-003",
+    "name": "Bolso Tote Personalizado",
+    "price": 850,
+    "category": "Bolsos",
     "slug": "bolsos",
-    "productoSlug": "bolso-tote-personalizado",
-    "fotos": [
+    "productSlug": "bolso-tote-personalizado",
+    "photos": [
       "https://images.unsplash.com/photo-1610282081854-9c311350beb9?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Bolso tote de lona personalizado con tu diseño, logo o foto, ideal para uso diario o como detalle de regalo.",
-    "disponible": true
+    "description": "Bolso tote de lona personalizado con tu diseño, logo o foto, ideal para uso diario o como detalle de regalo.",
+    "available": true
   },
   {
-    "nombre": "Funda de Celular Personalizada",
-    "precio": 550,
-    "categoria": "Fundas",
+    "id": "PROD-004",
+    "name": "Funda de Celular Personalizada",
+    "price": 550,
+    "category": "Fundas",
     "slug": "fundas",
-    "productoSlug": "funda-de-celular-personalizada",
-    "fotos": [
+    "productSlug": "funda-de-celular-personalizada",
+    "photos": [
       "https://images.unsplash.com/photo-1577954732026-2071521acdfb?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Funda de celular personalizada con tu foto, anime o diseño favorito, disponible para varios modelos.",
-    "disponible": true
+    "description": "Funda de celular personalizada con tu foto, anime o diseño favorito, disponible para varios modelos.",
+    "available": true
   },
   {
-    "nombre": "Camiseta Personalizada",
-    "precio": 550,
-    "categoria": "Camisetas",
+    "id": "PROD-005",
+    "name": "Camiseta Personalizada",
+    "price": 550,
+    "category": "Camisetas",
     "slug": "camisetas",
-    "productoSlug": "camiseta-personalizada",
-    "fotos": [
+    "productSlug": "camiseta-personalizada",
+    "photos": [
       "https://images.unsplash.com/photo-1637729099669-3881fe3e4de0?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Camiseta con vinil textil o bordado personalizado, ideal para equipos, negocios o regalos.",
-    "disponible": true
+    "description": "Camiseta con vinil textil o bordado personalizado, ideal para equipos, negocios o regalos.",
+    "available": true
   },
   {
-    "nombre": "Hoodie Personalizado",
-    "precio": 1200,
-    "categoria": "Camisetas",
+    "id": "PROD-006",
+    "name": "Hoodie Personalizado",
+    "price": 1200,
+    "category": "Camisetas",
     "slug": "camisetas",
-    "productoSlug": "hoodie-personalizado",
-    "fotos": [
+    "productSlug": "hoodie-personalizado",
+    "photos": [
       "https://images.unsplash.com/photo-1633292750937-120a94f5c2bb?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Hoodie personalizado con vinil textil o bordado, perfecto para regalar o para uniformar tu equipo.",
-    "disponible": true
+    "description": "Hoodie personalizado con vinil textil o bordado, perfecto para regalar o para uniformar tu equipo.",
+    "available": true
   },
   {
-    "nombre": "Llavero Acrílico con Foto",
-    "precio": 200,
-    "categoria": "Llaveros",
+    "id": "PROD-007",
+    "name": "Llavero Acrílico con Foto",
+    "price": 200,
+    "category": "Llaveros",
     "slug": "llaveros",
-    "productoSlug": "llavero-acrilico-con-foto",
-    "fotos": [
+    "productSlug": "llavero-acrilico-con-foto",
+    "photos": [
       "https://images.unsplash.com/photo-1699297842445-22bcbf7e27cb?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Llavero acrílico personalizado con tu foto o diseño, perfecto como detalle o recuerdo.",
-    "disponible": true
+    "description": "Llavero acrílico personalizado con tu foto o diseño, perfecto como detalle o recuerdo.",
+    "available": true
   },
   {
-    "nombre": "Diseño de Flyer Publicitario",
-    "precio": 500,
-    "categoria": "Servicios de Diseño",
+    "id": "PROD-008",
+    "name": "Diseño de Flyer Publicitario",
+    "price": 500,
+    "category": "Servicios de Diseño",
     "slug": "servicios-de-diseno",
-    "productoSlug": "diseno-de-flyer-publicitario",
-    "fotos": [
+    "productSlug": "diseno-de-flyer-publicitario",
+    "photos": [
       "https://images.unsplash.com/photo-1703223513142-0f5f42c4df36?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Diseño de flyer o pieza publicitaria para redes sociales o impresión, lista para promocionar tu negocio.",
-    "disponible": true
+    "description": "Diseño de flyer o pieza publicitaria para redes sociales o impresión, lista para promocionar tu negocio.",
+    "available": true
   },
   {
-    "nombre": "Papelería Personalizada",
-    "precio": 900,
-    "categoria": "Servicios de Diseño",
-    "slug": "servicios-de-diseno",
-    "productoSlug": "papeleria-personalizada",
-    "fotos": [
+    "id": "PROD-010",
+    "name": "Papelería Personalizada",
+    "price": 900,
+    "category": "Papelería Personalizada",
+    "slug": "papeleria-personalizada",
+    "productSlug": "papeleria-personalizada",
+    "photos": [
       "https://images.unsplash.com/photo-1766240571855-74dc2dc469b1?auto=format&fit=crop&w=800&q=80"
     ],
-    "descripcion": "Diseño de papelería personalizada (tarjetas, etiquetas y tags) para tu marca o evento.",
-    "disponible": true
+    "description": "Diseño de papelería personalizada (tarjetas, etiquetas y tags) para tu marca o evento.",
+    "available": true
   }
 ]

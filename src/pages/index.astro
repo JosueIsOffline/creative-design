@@ -6,14 +6,17 @@ import HowToOrder from '../components/HowToOrder.astro';
 import Gallery from '../components/Gallery.astro';
 import About from '../components/About.astro';
 import Glitter from '../components/Glitter.astro';
+import Snow from '../components/Snow.astro';
 import FinalCta from '../components/FinalCta.astro';
 import { Icon } from 'astro-icon/components';
 import ProductCard from '../components/ProductCard.astro';
 import { fetchCatalog } from '../lib/sheets';
 
 const products = await fetchCatalog(import.meta.env.CATALOG_CSV_URL);
-const destacados = products.slice(0, 6);
-const galeria = products.slice(0, 8);
+const featured = products.slice(0, 6);
+// Christmas season: the Sheet's Navidad category (slug 'navidad'), shown only with html.is-christmas.
+const gifts = products.filter((p) => p.slug === 'navidad').slice(0, 6);
+const gallery = products.slice(0, 8);
 ---
 <BaseLayout title="Inicio">
   <div id="intro-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center bg-background" data-intro>
@@ -21,14 +24,38 @@ const galeria = products.slice(0, 8);
   </div>
 
   <HeroScene />
+  <Snow />
 
   <div class="after-hero">
 
   <Marquee items={['Tazas', 'Vasos térmicos', 'Camisetas', 'Hoodies', 'Bolsos', 'Fundas', 'Llaveros']} />
 
+  {gifts.length > 0 && (
+    <section id="gifts" class="gifts" data-season aria-labelledby="gifts-title">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="gifts__head">
+          <div>
+            <span class="gifts__eyebrow"><span aria-hidden="true">✨</span> Temporada navideña</span>
+            <h2 id="gifts-title" class="gifts__title">Regalos de <span class="gifts__script">Navidad</span></h2>
+            <p class="gifts__lead">Piezas personalizadas, listas para envolver y regalar.</p>
+          </div>
+          <a href="/catalogo/navidad" class="gifts__all">Ver todo el catálogo de Navidad <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="gifts__grid">
+          {gifts.map((product) => (
+            <div class="gift">
+              <span class="gift__tag" aria-hidden="true"><span class="gift__hole"></span>RD$ {product.price.toLocaleString('es-DO')}</span>
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
   <HowToOrder />
 
-  {destacados.length > 0 && (
+  {featured.length > 0 && (
     <section id="destacados" class="relative py-16">
       <div class="max-w-6xl mx-auto px-6">
         <div class="flex items-end justify-between gap-4 mb-8">
@@ -39,7 +66,7 @@ const galeria = products.slice(0, 8);
           </a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-featured>
-          {destacados.map((product) => (
+          {featured.map((product) => (
             <div data-featured-item>
               <ProductCard product={product} />
             </div>
@@ -50,7 +77,7 @@ const galeria = products.slice(0, 8);
   )}
 
   <Glitter />
-  {galeria.length > 0 && <Gallery products={galeria} />}
+  {gallery.length > 0 && <Gallery products={gallery} />}
 
   <About />
 
@@ -143,3 +170,31 @@ const galeria = products.slice(0, 8);
   document.addEventListener('astro:page-load', mountIntro);
 </script>
 
+<style>
+  /* Christmas gifts: the price hangs from each photo as a gift tag on a string. */
+  .gifts { position: relative; padding: 96px 0 64px; }
+  .gifts__head { display: flex; align-items: end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 48px; }
+  .gifts__eyebrow { font: 500 11px/1 var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); }
+  .gifts__title { margin-top: 12px; font: 700 clamp(2.5rem, 6vw, 4.5rem)/0.95 var(--font-display); letter-spacing: -0.04em; }
+  .gifts__script { font-family: 'Dancing Script', cursive; font-weight: 600; letter-spacing: 0; color: var(--lilac); font-size: 1.15em; }
+  .gifts__lead { margin-top: 16px; color: var(--color-muted); max-width: 40ch; }
+  .gifts__all { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 14px; color: var(--color-foreground); text-decoration: underline; text-underline-offset: 4px; }
+  .gifts__all span { transition: translate 300ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .gifts__all:hover span { translate: 3px 0; }
+  .gifts__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 32px 24px; }
+  .gift { position: relative; }
+  .gift :global(.card-price) { display: none; } /* the tag carries the price */
+  .gift__tag {
+    position: absolute; z-index: 3; top: 14px; left: 18px; display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 12px 7px 22px; background: #f6efe3; color: #1d1a16; font: 600 13px/1 var(--font-mono); letter-spacing: 0.02em;
+    clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+    box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.4);
+    rotate: -7deg; transform-origin: 6px 50%;
+    transition: rotate 700ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+  /* The string it hangs from. */
+  .gift__tag::before { content: ''; position: absolute; left: -10px; top: 50%; width: 22px; height: 1.5px; background: #d62839; translate: 0 -50%; rotate: -24deg; }
+  .gift__hole { position: absolute; left: 9px; top: 50%; width: 6px; height: 6px; border-radius: 999px; background: rgb(0 0 0 / 0.25); translate: 0 -50%; }
+  .gift:hover .gift__tag { rotate: 4deg; }
+  @media (prefers-reduced-motion: reduce) { .gift__tag { transition: none; } }
+</style>

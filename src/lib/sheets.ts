@@ -3,14 +3,15 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 export interface Product {
-  nombre: string;
-  precio: number;
-  categoria: string;
-  slug: string;
-  productoSlug: string;
-  fotos: string[];
-  descripcion: string;
-  disponible: boolean;
+  id?: string; // the Sheet's ID column (PROD-001…): the coupons server prices the cart by it
+  name: string;
+  price: number;
+  category: string;
+  slug: string; // category slug
+  productSlug: string;
+  photos: string[];
+  description: string;
+  available: boolean;
 }
 
 const FALLBACK_PATH = path.join(process.cwd(), 'data', 'fallback.json');
@@ -30,10 +31,10 @@ function validateProducts(data: unknown): Product[] {
   return data.filter(
     (p): p is Product =>
       p &&
-      typeof p.precio === 'number' &&
-      Array.isArray(p.fotos) &&
-      typeof p.nombre === 'string' &&
-      typeof p.productoSlug === 'string'
+      typeof p.price === 'number' &&
+      Array.isArray(p.photos) &&
+      typeof p.name === 'string' &&
+      typeof p.productSlug === 'string'
   );
 }
 
@@ -77,11 +78,11 @@ export function parseCatalogCsv(csvText: string): Product[] {
   const usedProductSlugs = new Map<string, number>();
 
   for (const row of data) {
-    const nombre = getField(row, 'nombre', 'producto')?.trim();
-    const precioRaw = getField(row, 'precio')?.trim();
-    const fotosRaw = getField(row, 'fotos', 'imagen', 'imagenes')?.trim();
+    const name = getField(row, 'nombre', 'producto')?.trim();
+    const priceRaw = getField(row, 'precio')?.trim();
+    const photosRaw = getField(row, 'fotos', 'imagen', 'imagenes')?.trim();
 
-    if (!nombre || !precioRaw || !fotosRaw) {
+    if (!name || !priceRaw || !photosRaw) {
       console.warn(`[catalog] Fila descartada por datos incompletos: ${JSON.stringify(row)}`);
       continue;
     }
@@ -89,49 +90,100 @@ export function parseCatalogCsv(csvText: string): Product[] {
     // Drop a trailing 2-digit decimal/cents suffix (",00" or ".00") before
     // stripping separators — otherwise "350,00" reads as 35000 instead of 350.
     // Whole-peso pricing only; cents are truncated, not rounded.
-    const cleaned = precioRaw.replace(/[.,]\d{2}$/, '').replace(/[^0-9]/g, '');
+    const cleaned = priceRaw.replace(/[.,]\d{2}$/, '').replace(/[^0-9]/g, '');
     if (!cleaned) {
       console.warn(`[catalog] Precio inválido, fila descartada: ${JSON.stringify(row)}`);
       continue;
     }
-    const precio = Number(cleaned);
-    if (Number.isNaN(precio)) {
+    const price = Number(cleaned);
+    if (Number.isNaN(price)) {
       console.warn(`[catalog] Precio inválido, fila descartada: ${JSON.stringify(row)}`);
       continue;
     }
 
-    const fotos = fotosRaw.split(',').map((url) => url.trim()).filter(Boolean);
-    if (fotos.length === 0) {
+    const photos = photosRaw.split(',').map((url) => url.trim()).filter(Boolean);
+    if (photos.length === 0) {
       console.warn(`[catalog] Fila sin fotos válidas, descartada: ${JSON.stringify(row)}`);
       continue;
     }
 
-    const categoria = getField(row, 'categoria')?.trim() || 'sin-categoria';
-    const disponibleRaw = getField(row, 'disponible', 'en stock')?.trim().toLowerCase() ?? 'si';
-    const categoriaSlug = slugify(categoria);
+    const category = getField(row, 'categoria')?.trim() || 'sin-categoria';
+    const availableRaw = getField(row, 'disponible', 'en stock')?.trim().toLowerCase() ?? 'si';
+    const categorySlug = slugify(category);
 
-    const baseProductoSlug = slugify(nombre) || 'producto';
-    const slugKey = `${categoriaSlug}/${baseProductoSlug}`;
+    const baseProductSlug = slugify(name) || 'producto';
+    const slugKey = `${categorySlug}/${baseProductSlug}`;
     const seenCount = usedProductSlugs.get(slugKey) ?? 0;
     usedProductSlugs.set(slugKey, seenCount + 1);
-    const productoSlug = seenCount === 0 ? baseProductoSlug : `${baseProductoSlug}-${seenCount + 1}`;
+    const productSlug = seenCount === 0 ? baseProductSlug : `${baseProductSlug}-${seenCount + 1}`;
 
+    const id = getField(row, 'id')?.trim();
     products.push({
-      nombre,
-      precio,
-      categoria,
-      slug: categoriaSlug,
-      productoSlug,
-      fotos,
-      descripcion: getField(row, 'descripcion')?.trim() || '',
-      disponible: !['no', 'false', '0', 'n'].includes(disponibleRaw),
+      ...(id ? { id } : {}),
+      name,
+      price,
+      category,
+      slug: categorySlug,
+      productSlug,
+      photos,
+      description: getField(row, 'descripcion')?.trim() || '',
+      available: !['no', 'false', '0', 'n'].includes(availableRaw),
     });
   }
 
-  return products.filter((p) => p.disponible);
+  return products.filter((p) => p.available);
 }
 
+// Drive "view" links aren't images, and Drive's direct links are unofficial and
+// rate-limited. So at build time each Drive photo is downloaded once and served
+// as a static file: public/productos/<FILE_ID>.jpg. The file ID is the cache key
+// (a new photo means a new ID). Plain <img> everywhere, so Vercel's optimizer
+// never touches them.
+const DRIVE_ID = /drive\.google\.com\/file\/d\/([\w-]+)/;
+const PHOTOS_DIR = path.join(process.cwd(), 'public', 'productos');
+const PLACEHOLDER = '/placeholder.jpg';
+const downloads = new Map<string, Promise<string>>(); // every page calls fetchCatalog: download each file once
+
+function localPhoto(url: string): Promise<string> {
+  const id = url.match(DRIVE_ID)?.[1];
+  if (!id) return Promise.resolve(url);
+  if (!downloads.has(id)) {
+    downloads.set(id, (async () => {
+      const publicPath = `/productos/${id}.jpg`;
+      const file = path.join(PHOTOS_DIR, `${id}.jpg`);
+      if (await fs.stat(file).then(() => true, () => false)) return publicPath;
+      try {
+        const res = await fetch(`https://drive.google.com/uc?export=download&id=${id}`);
+        const body = Buffer.from(await res.arrayBuffer());
+        // Drive labels files loosely (application/binary…), but a file that isn't
+        // shared publicly comes back as an HTML page, sometimes with a 200.
+        if (!res.ok || res.headers.get('content-type')?.includes('text/html') || body.subarray(0, 64).toString().trimStart().startsWith('<')) {
+          throw new Error(`HTTP ${res.status} ${res.headers.get('content-type')}`);
+        }
+        await fs.mkdir(PHOTOS_DIR, { recursive: true });
+        await fs.writeFile(`${file}.tmp`, body);
+        await fs.rename(`${file}.tmp`, file);
+        return publicPath;
+      } catch (error) {
+        console.warn(`[catalog] No se pudo descargar la foto de Drive ${id} (${(error as Error).message}). Usando placeholder`);
+        return PLACEHOLDER;
+      }
+    })());
+  }
+  return downloads.get(id)!;
+}
+
+/** Swaps every Drive link for its downloaded copy. */
+async function localizePhotos(products: Product[]): Promise<Product[]> {
+  return Promise.all(products.map(async (p) => ({ ...p, photos: await Promise.all(p.photos.map(localPhoto)) })));
+}
+
+/** The catalog with Drive photos already downloaded. fallback.json keeps the original links. */
 export async function fetchCatalog(csvUrl: string): Promise<Product[]> {
+  return localizePhotos(await fetchRawCatalog(csvUrl));
+}
+
+async function fetchRawCatalog(csvUrl: string): Promise<Product[]> {
   try {
     const response = await fetch(csvUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -173,7 +225,7 @@ export interface Category {
 export function getCategories(products: Product[]): Category[] {
   const bySlug = new Map<string, string>();
   for (const p of products) {
-    if (!bySlug.has(p.slug)) bySlug.set(p.slug, p.categoria);
+    if (!bySlug.has(p.slug)) bySlug.set(p.slug, p.category);
   }
   return [...bySlug.entries()].map(([slug, name]) => ({ slug, name }));
 }

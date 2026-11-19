@@ -3,32 +3,32 @@ import type { Product } from '../lib/sheets';
 import { Icon } from 'astro-icon/components';
 interface Props { product: Product }
 const { product } = Astro.props;
-const precioFormateado = `RD$ ${product.precio.toLocaleString('es-DO')}`;
+const formattedPrice = `RD$ ${product.price.toLocaleString('es-DO')}`;
 ---
-<a href={`/catalogo/${product.slug}/${product.productoSlug}`} class="block group h-full" data-product-trigger>
+<a href={`/catalogo/${product.slug}/${product.productSlug}`} class="block group h-full" data-product-trigger>
   <article class="product-card relative h-full flex flex-col">
     <button type="button" class="card-close absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-brand-black/80 text-white flex items-center justify-center cursor-pointer" aria-label="Cerrar">
       <Icon name="line-md:close" class="w-4 h-4" />
     </button>
     <div class="relative overflow-hidden rounded-2xl" data-tilt data-spot>
       <img
-        src={product.fotos[0]}
-        alt={product.nombre}
+        src={product.photos[0]}
+        alt={product.name}
         class="card-image w-full aspect-[5/4] object-cover transition-transform duration-400 ease-out group-hover:scale-[1.04]"
         loading="lazy"
         onerror="this.onerror=null;this.src='/placeholder.jpg';"
       />
     </div>
     <div class="p-4 flex flex-col flex-1 items-center text-center">
-      <span class="card-categoria text-xs text-subtle">{product.categoria}</span>
-      <h3 class="card-title font-display font-medium text-base text-foreground mt-1 truncate">{product.nombre}</h3>
-      <p class="card-precio text-sm text-muted mt-1">{precioFormateado}</p>
-      <p class="card-desc-full hidden text-sm text-muted leading-relaxed mt-3 text-left">{product.descripcion}</p>
+      <span class="card-category text-xs text-subtle">{product.category}</span>
+      <h3 class="card-title font-display font-medium text-base text-foreground mt-1 truncate">{product.name}</h3>
+      <p class="card-price text-sm text-muted mt-1">{formattedPrice}</p>
+      <p class="card-desc-full hidden text-sm text-muted leading-relaxed mt-3 text-left">{product.description}</p>
       <button
         type="button"
         class="card-add-to-cart mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/40 text-accent text-sm font-medium px-4 py-1.5 hover:bg-accent/10 transition-colors cursor-pointer"
         data-magnetic
-        data-product={JSON.stringify({ slug: product.slug, productoSlug: product.productoSlug, nombre: product.nombre, precio: product.precio, foto: product.fotos[0] })}
+        data-product={JSON.stringify({ slug: product.slug, productSlug: product.productSlug, name: product.name, price: product.price, photo: product.photos[0] })}
       >
         <span class="card-add-label">Agregar al carrito</span>
         <span class="card-add-label-added hidden">¡Agregado!</span>
