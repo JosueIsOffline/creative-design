@@ -134,7 +134,56 @@ export function parseCatalogCsv(csvText: string): Product[] {
   return products.filter((p) => p.available);
 }
 
+// Drive "view" links aren't images, and Drive's direct links are unofficial and
+// rate-limited. So at build time each Drive photo is downloaded once and served
+// as a static file: public/productos/<FILE_ID>.jpg. The file ID is the cache key
+// (a new photo means a new ID). Plain <img> everywhere, so Vercel's optimizer
+// never touches them.
+const DRIVE_ID = /drive\.google\.com\/file\/d\/([\w-]+)/;
+const PHOTOS_DIR = path.join(process.cwd(), 'public', 'productos');
+const PLACEHOLDER = '/placeholder.jpg';
+const downloads = new Map<string, Promise<string>>(); // every page calls fetchCatalog: download each file once
+
+function localPhoto(url: string): Promise<string> {
+  const id = url.match(DRIVE_ID)?.[1];
+  if (!id) return Promise.resolve(url);
+  if (!downloads.has(id)) {
+    downloads.set(id, (async () => {
+      const publicPath = `/productos/${id}.jpg`;
+      const file = path.join(PHOTOS_DIR, `${id}.jpg`);
+      if (await fs.stat(file).then(() => true, () => false)) return publicPath;
+      try {
+        const res = await fetch(`https://drive.google.com/uc?export=download&id=${id}`);
+        const body = Buffer.from(await res.arrayBuffer());
+        // Drive labels files loosely (application/binary…), but a file that isn't
+        // shared publicly comes back as an HTML page, sometimes with a 200.
+        if (!res.ok || res.headers.get('content-type')?.includes('text/html') || body.subarray(0, 64).toString().trimStart().startsWith('<')) {
+          throw new Error(`HTTP ${res.status} ${res.headers.get('content-type')}`);
+        }
+        await fs.mkdir(PHOTOS_DIR, { recursive: true });
+        await fs.writeFile(`${file}.tmp`, body);
+        await fs.rename(`${file}.tmp`, file);
+        return publicPath;
+      } catch (error) {
+        console.warn(`[catalog] No se pudo descargar la foto de Drive ${id} (${(error as Error).message}). Usando placeholder`);
+        return PLACEHOLDER;
+      }
+    })());
+  }
+  return downloads.get(id)!;
+}
+
+/** Swaps every Drive link for its downloaded copy. */
+async function localizePhotos(products: Product[]): Promise<Product[]> {
+  return Promise.all(products.map(async (p) => ({ ...p, photos: await Promise.all(p.photos.map(localPhoto)) })));
+}
+
+/** The catalog with Drive photos already downloaded. fallback.json keeps the original links. */
 export async function fetchCatalog(csvUrl: string): Promise<Product[]> {
+  return localizePhotos(await fetchRawCatalog(csvUrl));
+}
+
+async function fetchRawCatalog(csvUrl: string): Promise<Product[]> {
   try {
     const response = await fetch(csvUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
